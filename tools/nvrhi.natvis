@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+    <Type Name="nvrhi::static_vector&lt;*,*&gt;">
+        <DisplayString>{{ size={current_size} }}</DisplayString>
+        <Expand>
+            <ArrayItems>
+                <Size>current_size</Size>
+                <ValuePointer>_Elems</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="nvrhi::RefCountPtr&lt;*&gt;">
+        <DisplayString Condition="ptr_ == 0">empty</DisplayString>
+        <DisplayString>{*ptr_}</DisplayString>
+        <Expand>
+            <ExpandedItem>ptr_</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nvrhi::BindingLayoutItem">
+        <DisplayString Condition="type == nvrhi::ResourceType::Texture_SRV || type == nvrhi::ResourceType::TypedBuffer_SRV || type == nvrhi::ResourceType::StructuredBuffer_SRV || type == nvrhi::ResourceType::RawBuffer_SRV || type == nvrhi::ResourceType::RayTracingAccelStruct">
+            t{slot}: {type}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::Texture_UAV || type == nvrhi::ResourceType::TypedBuffer_UAV || type == nvrhi::ResourceType::StructuredBuffer_UAV || type == nvrhi::ResourceType::RawBuffer_UAV">
+            u{slot}: {type}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::ConstantBuffer || type == nvrhi::ResourceType::VolatileConstantBuffer">
+            b{slot}: {type}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::PushConstants">
+            b{slot}: {type} size={size}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::Sampler">
+            s{slot}: {type}
+        </DisplayString>
+        <DisplayString>[{slot}] {type}</DisplayString>
+    </Type>
+
+    <Type Name="nvrhi::BindingLayoutDesc">
+        <DisplayString>{{ size={bindings.current_size} }}</DisplayString>
+        <Expand>
+            <Item Name="visibility">visibility</Item>
+            <Item Name="registerSpace">registerSpace</Item>
+            <Item Name="bindingOffsets">bindingOffsets</Item>
+            <ArrayItems>
+                <Size>bindings.current_size</Size>
+                <ValuePointer>bindings._Elems</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="nvrhi::BindingSetItem">
+        <DisplayString Condition="type == nvrhi::ResourceType::Texture_SRV || type == nvrhi::ResourceType::TypedBuffer_SRV || type == nvrhi::ResourceType::StructuredBuffer_SRV || type == nvrhi::ResourceType::RawBuffer_SRV || type == nvrhi::ResourceType::RayTracingAccelStruct">
+            t{slot}: {type} {*resourceHandle}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::Texture_UAV || type == nvrhi::ResourceType::TypedBuffer_UAV || type == nvrhi::ResourceType::StructuredBuffer_UAV || type == nvrhi::ResourceType::RawBuffer_UAV">
+            u{slot}: {type} {*resourceHandle}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::ConstantBuffer || type == nvrhi::ResourceType::VolatileConstantBuffer">
+            b{slot}: {type} {*resourceHandle}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::PushConstants">
+            b{slot}: {type} size={range.byteSize}
+        </DisplayString>
+        <DisplayString Condition="type == nvrhi::ResourceType::Sampler">
+            s{slot}: {type} {*resourceHandle}
+        </DisplayString>
+        <DisplayString>[{slot}]: {type} {*resourceHandle}</DisplayString>
+        <Expand>
+            <Item Name="resource">resourceHandle</Item>
+            <Item Name="type">type</Item>
+            <Item Name="slot">slot</Item>
+            <Item Name="format" Condition="type == nvrhi::ResourceType::Texture_SRV || type == nvrhi::ResourceType::Texture_UAV || type == nvrhi::ResourceType::TypedBuffer_SRV || type == nvrhi::ResourceType::TypedBuffer_UAV">format</Item>
+            <Item Name="subresources" Condition="type == nvrhi::ResourceType::Texture_SRV || type == nvrhi::ResourceType::Texture_UAV">subresources</Item>
+            <Item Name="dimension" Condition="type == nvrhi::ResourceType::Texture_SRV || type == nvrhi::ResourceType::Texture_UAV">dimension</Item>
+            <Item Name="range" Condition="type == nvrhi::ResourceType::TypedBuffer_SRV || type == nvrhi::ResourceType::TypedBuffer_UAV || type == nvrhi::ResourceType::StructuredBuffer_SRV || type == nvrhi::ResourceType::StructuredBuffer_UAV || type == nvrhi::ResourceType::RawBuffer_SRV || type == nvrhi::ResourceType::RawBuffer_UAV">range</Item>
+        </Expand>
+    </Type>
+
+    <Type Name="nvrhi::BindingSetDesc">
+        <DisplayString>{{ size={bindings.current_size} }}</DisplayString>
+        <Expand>
+            <Item Name="trackLiveness">trackLiveness</Item>
+            <ArrayItems>
+                <Size>bindings.current_size</Size>
+                <ValuePointer>bindings._Elems</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="nvrhi::TextureDesc">
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::Texture1D">
+            Texture1D {debugName} Width={width} MipLevels={mipLevels} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::Texture1DArray">
+            Texture1DArray {debugName} Width={width} ArraySize={arraySize} MipLevels={mipLevels} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::Texture2D">
+            Texture2D {debugName} Size={width}x{height} MipLevels={mipLevels} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::Texture2DArray">
+            Texture2DArray {debugName} Width={width} ArraySize={arraySize} MipLevels={mipLevels} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::TextureCube">
+            TextureCube {debugName} Size={width}x{height} MipLevels={mipLevels} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::TextureCubeArray">
+            TextureCubeArray {debugName} Width={width} ArraySize={arraySize} MipLevels={mipLevels} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::Texture2DMS">
+            Texture2DMS {debugName} Size={width}x{height} SampleCount={sampleCount} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::Texture2DMSArray">
+            Texture2DMSArray {debugName} Width={width} ArraySize={arraySize} SampleCount={sampleCount} Format={format}
+        </DisplayString>
+        <DisplayString Condition="dimension == nvrhi::TextureDimension::Texture3D">
+            Texture3D {debugName} Size={width}x{height}x{depth} MipLevels={mipLevels} Format={format}
+        </DisplayString>
+        <DisplayString>Unknown TextureDesc</DisplayString>
+    </Type>
+
+    <Type Name="nvrhi::FramebufferInfo">
+        <DisplayString>Size={width}x{height} SampleCount={sampleCount} ColorTargets={colorFormats.current_size} DepthTarget={depthFormat != nvrhi::Format::UNKNOWN}</DisplayString>
+    </Type>
+
+    <Type Name="nvrhi::FramebufferAttachment">
+        <DisplayString Condition="!texture">empty</DisplayString>
+        <DisplayString>{*texture} Subresources={subresources} Format={format}</DisplayString>
+    </Type>
+
+    <Type Name="nvrhi::FramebufferDesc">
+        <DisplayString Condition="depthAttachment.texture">Framebuffer ({colorAttachments.current_size} color target(s), with depth)</DisplayString>
+        <DisplayString>Framebuffer ({colorAttachments.current_size} color target(s), no depth)</DisplayString>
+        <Expand>
+            <Item Name="depth">depthAttachment</Item>
+            <ArrayItems>
+                <Size>colorAttachments.current_size</Size>
+                <ValuePointer>colorAttachments._Elems</ValuePointer>
+            </ArrayItems>
+        </Expand>
+    </Type>
+
+    <Type Name="nvrhi::HeapDesc">
+        <DisplayString>{type} Heap {debugName} Capacity={capacity}</DisplayString>
+    </Type>
+
+    <Type Name="nvrhi::BufferDesc">
+        <DisplayString>Buffer {debugName} ByteSize={byteSize} StructStride={structStride} Format={format}</DisplayString>
+    </Type>
+
+    <Type Name="nvrhi::rt::AccelStructDesc">
+        <DisplayString Condition="isTopLevel">
+            TopLevelAccelStruct {debugName} MaxInstances={topLevelMaxInstances} BuildFlags={buildFlags}
+        </DisplayString>
+        <DisplayString>
+            BottomLevelAccelStruct {debugName} MaxGeometries={bottomLevelGeometries.size()} BuildFlags={buildFlags}
+        </DisplayString>
+    </Type>
+
+    <Type Name="nvrhi::ShaderDesc">
+        <DisplayString>{shaderType} Shader {debugName}:{entryName}</DisplayString>
+    </Type>
+
+
+    <Type Name="nvrhi::d3d11::Buffer">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d11::Texture">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d11::StagingTexture">
+        <DisplayString>Staging {desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d11::Sampler">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d11::Shader">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d11::Framebuffer">
+        <DisplayString>{framebufferInfo}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d11::BindingSet">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d11::BindingLayout">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d11::GraphicsPipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d11::ComputePipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+
+
+    <Type Name="nvrhi::d3d12::Heap">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d12::Buffer">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d12::Texture">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d12::StagingTexture">
+        <DisplayString>Staging {desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d12::Sampler">
+        <DisplayString>{m_Desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>m_Desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d12::AccelStruct">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d12::Shader">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::d3d12::Framebuffer">
+        <DisplayString>{framebufferInfo}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d12::BindingSet">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d12::BindingLayout">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d12::GraphicsPipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d12::ComputePipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d12::MeshletPipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::d3d12::RayTracingPipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+
+
+    <Type Name="nvrhi::vulkan::Heap">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::vulkan::Buffer">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::vulkan::Texture">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::vulkan::StagingTexture">
+        <DisplayString>Staging {desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::vulkan::Sampler">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::vulkan::AccelStruct">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::vulkan::Shader">
+        <DisplayString>{desc}</DisplayString>
+    </Type>
+    <Type Name="nvrhi::vulkan::Framebuffer">
+        <DisplayString>{framebufferInfo}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::vulkan::BindingSet">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::vulkan::BindingLayout">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::vulkan::GraphicsPipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::vulkan::ComputePipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::vulkan::MeshletPipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="nvrhi::vulkan::RayTracingPipeline">
+        <DisplayString>{desc}</DisplayString>
+        <Expand>
+            <ExpandedItem>desc</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nvrhi::validation::DeviceWrapper">
+        <DisplayString>({m_Device})</DisplayString>
+    </Type>
+    <Type Name="nvrhi::validation::CommandListWrapper">
+        <DisplayString>({m_CommandList})</DisplayString>
+    </Type>
+    <Type Name="nvrhi::validation::AccelStructWrapper">
+        <DisplayString>({m_AccelStruct})</DisplayString>
+    </Type>
+</AutoVisualizer>
