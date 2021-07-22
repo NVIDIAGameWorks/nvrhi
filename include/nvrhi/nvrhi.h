@@ -498,13 +498,13 @@ namespace nvrhi
     struct VertexAttributeDesc
     {
         std::string name;
-        Format format;
-        uint32_t arraySize;
-        uint32_t bufferIndex;
-        uint32_t offset;
+        Format format = Format::UNKNOWN;
+        uint32_t arraySize = 1;
+        uint32_t bufferIndex = 0;
+        uint32_t offset = 0;
         // note: for most APIs, all strides for a given bufferIndex must be identical
-        uint32_t elementStride;
-        bool isInstanced;
+        uint32_t elementStride = 0;
+        bool isInstanced = false;
 
                   VertexAttributeDesc& setName(const std::string& value) { name = value; return *this; }
         constexpr VertexAttributeDesc& setFormat(Format value) { format = value; return *this; }
@@ -1193,7 +1193,17 @@ namespace nvrhi
     {
         class IAccelStruct;
 
-        typedef float AffineTransform[3][4];
+        typedef float AffineTransform[12];
+
+        constexpr AffineTransform c_IdentityTransform = {
+        //  +----+----+---------  rotation and scaling
+        //  v    v    v
+            1.f, 0.f, 0.f, 0.f,
+            0.f, 1.f, 0.f, 0.f,
+            0.f, 0.f, 1.f, 0.f
+        //                 ^
+        //                 +----  translation
+        };
 
         enum class GeometryFlags : uint8_t
         {
@@ -1417,10 +1427,10 @@ namespace nvrhi
 
         static BindingLayoutItem PushConstants(const uint32_t slot, const size_t size)
         {
-            BindingLayoutItem result;  // NOLINT(cppcoreguidelines-pro-type-member-init)
+            BindingLayoutItem result{};
             result.slot = slot;
             result.type = ResourceType::PushConstants;
-            result.size = uint32_t(size);
+            result.size = uint16_t(size);
             return result;
         }
 #undef NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER
