@@ -48,7 +48,7 @@ To build NVRHI as a shared library (DLL or .so):
 
 ## Using NVRHI in Applications
 
-See the [programming guide](doc/ProgrammingGuide.md).
+See the [programming guide](doc/ProgrammingGuide.md) and the [tutorial](doc/Tutorial.md).
 
 ## Shader Compiler
 
