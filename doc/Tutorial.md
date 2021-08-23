@@ -39,10 +39,11 @@ nvrhi::DeviceHandle nvrhiDevice = nvrhi::d3d12::createDevice(deviceDesc);
 ...
 const char* deviceExtensions[] = {
     "VK_KHR_acceleration_structure",
+    "VK_KHR_deferred_host_operations",
     "VK_KHR_ray_tracing_pipeline",
     // list the extensions that were requested when the device was created
 };
-nvrhi::d3d12::DeviceDesc deviceDesc;
+nvrhi::vulkan::DeviceDesc deviceDesc;
 deviceDesc.errorCB = g_MyMessageCallback;
 deviceDesc.physicalDevice = vulkanPhysicalDevice;
 deviceDesc.device = vulkanDevice;
@@ -51,7 +52,7 @@ deviceDesc.graphicsQueueIndex = vulkanGraphicsQueueFamily;
 deviceDesc.deviceExtensions = deviceExtensions;
 deviceDesc.numDeviceExtensions = std::size(deviceExtensions);
 
-nvrhi::DeviceHandle nvrhiDevice = nvrhi::d3d11::createDevice(deviceDesc);
+nvrhi::DeviceHandle nvrhiDevice = nvrhi::vulkan::createDevice(deviceDesc);
 ```
 
 #### Validation
