@@ -24,6 +24,13 @@ Various early versions of NVRHI have been used in various projects created at NV
 - [VXGI](https://developer.nvidia.com/vxgi)
 - [WaveWorks](https://developer.nvidia.com/waveworks)
 
+## Requirements
+
+* Windows or Linux (x64 or ARM64)
+* CMake 3.10
+* A C++ 17 compiler (Visual Studio 2019, GCC 8 or Clang 6)
+* Windows SDK version 10.0.19041.0 or later for DX12 support
+
 ## Building NVRHI
 
 NVRHI can be configured to be used a set of static libraries in CMake-based projects, or as a single dynamic library.
