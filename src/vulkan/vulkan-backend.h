@@ -953,6 +953,7 @@ namespace nvrhi::vulkan
         Object getNativeObject(ObjectType objectType) override;
         const rt::AccelStructDesc& getDesc() const override { return desc; }
         bool isCompacted() const override { return compacted; }
+        uint64_t getDeviceAddress() const override;
 
     private:
         const VulkanContext& m_Context;
@@ -1127,6 +1128,8 @@ namespace nvrhi::vulkan
         void buildBottomLevelAccelStruct(rt::IAccelStruct* as, const rt::GeometryDesc* pGeometries, size_t numGeometries, rt::AccelStructBuildFlags buildFlags) override;
         void compactBottomLevelAccelStructs() override;
         void buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags) override;
+        void buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances,
+            rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) override;
 
         void beginTimerQuery(ITimerQuery* query) override;
         void endTimerQuery(ITimerQuery* query) override;
@@ -1215,6 +1218,8 @@ namespace nvrhi::vulkan
         void requireTextureState(ITexture* texture, TextureSubresourceSet subresources, ResourceStates state);
         void requireBufferState(IBuffer* buffer, ResourceStates state);
         bool anyBarriers() const;
+
+        void buildTopLevelAccelStructInternal(AccelStruct* as, VkDeviceAddress instanceData, size_t numInstances, rt::AccelStructBuildFlags buildFlags, uint64_t currentVersion);
     };
 
 } // namespace nvrhi::vulkan

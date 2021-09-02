@@ -91,7 +91,8 @@ namespace nvrhi::validation
 
         const rt::AccelStructDesc& getDesc() const override { return m_AccelStruct->getDesc(); }
         bool isCompacted() const override { return m_AccelStruct->isCompacted(); }
-
+        uint64_t getDeviceAddress() const override { return m_AccelStruct->getDeviceAddress(); };
+        
     private:
         rt::AccelStructHandle m_AccelStruct;
     };
@@ -134,6 +135,8 @@ namespace nvrhi::validation
         void evaluatePushConstantSize(const nvrhi::BindingLayoutVector& bindingLayouts);
         bool validatePushConstants(const char* pipelineType, const char* stateFunctionName) const;
         bool validateBindingSetsAgainstLayouts(const static_vector<BindingLayoutHandle, c_MaxBindingLayouts>& layouts, const static_vector<IBindingSet*, c_MaxBindingLayouts>& sets) const;
+
+        bool validateBuildTopLevelAccelStruct(AccelStructWrapper* wrapper, size_t numInstances, rt::AccelStructBuildFlags buildFlags) const;
 
     public:
 
@@ -181,6 +184,8 @@ namespace nvrhi::validation
         void buildBottomLevelAccelStruct(rt::IAccelStruct* as, const rt::GeometryDesc* pGeometries, size_t numGeometries, rt::AccelStructBuildFlags buildFlags) override;
         void compactBottomLevelAccelStructs() override;
         void buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags) override;
+        void buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances,
+            rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) override;
 
         void beginTimerQuery(ITimerQuery* query) override;
         void endTimerQuery(ITimerQuery* query) override;

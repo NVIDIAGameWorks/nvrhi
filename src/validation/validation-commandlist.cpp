@@ -1439,6 +1439,62 @@ namespace nvrhi::validation
         m_CommandList->buildBottomLevelAccelStruct(underlyingAS, pGeometries, numGeometries, buildFlags);
     }
 
+    bool CommandListWrapper::validateBuildTopLevelAccelStruct(AccelStructWrapper* wrapper, size_t numInstances, rt::AccelStructBuildFlags buildFlags) const
+    {
+        if (!wrapper->isTopLevel)
+        {
+            std::stringstream ss;
+            ss << "Cannot perform buildTopLevelAccelStruct on a bottom-level AS "
+                << utils::DebugNameToString(wrapper->getDesc().debugName);
+            error(ss.str());
+            return false;
+        }
+
+        if (numInstances > wrapper->maxInstances)
+        {
+            std::stringstream ss;
+            ss << "Cannot build TLAS " << utils::DebugNameToString(wrapper->getDesc().debugName)
+                << " with " << numInstances << " instances which is greater than topLevelMaxInstances "
+                   " specified at creation (" << wrapper->maxInstances << ")";
+            error(ss.str());
+            return false;
+        }
+
+        if ((buildFlags & rt::AccelStructBuildFlags::PerformUpdate) != 0)
+        {
+            if (!wrapper->allowUpdate)
+            {
+                std::stringstream ss;
+                ss << "Cannot perform an update on TLAS " << utils::DebugNameToString(wrapper->getDesc().debugName)
+                    << " that was not created with the ALLOW_UPDATE flag";
+                error(ss.str());
+                return false;
+            }
+
+            if (!wrapper->wasBuilt)
+            {
+                std::stringstream ss;
+                ss << "Cannot perform an update on TLAS " << utils::DebugNameToString(wrapper->getDesc().debugName)
+                    << " before the same TLAS was initially built";
+                error(ss.str());
+                return false;
+            }
+
+            if (wrapper->buildInstances != numInstances)
+            {
+                std::stringstream ss;
+                ss << "Cannot perform an update on TLAS " << utils::DebugNameToString(wrapper->getDesc().debugName)
+                    << " with " << numInstances << " instances when this TLAS was built with "
+                    << wrapper->buildInstances << " instances";
+                error(ss.str());
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
     void CommandListWrapper::buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
     {
         if (!requireOpenState())
@@ -1446,6 +1502,12 @@ namespace nvrhi::validation
 
         if (!requireType(CommandQueue::Compute, "buildTopLevelAccelStruct"))
             return;
+
+        if (!as)
+        {
+            error("buildTopLevelAccelStruct: 'as' is NULL");
+            return;
+        }
 
         std::vector<rt::InstanceDesc> patchedInstances;
         patchedInstances.assign(pInstances, pInstances + numInstances);
@@ -1462,15 +1524,9 @@ namespace nvrhi::validation
         {
             underlyingAS = wrapper->getUnderlyingObject();
 
-            if (!wrapper->isTopLevel)
-            {
-                std::stringstream ss;
-                ss << "Cannot perform buildTopLevelAccelStruct on a bottom-level AS "
-                    << utils::DebugNameToString(as->getDesc().debugName);
-                error(ss.str());
+            if (!validateBuildTopLevelAccelStruct(wrapper, numInstances, buildFlags))
                 return;
-            }
-
+            
             for (size_t i = 0; i < numInstances; i++)
             {
                 const auto& instance = pInstances[i];
@@ -1515,42 +1571,66 @@ namespace nvrhi::validation
                     m_MessageCallback->message(MessageSeverity::Warning, ss.str().c_str());
                 }
             }
-
-            if ((buildFlags & rt::AccelStructBuildFlags::PerformUpdate) != 0)
-            {
-                if (!wrapper->allowUpdate)
-                {
-                    std::stringstream ss;
-                    ss << "Cannot perform an update on TLAS " << utils::DebugNameToString(as->getDesc().debugName)
-                        << " that was not created with the ALLOW_UPDATE flag";
-                    error(ss.str());
-                    return;
-                }
-
-                if (!wrapper->wasBuilt)
-                {
-                    std::stringstream ss;
-                    ss << "Cannot perform an update on TLAS " << utils::DebugNameToString(as->getDesc().debugName)
-                        << " before the same TLAS was initially built";
-                    error(ss.str());
-                    return;
-                }
-
-                if (wrapper->buildInstances != numInstances)
-                {
-                    std::stringstream ss;
-                    ss << "Cannot perform an update on TLAS " << utils::DebugNameToString(as->getDesc().debugName)
-                        << " with " << numInstances << " instances when this TLAS was built with "
-                        << wrapper->buildInstances << " instances";
-                    error(ss.str());
-                    return;
-                }
-            }
-
+            
             wrapper->wasBuilt = true;
             wrapper->buildInstances = numInstances;
         }
         m_CommandList->buildTopLevelAccelStruct(underlyingAS, patchedInstances.data(), uint32_t(patchedInstances.size()), buildFlags);
+    }
+
+    void CommandListWrapper::buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    {
+        if (!requireOpenState())
+            return;
+
+        if (!requireType(CommandQueue::Compute, "buildTopLevelAccelStruct"))
+            return;
+
+        if (!as)
+        {
+            error("buildTopLevelAccelStructFromBuffer: 'as' is NULL");
+            return;
+        }
+
+        if (!instanceBuffer)
+        {
+            error("buildTopLevelAccelStructFromBuffer: 'instanceBuffer' is NULL");
+            return;
+        }
+
+        rt::IAccelStruct* underlyingAS = as;
+
+        AccelStructWrapper* wrapper = dynamic_cast<AccelStructWrapper*>(as);
+        if (wrapper)
+        {
+            underlyingAS = wrapper->getUnderlyingObject();
+
+            if (!validateBuildTopLevelAccelStruct(wrapper, numInstances, buildFlags))
+                return;
+        }
+
+        auto bufferDesc = instanceBuffer->getDesc();
+        if (!bufferDesc.isAccelStructBuildInput)
+        {
+            std::stringstream ss;
+            ss << "Buffer " << utils::DebugNameToString(bufferDesc.debugName) << " used in buildTopLevelAccelStructFromBuffer "
+                "doesn't have the 'isAccelStructBuildInput' flag set";
+            error(ss.str());
+            return;
+        }
+
+        uint64_t sizeOfData = numInstances * sizeof(rt::InstanceDesc);
+        if (bufferDesc.byteSize < instanceBufferOffset + sizeOfData)
+        {
+            std::stringstream ss;
+            ss << "Buffer " << utils::DebugNameToString(bufferDesc.debugName) << " used in buildTopLevelAccelStructFromBuffer "
+                "is smaller than the referenced instance data: " << sizeOfData << " bytes used at offset " << instanceBufferOffset
+                << ", buffer size is " << bufferDesc.byteSize << " bytes";
+            error(ss.str());
+            return;
+        }
+
+        m_CommandList->buildTopLevelAccelStructFromBuffer(underlyingAS, instanceBuffer, instanceBufferOffset, numInstances, buildFlags);
     }
 
     void CommandListWrapper::evaluatePushConstantSize(const nvrhi::BindingLayoutVector& bindingLayouts)

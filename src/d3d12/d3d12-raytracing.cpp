@@ -195,6 +195,15 @@ namespace nvrhi::d3d12
         return nullptr;
     }
 
+    uint64_t AccelStruct::getDeviceAddress() const
+    {
+#ifdef NVRHI_WITH_RTXMU
+        if (!desc.isTopLevel)
+            return m_Context.rtxMemUtil->GetAccelStructGPUVA(rtxmuId);
+#endif
+        return dataBuffer->gpuVA;
+    }
+
     static void fillD3dGeometryDesc(D3D12_RAYTRACING_GEOMETRY_DESC& outD3dGeometryDesc, const rt::GeometryDesc& geometryDesc)
     {
         if (geometryDesc.geometryType == rt::GeometryType::Triangles)
@@ -1007,74 +1016,20 @@ namespace nvrhi::d3d12
 #endif
     }
 
-    void CommandList::buildTopLevelAccelStruct(rt::IAccelStruct* _as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    void CommandList::buildTopLevelAccelStructInternal(AccelStruct* as, D3D12_GPU_VIRTUAL_ADDRESS instanceData, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
     {
-        AccelStruct* as = checked_cast<AccelStruct*>(_as);
-
         const bool performUpdate = (buildFlags & rt::AccelStructBuildFlags::PerformUpdate) != 0;
+
         if (performUpdate)
         {
             assert(as->allowUpdate);
             assert(as->dxrInstances.size() == numInstances); // DXR doesn't allow updating to a different instance count
         }
 
-        as->bottomLevelASes.clear();
-
-        // Keep the dxrInstances array in the AS object to avoid reallocating it on the next update
-        as->dxrInstances.resize(numInstances);
-
-        // Construct the instance array in a local vector first and then copy it over
-        // because doing it in GPU memory over PCIe is much slower.
-        for (uint32_t i = 0; i < numInstances; i++)
-        {
-            const rt::InstanceDesc& instance = pInstances[i];
-            D3D12_RAYTRACING_INSTANCE_DESC& dxrInstance = as->dxrInstances[i];
-
-            AccelStruct* blas = checked_cast<AccelStruct*>(instance.bottomLevelAS);
-
-            if (blas->desc.trackLiveness)
-                as->bottomLevelASes.push_back(blas);
-
-#ifdef NVRHI_WITH_RTXMU
-            dxrInstance.AccelerationStructure = m_Context.rtxMemUtil->GetAccelStructGPUVA(blas->rtxmuId);
-#else
-            dxrInstance.AccelerationStructure = blas->dataBuffer->gpuVA;
-#endif
-            dxrInstance.Flags = (D3D12_RAYTRACING_INSTANCE_FLAGS)instance.flags;
-            dxrInstance.InstanceID = instance.instanceID;
-            dxrInstance.InstanceContributionToHitGroupIndex = instance.instanceContributionToHitGroupIndex;
-            dxrInstance.InstanceMask = instance.instanceMask;
-            memcpy(&dxrInstance.Transform, instance.transform, sizeof(rt::AffineTransform));
-
-#ifndef NVRHI_WITH_RTXMU
-            if (m_EnableAutomaticBarriers)
-            {
-                requireBufferState(blas->dataBuffer, nvrhi::ResourceStates::AccelStructBuildBlas);
-            }
-#endif
-        }
-
-#ifdef NVRHI_WITH_RTXMU
-        m_Context.rtxMemUtil->PopulateUAVBarriersCommandList(m_ActiveCommandList->commandList4, m_Instance->rtxmuBuildIds);
-#endif
-
-        // Copy the instance array to the GPU
-        D3D12_RAYTRACING_INSTANCE_DESC* cpuVA = nullptr;
-        D3D12_GPU_VIRTUAL_ADDRESS gpuVA = 0;
-        size_t uploadSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * as->dxrInstances.size();
-        if (!m_UploadManager.suballocateBuffer(uploadSize, nullptr, nullptr, nullptr, (void**)&cpuVA, &gpuVA,
-            m_RecordingVersion, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT))
-        {
-            m_Context.error("Couldn't suballocate an upload buffer");
-            return;
-        }
-
-        memcpy(cpuVA, as->dxrInstances.data(), sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * as->dxrInstances.size());
-
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS ASInputs;
         ASInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
         ASInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-        ASInputs.InstanceDescs = gpuVA;
+        ASInputs.InstanceDescs = instanceData;
         ASInputs.NumDescs = UINT(numInstances);
         ASInputs.Flags = (D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS)buildFlags;
         if (as->allowUpdate)
@@ -1082,7 +1037,7 @@ namespace nvrhi::d3d12
 
         D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO ASPreBuildInfo = {};
         m_Context.device5->GetRaytracingAccelerationStructurePrebuildInfo(&ASInputs, &ASPreBuildInfo);
-        
+
         if (ASPreBuildInfo.ResultDataMaxSizeInBytes > as->dataBuffer->desc.byteSize)
         {
             std::stringstream ss;
@@ -1116,16 +1071,93 @@ namespace nvrhi::d3d12
         buildDesc.DestAccelerationStructureData = as->dataBuffer->gpuVA;
         buildDesc.SourceAccelerationStructureData = performUpdate ? as->dataBuffer->gpuVA : 0;
 
+        m_ActiveCommandList->commandList4->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+    }
+
+    void CommandList::buildTopLevelAccelStruct(rt::IAccelStruct* _as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    {
+        AccelStruct* as = checked_cast<AccelStruct*>(_as);
+        
+        as->bottomLevelASes.clear();
+
+        // Keep the dxrInstances array in the AS object to avoid reallocating it on the next update
+        as->dxrInstances.resize(numInstances);
+
+        // Construct the instance array in a local vector first and then copy it over
+        // because doing it in GPU memory over PCIe is much slower.
+        for (uint32_t i = 0; i < numInstances; i++)
+        {
+            const rt::InstanceDesc& instance = pInstances[i];
+            D3D12_RAYTRACING_INSTANCE_DESC& dxrInstance = as->dxrInstances[i];
+
+            AccelStruct* blas = checked_cast<AccelStruct*>(instance.bottomLevelAS);
+
+            if (blas->desc.trackLiveness)
+                as->bottomLevelASes.push_back(blas);
+
+            static_assert(sizeof(dxrInstance) == sizeof(instance));
+            memcpy(&dxrInstance, &instance, sizeof(instance));
+
+#ifdef NVRHI_WITH_RTXMU
+            dxrInstance.AccelerationStructure = m_Context.rtxMemUtil->GetAccelStructGPUVA(blas->rtxmuId);
+#else
+            dxrInstance.AccelerationStructure = blas->dataBuffer->gpuVA;
+#endif
+
+#ifndef NVRHI_WITH_RTXMU
+            if (m_EnableAutomaticBarriers)
+            {
+                requireBufferState(blas->dataBuffer, nvrhi::ResourceStates::AccelStructBuildBlas);
+            }
+#endif
+        }
+
+#ifdef NVRHI_WITH_RTXMU
+        m_Context.rtxMemUtil->PopulateUAVBarriersCommandList(m_ActiveCommandList->commandList4, m_Instance->rtxmuBuildIds);
+#endif
+
+        // Copy the instance array to the GPU
+        D3D12_RAYTRACING_INSTANCE_DESC* cpuVA = nullptr;
+        D3D12_GPU_VIRTUAL_ADDRESS gpuVA = 0;
+        size_t uploadSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * as->dxrInstances.size();
+        if (!m_UploadManager.suballocateBuffer(uploadSize, nullptr, nullptr, nullptr, (void**)&cpuVA, &gpuVA,
+            m_RecordingVersion, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT))
+        {
+            m_Context.error("Couldn't suballocate an upload buffer");
+            return;
+        }
+
+        memcpy(cpuVA, as->dxrInstances.data(), sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * as->dxrInstances.size());
+
         if (m_EnableAutomaticBarriers)
         {
             requireBufferState(as->dataBuffer, nvrhi::ResourceStates::AccelStructWrite);
         }
         commitBarriers();
 
-        m_ActiveCommandList->commandList4->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
-        
+        buildTopLevelAccelStructInternal(as, gpuVA, numInstances, buildFlags);
+
         if (as->desc.trackLiveness)
             m_Instance->referencedResources.push_back(as);
     }
 
+    void CommandList::buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* _as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    {
+        AccelStruct* as = checked_cast<AccelStruct*>(_as);
+        
+        as->bottomLevelASes.clear();
+        as->dxrInstances.clear();
+
+        if (m_EnableAutomaticBarriers)
+        {
+            requireBufferState(as->dataBuffer, nvrhi::ResourceStates::AccelStructWrite);
+            requireBufferState(instanceBuffer, nvrhi::ResourceStates::AccelStructBuildInput);
+        }
+        commitBarriers();
+
+        buildTopLevelAccelStructInternal(as, getBufferGpuVA(instanceBuffer) + instanceBufferOffset, numInstances, buildFlags);
+
+        if (as->desc.trackLiveness)
+            m_Instance->referencedResources.push_back(as);
+    }
 } // namespace nvrhi::d3d12

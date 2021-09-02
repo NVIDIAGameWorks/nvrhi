@@ -412,10 +412,8 @@ namespace nvrhi::vulkan
 #endif
     }
 
-    void CommandList::buildTopLevelAccelStruct(rt::IAccelStruct* _as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    void CommandList::buildTopLevelAccelStructInternal(AccelStruct* as, VkDeviceAddress instanceData, size_t numInstances, rt::AccelStructBuildFlags buildFlags, uint64_t currentVersion)
     {
-        AccelStruct* as = checked_cast<AccelStruct*>(_as);
-
         const bool performUpdate = (buildFlags & rt::AccelStructBuildFlags::PerformUpdate) != 0;
         if (performUpdate)
         {
@@ -426,60 +424,12 @@ namespace nvrhi::vulkan
         auto geometry = vk::AccelerationStructureGeometryKHR()
             .setGeometryType(vk::GeometryTypeKHR::eInstances);
 
-        as->instances.resize(numInstances);
-
-        for (size_t i = 0; i < numInstances; i++)
-        {
-            const rt::InstanceDesc& src = pInstances[i];
-            vk::AccelerationStructureInstanceKHR& dst = as->instances[i];
-
-            AccelStruct* blas = checked_cast<AccelStruct*>(src.bottomLevelAS);
-#ifdef NVRHI_WITH_RTXMU
-            blas->rtxmuBuffer = m_Context.rtxMemUtil->GetBuffer(blas->rtxmuId);
-            blas->accelStruct = m_Context.rtxMemUtil->GetAccelerationStruct(blas->rtxmuId);
-            blas->accelStructDeviceAddress = m_Context.rtxMemUtil->GetDeviceAddress(blas->rtxmuId);
-            dst.setAccelerationStructureReference(blas->accelStructDeviceAddress);
-#else
-            dst.setAccelerationStructureReference(blas->accelStructDeviceAddress);
-#endif
-            dst.setInstanceCustomIndex(src.instanceID);
-            dst.setInstanceShaderBindingTableRecordOffset(src.instanceContributionToHitGroupIndex * m_Context.rayTracingPipelineProperties.shaderGroupBaseAlignment);
-            dst.setFlags(convertInstanceFlags(src.flags));
-            dst.setMask(src.instanceMask);
-            memcpy(dst.transform.matrix.data(), src.transform, sizeof(float) * 12);
-
-#ifndef NVRHI_WITH_RTXMU
-            if (m_EnableAutomaticBarriers)
-            {
-                requireBufferState(blas->dataBuffer, nvrhi::ResourceStates::AccelStructBuildBlas);
-            }
-#endif
-        }
-
-#ifdef NVRHI_WITH_RTXMU
-        m_Context.rtxMemUtil->PopulateUAVBarriersCommandList(m_CurrentCmdBuf->cmdBuf, m_CurrentCmdBuf->rtxmuBuildIds);
-#endif
-
-        uint64_t currentVersion = MakeVersion(m_CurrentCmdBuf->recordingID, m_CommandListParameters.queueType, false);
-
-        Buffer* uploadBuffer = nullptr;
-        uint64_t uploadOffset = 0;
-        void* uploadCpuVA = nullptr;
-        m_UploadManager->suballocateBuffer(as->instances.size() * sizeof(vk::AccelerationStructureInstanceKHR),
-            &uploadBuffer, &uploadOffset, &uploadCpuVA, currentVersion);
-
-        // Copy the instance data to GPU-visible memory.
-        // The vk::AccelerationStructureInstanceKHR struct should be directly copyable, but ReSharper/clang thinks it's not,
-        // so the inspection is disabled with a comment below.
-        memcpy(uploadCpuVA, as->instances.data(), // NOLINT(bugprone-undefined-memory-manipulation)
-            as->instances.size() * sizeof(vk::AccelerationStructureInstanceKHR));
-
         geometry.geometry.setInstances(vk::AccelerationStructureGeometryInstancesDataKHR()
-            .setData(uploadBuffer->deviceAddress + uploadOffset)
+            .setData(instanceData)
             .setArrayOfPointers(false));
-        
+
         std::array<vk::AccelerationStructureGeometryKHR, 1> geometries = { geometry };
-        std::array<vk::AccelerationStructureBuildRangeInfoKHR, 1> buildRanges = { 
+        std::array<vk::AccelerationStructureBuildRangeInfoKHR, 1> buildRanges = {
             vk::AccelerationStructureBuildRangeInfoKHR().setPrimitiveCount(uint32_t(numInstances)) };
         std::array<uint32_t, 1> maxPrimitiveCounts = { uint32_t(numInstances) };
 
@@ -529,13 +479,7 @@ namespace nvrhi::vulkan
             m_Context.error(ss.str());
             return;
         }
-
-        if (m_EnableAutomaticBarriers)
-        {
-            requireBufferState(as->dataBuffer, nvrhi::ResourceStates::AccelStructWrite);
-        }
-        commitBarriers();
-
+        
         assert(scratchBuffer->deviceAddress);
         buildInfo.setScratchData(scratchBuffer->deviceAddress + scratchOffset);
 
@@ -543,6 +487,89 @@ namespace nvrhi::vulkan
         std::array<const vk::AccelerationStructureBuildRangeInfoKHR*, 1> buildRangeArrays = { buildRanges.data() };
 
         m_CurrentCmdBuf->cmdBuf.buildAccelerationStructuresKHR(buildInfos, buildRangeArrays);
+    }
+
+    void CommandList::buildTopLevelAccelStruct(rt::IAccelStruct* _as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    {
+        AccelStruct* as = checked_cast<AccelStruct*>(_as);
+        
+        as->instances.resize(numInstances);
+
+        for (size_t i = 0; i < numInstances; i++)
+        {
+            const rt::InstanceDesc& src = pInstances[i];
+            vk::AccelerationStructureInstanceKHR& dst = as->instances[i];
+
+            AccelStruct* blas = checked_cast<AccelStruct*>(src.bottomLevelAS);
+#ifdef NVRHI_WITH_RTXMU
+            blas->rtxmuBuffer = m_Context.rtxMemUtil->GetBuffer(blas->rtxmuId);
+            blas->accelStruct = m_Context.rtxMemUtil->GetAccelerationStruct(blas->rtxmuId);
+            blas->accelStructDeviceAddress = m_Context.rtxMemUtil->GetDeviceAddress(blas->rtxmuId);
+            dst.setAccelerationStructureReference(blas->accelStructDeviceAddress);
+#else
+            dst.setAccelerationStructureReference(blas->accelStructDeviceAddress);
+#endif
+            dst.setInstanceCustomIndex(src.instanceID);
+            dst.setInstanceShaderBindingTableRecordOffset(src.instanceContributionToHitGroupIndex * m_Context.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+            dst.setFlags(convertInstanceFlags(src.flags));
+            dst.setMask(src.instanceMask);
+            memcpy(dst.transform.matrix.data(), src.transform, sizeof(float) * 12);
+
+#ifndef NVRHI_WITH_RTXMU
+            if (m_EnableAutomaticBarriers)
+            {
+                requireBufferState(blas->dataBuffer, nvrhi::ResourceStates::AccelStructBuildBlas);
+            }
+#endif
+        }
+
+#ifdef NVRHI_WITH_RTXMU
+        m_Context.rtxMemUtil->PopulateUAVBarriersCommandList(m_CurrentCmdBuf->cmdBuf, m_CurrentCmdBuf->rtxmuBuildIds);
+#endif
+
+        uint64_t currentVersion = MakeVersion(m_CurrentCmdBuf->recordingID, m_CommandListParameters.queueType, false);
+
+        Buffer* uploadBuffer = nullptr;
+        uint64_t uploadOffset = 0;
+        void* uploadCpuVA = nullptr;
+        m_UploadManager->suballocateBuffer(as->instances.size() * sizeof(vk::AccelerationStructureInstanceKHR),
+            &uploadBuffer, &uploadOffset, &uploadCpuVA, currentVersion);
+
+        // Copy the instance data to GPU-visible memory.
+        // The vk::AccelerationStructureInstanceKHR struct should be directly copyable, but ReSharper/clang thinks it's not,
+        // so the inspection is disabled with a comment below.
+        memcpy(uploadCpuVA, as->instances.data(), // NOLINT(bugprone-undefined-memory-manipulation)
+            as->instances.size() * sizeof(vk::AccelerationStructureInstanceKHR));
+
+        if (m_EnableAutomaticBarriers)
+        {
+            requireBufferState(as->dataBuffer, nvrhi::ResourceStates::AccelStructWrite);
+        }
+        commitBarriers();
+
+        buildTopLevelAccelStructInternal(as, uploadBuffer->deviceAddress + uploadOffset, numInstances, buildFlags, currentVersion);
+
+        if (as->desc.trackLiveness)
+            m_CurrentCmdBuf->referencedResources.push_back(as);
+    }
+
+    void CommandList::buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* _as, nvrhi::IBuffer* _instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    {
+        AccelStruct* as = checked_cast<AccelStruct*>(_as);
+        Buffer* instanceBuffer = checked_cast<Buffer*>(_instanceBuffer);
+
+        as->instances.clear();
+
+        if (m_EnableAutomaticBarriers)
+        {
+            requireBufferState(as->dataBuffer, nvrhi::ResourceStates::AccelStructWrite);
+            requireBufferState(instanceBuffer, nvrhi::ResourceStates::AccelStructBuildInput);
+        }
+        commitBarriers();
+
+        uint64_t currentVersion = MakeVersion(m_CurrentCmdBuf->recordingID, m_CommandListParameters.queueType, false);
+        
+        buildTopLevelAccelStructInternal(as, instanceBuffer->deviceAddress + instanceBufferOffset, numInstances, buildFlags, currentVersion);
 
         if (as->desc.trackLiveness)
             m_CurrentCmdBuf->referencedResources.push_back(as);
@@ -577,6 +604,15 @@ namespace nvrhi::vulkan
         default:
             return nullptr;
         }
+    }
+
+    uint64_t AccelStruct::getDeviceAddress() const
+    {
+#ifdef NVRHI_WITH_RTXMU
+        if (!desc.isTopLevel)
+            return m_Context.rtxMemUtil->GetDeviceAddress(rtxmuId);
+#endif
+        return getBufferAddress(dataBuffer, 0).deviceAddress;
     }
 
     void CommandList::setRayTracingState(const rt::State& state)

@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 1;
+    static constexpr uint32_t c_HeaderVersion = 2;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -1287,8 +1287,8 @@ namespace nvrhi
             GeometryDesc& setTriangles(const GeometryTriangles& value) { geometryData.triangles = value; geometryType = GeometryType::Triangles; return *this; }
             GeometryDesc& setAABBs(const GeometryAABBs& value) { geometryData.aabbs = value; geometryType = GeometryType::AABBs; return *this; }
         };
-
-        enum class InstanceFlags : uint8_t
+        
+        enum class InstanceFlags : unsigned
         {
             None = 0,
             TriangleCullDisable = 1,
@@ -1301,12 +1301,25 @@ namespace nvrhi
 
         struct InstanceDesc
         {
-            uint32_t instanceID = 0;
-            uint32_t instanceContributionToHitGroupIndex = 0;
-            uint32_t instanceMask = 0;
-            AffineTransform transform = {};
-            InstanceFlags flags = InstanceFlags::None;
-            IAccelStruct* bottomLevelAS = nullptr;
+            AffineTransform transform;
+            unsigned instanceID : 24;
+            unsigned instanceMask : 8;
+            unsigned instanceContributionToHitGroupIndex : 24;
+            InstanceFlags flags : 8;
+            union {
+                IAccelStruct* bottomLevelAS; // for buildTopLevelAccelStruct
+                uint64_t blasDeviceAddress;  // for buildTopLevelAccelStructFromBuffer - use IAccelStruct::getDeviceAddress()
+            };
+
+            InstanceDesc()  // NOLINT(cppcoreguidelines-pro-type-member-init)
+                : instanceID(0)
+                , instanceMask(0)
+                , instanceContributionToHitGroupIndex(0)
+                , flags(InstanceFlags::None)
+                , bottomLevelAS(nullptr)
+            {
+                setTransform(c_IdentityTransform);
+            }
 
             InstanceDesc& setInstanceID(uint32_t value) { instanceID = value; return *this; }
             InstanceDesc& setInstanceContributionToHitGroupIndex(uint32_t value) { instanceContributionToHitGroupIndex = value; return *this; }
@@ -1315,6 +1328,8 @@ namespace nvrhi
             InstanceDesc& setFlags(InstanceFlags value) { flags = value; return *this; }
             InstanceDesc& setBLAS(IAccelStruct* value) { bottomLevelAS = value; return *this; }
         };
+
+        static_assert(sizeof(InstanceDesc) == 64);
 
         enum class AccelStructBuildFlags : uint8_t
         {
@@ -1357,6 +1372,7 @@ namespace nvrhi
         public:
             [[nodiscard]] virtual const AccelStructDesc& getDesc() const = 0;
             [[nodiscard]] virtual bool isCompacted() const = 0;
+            [[nodiscard]] virtual uint64_t getDeviceAddress() const = 0;
         };
 
         typedef RefCountPtr<IAccelStruct> AccelStructHandle;
@@ -2335,6 +2351,12 @@ namespace nvrhi
             rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) = 0;
         virtual void compactBottomLevelAccelStructs() = 0;
         virtual void buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances,
+            rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) = 0;
+
+        // A version of buildTopLevelAccelStruct that takes the instance data from a buffer on the GPU.
+        // The buffer must be pre-filled with rt::InstanceDesc structures using a copy operation or a shader.
+        // No validation on the buffer contents is performed by NVRHI, and no state or liveness tracking for the referenced BLAS'es.
+        virtual void buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances,
             rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) = 0;
 
         virtual void beginTimerQuery(ITimerQuery* query) = 0;

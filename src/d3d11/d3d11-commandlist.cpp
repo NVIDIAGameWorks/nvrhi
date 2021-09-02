@@ -190,5 +190,8 @@ namespace nvrhi::d3d11
         utils::NotSupported();
     }
 
-
+    void CommandList::buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
+    {
+        utils::NotSupported();
+    }
 } // namespace nvrhi::d3d11
