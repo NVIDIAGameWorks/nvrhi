@@ -264,13 +264,11 @@ namespace nvrhi::d3d12
             m_Resources.depthStencilViewHeap.releaseDescriptor(DSV);
     }
     
-    void CommandList::bindFramebuffer(const DepthStencilState &depthStencilState, Framebuffer *fb)
+    void CommandList::bindFramebuffer(Framebuffer *fb)
     {
         if (m_EnableAutomaticBarriers)
         {
-            bool enableDepthWrite = depthStencilState.depthWriteEnable || depthStencilState.stencilWriteMask != 0;
-
-            setResourceStatesForFramebuffer(fb, enableDepthWrite);
+            setResourceStatesForFramebuffer(fb);
         }
         
         static_vector<D3D12_CPU_DESCRIPTOR_HANDLE, 16> RTVs;
@@ -332,7 +330,7 @@ namespace nvrhi::d3d12
 
         if (updateFramebuffer)
         {
-            bindFramebuffer(pso->desc.renderState.depthStencilState, framebuffer);
+            bindFramebuffer(framebuffer);
             m_Instance->referencedResources.push_back(framebuffer);
         }
 

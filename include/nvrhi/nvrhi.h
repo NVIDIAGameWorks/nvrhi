@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 2;
+    static constexpr uint32_t c_HeaderVersion = 3;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -2375,7 +2375,7 @@ namespace nvrhi
         virtual void setResourceStatesForBindingSet(IBindingSet* bindingSet) = 0;
         
         // Sets the necessary resource states for all targets of the framebuffer.
-        NVRHI_API void setResourceStatesForFramebuffer(IFramebuffer* framebuffer, bool enableDepthWrite);
+        NVRHI_API void setResourceStatesForFramebuffer(IFramebuffer* framebuffer);
 
         // Tells the D3D12/VK backend whether UAV barriers should be used for the given texture or buffer between draw calls.
         // A barrier should still be placed before the first draw call in the group and after the last one.

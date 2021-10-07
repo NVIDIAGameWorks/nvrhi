@@ -256,7 +256,7 @@ namespace nvrhi::d3d12
 
         if (updateFramebuffer)
         {
-            bindFramebuffer(pso->desc.renderState.depthStencilState, framebuffer);
+            bindFramebuffer(framebuffer);
             m_Instance->referencedResources.push_back(framebuffer);
         }
 

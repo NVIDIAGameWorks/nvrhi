@@ -964,6 +964,49 @@ namespace nvrhi::validation
         return false;
     }
 
+    bool DeviceWrapper::validateRenderState(const RenderState& renderState, IFramebuffer* fb) const
+    {
+        if (!fb)
+        {
+            error("framebuffer is NULL");
+            return false;
+        }
+
+        const auto fbDesc = fb->getDesc();
+
+        if (renderState.depthStencilState.depthTestEnable ||
+            renderState.depthStencilState.stencilEnable)
+        {
+            if (!fbDesc.depthAttachment.valid())
+            {
+                error("The depth-stencil state indicates that depth or stencil operations are used, "
+                    "but the framebuffer has no depth attachment.");
+                return false;
+            }
+        }
+
+        if ((renderState.depthStencilState.depthTestEnable && renderState.depthStencilState.depthWriteEnable) ||
+            (renderState.depthStencilState.stencilEnable && renderState.depthStencilState.stencilWriteMask != 0))
+        {
+            if (fbDesc.depthAttachment.isReadOnly)
+            {
+                error("The depth-stencil state indicates that depth or stencil writes are used, "
+                    "but the framebuffer's depth attachment is read-only.");
+                return false;
+            }
+        }
+        else if (renderState.depthStencilState.depthTestEnable ||renderState.depthStencilState.stencilEnable)
+        {
+            if (!fbDesc.depthAttachment.isReadOnly)
+            {
+                warning("The depth-stencil state indicates read-only depth and stencil, "
+                    "but the framebuffer has a read-write depth attachment, which is suboptimal.");
+            }
+        }
+
+        return true;
+    }
+
     GraphicsPipelineHandle DeviceWrapper::createGraphicsPipeline(const GraphicsPipelineDesc& pipelineDesc, IFramebuffer* fb)
     {
         std::vector<IShader*> shaders;
@@ -981,6 +1024,9 @@ namespace nvrhi::validation
         }
 
         if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders, m_Device->getGraphicsAPI()))
+            return nullptr;
+
+        if (!validateRenderState(pipelineDesc.renderState, fb))
             return nullptr;
 
         return m_Device->createGraphicsPipeline(pipelineDesc, fb);
@@ -1022,6 +1068,9 @@ namespace nvrhi::validation
         }
 
         if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders, m_Device->getGraphicsAPI()))
+            return nullptr;
+
+        if (!validateRenderState(pipelineDesc.renderState, fb))
             return nullptr;
 
         return m_Device->createMeshletPipeline(pipelineDesc, fb);

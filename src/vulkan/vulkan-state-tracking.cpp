@@ -75,8 +75,6 @@ namespace nvrhi::vulkan
     {
         assert(m_EnableAutomaticBarriers);
 
-        GraphicsPipeline* pso = checked_cast<GraphicsPipeline*>(state.pipeline);
-        
         if (arraysAreDifferent(state.bindings, m_CurrentGraphicsState.bindings))
         {
             for (size_t i = 0; i < state.bindings.size(); i++)
@@ -100,7 +98,7 @@ namespace nvrhi::vulkan
 
         if (m_CurrentGraphicsState.framebuffer != state.framebuffer)
         {
-            setResourceStatesForFramebuffer(state.framebuffer, pso->desc.renderState.depthStencilState.depthWriteEnable);
+            setResourceStatesForFramebuffer(state.framebuffer);
         }
 
         if (state.indirectParams && state.indirectParams != m_CurrentGraphicsState.indirectParams)
@@ -112,8 +110,6 @@ namespace nvrhi::vulkan
     void CommandList::trackResourcesAndBarriers(const MeshletState& state)
     {
         assert(m_EnableAutomaticBarriers);
-
-        MeshletPipeline* pso = checked_cast<MeshletPipeline*>(state.pipeline);
         
         if (arraysAreDifferent(state.bindings, m_CurrentMeshletState.bindings))
         {
@@ -125,7 +121,7 @@ namespace nvrhi::vulkan
 
         if (m_CurrentMeshletState.framebuffer != state.framebuffer)
         {
-            setResourceStatesForFramebuffer(state.framebuffer, pso->desc.renderState.depthStencilState.depthWriteEnable);
+            setResourceStatesForFramebuffer(state.framebuffer);
         }
 
         if (state.indirectParams && state.indirectParams != m_CurrentMeshletState.indirectParams)

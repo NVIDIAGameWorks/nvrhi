@@ -166,7 +166,7 @@ namespace nvrhi
         }
     }
     
-    void ICommandList::setResourceStatesForFramebuffer(IFramebuffer* framebuffer, bool enableDepthWrite)
+    void ICommandList::setResourceStatesForFramebuffer(IFramebuffer* framebuffer)
     {
         const FramebufferDesc& desc = framebuffer->getDesc();
 
@@ -179,7 +179,7 @@ namespace nvrhi
         if (desc.depthAttachment.valid())
         {
             setTextureState(desc.depthAttachment.texture, desc.depthAttachment.subresources,
-                enableDepthWrite ? ResourceStates::DepthWrite : ResourceStates::DepthRead);
+                desc.depthAttachment.isReadOnly ? ResourceStates::DepthRead : ResourceStates::DepthWrite);
         }
     }
 

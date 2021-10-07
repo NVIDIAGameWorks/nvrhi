@@ -973,7 +973,7 @@ namespace nvrhi::d3d12
 
         void bindGraphicsPipeline(GraphicsPipeline* pso, bool updateRootSignature) const;
         void bindMeshletPipeline(MeshletPipeline* pso, bool updateRootSignature) const;
-        void bindFramebuffer(const DepthStencilState& depthStencilState, Framebuffer* fb);
+        void bindFramebuffer(Framebuffer* fb);
         void unbindShadingRateState();
         
         std::shared_ptr<InternalCommandList> createInternalCommandList() const;
