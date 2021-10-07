@@ -85,6 +85,10 @@ namespace nvrhi::vulkan
             assert(!desc.isVirtual);
 
             uint64_t alignment = m_Context.physicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
+
+            uint64_t atomSize = m_Context.physicalDeviceProperties.limits.nonCoherentAtomSize;
+            alignment = std::max(alignment, atomSize);
+
             assert((alignment & (alignment - 1)) == 0); // check if it's a power of 2
             
             size = (size + alignment - 1) & ~(alignment - 1);
