@@ -439,6 +439,12 @@ namespace nvrhi::vulkan
 
         endRenderPass();
 
+        if (m_EnableAutomaticBarriers)
+        {
+            requireBufferState(vkbuf, ResourceStates::CopyDest);
+        }
+        commitBarriers();
+
         m_CurrentCmdBuf->cmdBuf.fillBuffer(vkbuf->buffer, 0, vkbuf->desc.byteSize, clearValue);
         m_CurrentCmdBuf->referencedResources.push_back(b);
     }
