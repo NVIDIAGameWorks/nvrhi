@@ -1050,6 +1050,7 @@ namespace nvrhi::vulkan
         void waitForIdle() override;
         void runGarbageCollection() override;
         bool queryFeatureSupport(Feature feature, void* pInfo = nullptr, size_t infoSize = 0) override;
+        FormatSupport queryFormatSupport(Format format) override;
         Object getNativeQueue(ObjectType objectType, CommandQueue queue) override;
         IMessageCallback* getMessageCallback() override { return m_Context.messageCallback; }
 

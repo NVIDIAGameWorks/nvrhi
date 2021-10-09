@@ -151,6 +151,56 @@ namespace nvrhi::d3d11
         }
     }
 
+    FormatSupport Device::queryFormatSupport(Format format)
+    {
+        const DxgiFormatMapping& formatMapping = getDxgiFormatMapping(format);
+
+        FormatSupport result = FormatSupport::None;
+
+        UINT flags = 0;
+        m_Context.device->CheckFormatSupport(formatMapping.rtvFormat, &flags);
+
+        if (flags & D3D11_FORMAT_SUPPORT_BUFFER)
+            result = result | FormatSupport::Buffer;
+        if (flags & (D3D11_FORMAT_SUPPORT_TEXTURE1D | D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_TEXTURE3D | D3D11_FORMAT_SUPPORT_TEXTURECUBE))
+            result = result | FormatSupport::Texture;
+        if (flags & D3D11_FORMAT_SUPPORT_DEPTH_STENCIL)
+            result = result | FormatSupport::DepthStencil;
+        if (flags & D3D11_FORMAT_SUPPORT_RENDER_TARGET)
+            result = result | FormatSupport::RenderTarget;
+        if (flags & D3D11_FORMAT_SUPPORT_BLENDABLE)
+            result = result | FormatSupport::Blendable;
+
+        if (formatMapping.srvFormat != formatMapping.rtvFormat)
+        {
+            flags = 0;
+            m_Context.device->CheckFormatSupport(formatMapping.srvFormat, &flags);
+        }
+
+        if (flags & D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER)
+            result = result | FormatSupport::IndexBuffer;
+        if (flags & D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER)
+            result = result | FormatSupport::VertexBuffer;
+        if (flags & D3D11_FORMAT_SUPPORT_SHADER_LOAD)
+            result = result | FormatSupport::ShaderLoad;
+        if (flags & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE)
+            result = result | FormatSupport::ShaderSample;
+
+        D3D11_FEATURE_DATA_FORMAT_SUPPORT2 featureData = {};
+        featureData.InFormat = formatMapping.srvFormat;
+        
+        m_Context.device->CheckFeatureSupport(D3D11_FEATURE_FORMAT_SUPPORT2, &featureData, sizeof(featureData));
+
+        if (featureData.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_ATOMIC_ADD)
+            result = result | FormatSupport::ShaderAtomic;
+        if (featureData.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_LOAD)
+            result = result | FormatSupport::ShaderUavLoad;
+        if (featureData.OutFormatSupport2 & D3D11_FORMAT_SUPPORT2_UAV_TYPED_STORE)
+            result = result | FormatSupport::ShaderUavStore;
+        
+        return result;
+    }
+
     rt::PipelineHandle Device::createRayTracingPipeline(const rt::PipelineDesc&)
     {
         return nullptr;

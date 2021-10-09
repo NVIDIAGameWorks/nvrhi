@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 3;
+    static constexpr uint32_t c_HeaderVersion = 4;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -257,6 +257,28 @@ namespace nvrhi
     };
 
     NVRHI_API const FormatInfo& getFormatInfo(Format format);
+
+    enum class FormatSupport : uint32_t
+    {
+        None            = 0,
+
+        Buffer          = 0x00000001,
+        IndexBuffer     = 0x00000002,
+        VertexBuffer    = 0x00000004,
+
+        Texture         = 0x00000008,
+        DepthStencil    = 0x00000010,
+        RenderTarget    = 0x00000020,
+        Blendable       = 0x00000040,
+
+        ShaderLoad      = 0x00000080,
+        ShaderSample    = 0x00000100,
+        ShaderUavLoad   = 0x00000200,
+        ShaderUavStore  = 0x00000400,
+        ShaderAtomic    = 0x00000800,
+    };
+
+    NVRHI_ENUM_CLASS_FLAG_OPERATORS(FormatSupport)
 
     //////////////////////////////////////////////////////////////////////////
     // Heap
@@ -2496,6 +2518,8 @@ namespace nvrhi
         virtual void runGarbageCollection() = 0;
 
         virtual bool queryFeatureSupport(Feature feature, void* pInfo = nullptr, size_t infoSize = 0) = 0;
+
+        virtual FormatSupport queryFormatSupport(Format format) = 0;
 
         virtual Object getNativeQueue(ObjectType objectType, CommandQueue queue) = 0;
 

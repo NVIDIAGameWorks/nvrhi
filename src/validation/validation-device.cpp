@@ -1804,6 +1804,11 @@ namespace nvrhi::validation
         return m_Device->queryFeatureSupport(feature, pInfo, infoSize);
     }
 
+    FormatSupport DeviceWrapper::queryFormatSupport(Format format)
+    {
+        return m_Device->queryFormatSupport(format);
+    }
+
     Object DeviceWrapper::getNativeQueue(ObjectType objectType, CommandQueue queue)
     {
         return m_Device->getNativeQueue(objectType, queue);

@@ -259,6 +259,63 @@ namespace nvrhi::vulkan
         }
     }
 
+    FormatSupport Device::queryFormatSupport(Format format)
+    {
+        vk::Format vulkanFormat = convertFormat(format);
+        
+        vk::FormatProperties props;
+        m_Context.physicalDevice.getFormatProperties(vulkanFormat, &props);
+
+        FormatSupport result = FormatSupport::None;
+
+        if (props.bufferFeatures)
+            result = result | FormatSupport::Buffer;
+
+        if (format == Format::R32_UINT || format == Format::R16_UINT) {
+            // There is no explicit bit in vk::FormatFeatureFlags for index buffers
+            result = result | FormatSupport::IndexBuffer;
+        }
+        
+        if (props.bufferFeatures & vk::FormatFeatureFlagBits::eVertexBuffer)
+            result = result | FormatSupport::VertexBuffer;
+
+        if (props.optimalTilingFeatures)
+            result = result | FormatSupport::Texture;
+
+        if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+            result = result | FormatSupport::DepthStencil;
+
+        if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachment)
+            result = result | FormatSupport::RenderTarget;
+
+        if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
+            result = result | FormatSupport::Blendable;
+
+        if ((props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage) ||
+            (props.bufferFeatures & vk::FormatFeatureFlagBits::eUniformTexelBuffer))
+        {
+            result = result | FormatSupport::ShaderLoad;
+        }
+
+        if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)
+            result = result | FormatSupport::ShaderSample;
+
+        if ((props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eStorageImage) ||
+            (props.bufferFeatures & vk::FormatFeatureFlagBits::eStorageTexelBuffer))
+        {
+            result = result | FormatSupport::ShaderUavLoad;
+            result = result | FormatSupport::ShaderUavStore;
+        }
+
+        if ((props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eStorageImageAtomic) ||
+            (props.bufferFeatures & vk::FormatFeatureFlagBits::eStorageTexelBufferAtomic))
+        {
+            result = result | FormatSupport::ShaderAtomic;
+        }
+
+        return result;
+    }
+
     Object Device::getNativeQueue(ObjectType objectType, CommandQueue queue)
     {
         if (objectType != ObjectTypes::VK_Queue)

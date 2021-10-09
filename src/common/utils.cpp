@@ -146,6 +146,20 @@ namespace nvrhi::utils
         commandList->setBufferState(buffer, ResourceStates::UnorderedAccess);
     }
 
+    Format ChooseFormat(IDevice* device, nvrhi::FormatSupport requiredFeatures, const nvrhi::Format* requestedFormats, size_t requestedFormatCount)
+    {
+        assert(device);
+        assert(requestedFormats || requestedFormatCount == 0);
+
+        for (size_t i = 0; i < requestedFormatCount; i++)
+        {
+            if ((device->queryFormatSupport(requestedFormats[i]) & requiredFeatures) == requiredFeatures)
+                return requestedFormats[i];
+        }
+
+        return Format::UNKNOWN;
+    }
+
     const char* GraphicsAPIToString(GraphicsAPI api)
     {
         switch (api)

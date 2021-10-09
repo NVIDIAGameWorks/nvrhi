@@ -82,6 +82,15 @@ namespace nvrhi::utils
     NVRHI_API void BufferUavBarrier(
         ICommandList* commandList,
         IBuffer* buffer);
+
+    // Selects a format from the supplied list that supports all the required features on the given device.
+    // The formats are tested in the same order they're provided, and the first matching one is returned.
+    // If no formats are matching, Format::UNKNOWN is returned.
+    NVRHI_API Format ChooseFormat(
+        IDevice* device,
+        nvrhi::FormatSupport requiredFeatures,
+        const nvrhi::Format* requestedFormats,
+        size_t requestedFormatCount);
     
     NVRHI_API const char* GraphicsAPIToString(GraphicsAPI api);
     NVRHI_API const char* TextureDimensionToString(TextureDimension dimension);

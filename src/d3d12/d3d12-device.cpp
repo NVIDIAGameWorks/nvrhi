@@ -420,6 +420,54 @@ namespace nvrhi::d3d12
         }
     }
 
+    FormatSupport Device::queryFormatSupport(Format format)
+    {
+        const DxgiFormatMapping& formatMapping = getDxgiFormatMapping(format);
+
+        FormatSupport result = FormatSupport::None;
+
+        D3D12_FEATURE_DATA_FORMAT_SUPPORT featureData = {};
+        featureData.Format = formatMapping.rtvFormat;
+
+        m_Context.device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &featureData, sizeof(featureData));
+
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_BUFFER)
+            result = result | FormatSupport::Buffer;
+        if (featureData.Support1 & (D3D12_FORMAT_SUPPORT1_TEXTURE1D | D3D12_FORMAT_SUPPORT1_TEXTURE2D | D3D12_FORMAT_SUPPORT1_TEXTURE3D | D3D12_FORMAT_SUPPORT1_TEXTURECUBE))
+            result = result | FormatSupport::Texture;
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_DEPTH_STENCIL)
+            result = result | FormatSupport::DepthStencil;
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_RENDER_TARGET)
+            result = result | FormatSupport::RenderTarget;
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_BLENDABLE)
+            result = result | FormatSupport::Blendable;
+
+        if (formatMapping.srvFormat != featureData.Format)
+        {
+            featureData.Format = formatMapping.srvFormat;
+            featureData.Support1 = (D3D12_FORMAT_SUPPORT1)0;
+            featureData.Support2 = (D3D12_FORMAT_SUPPORT2)0;
+            m_Context.device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &featureData, sizeof(featureData));
+        }
+
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_IA_INDEX_BUFFER)
+            result = result | FormatSupport::IndexBuffer;
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_IA_VERTEX_BUFFER)
+            result = result | FormatSupport::VertexBuffer;
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_SHADER_LOAD)
+            result = result | FormatSupport::ShaderLoad;
+        if (featureData.Support1 & D3D12_FORMAT_SUPPORT1_SHADER_SAMPLE)
+            result = result | FormatSupport::ShaderSample;
+        if (featureData.Support2 & D3D12_FORMAT_SUPPORT2_UAV_ATOMIC_ADD)
+            result = result | FormatSupport::ShaderAtomic;
+        if (featureData.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD)
+            result = result | FormatSupport::ShaderUavLoad;
+        if (featureData.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE)
+            result = result | FormatSupport::ShaderUavStore;
+
+        return result;
+    }
+
     Object Device::getNativeQueue(ObjectType objectType, CommandQueue queue)
     {
         if (objectType != ObjectTypes::D3D12_CommandQueue)
