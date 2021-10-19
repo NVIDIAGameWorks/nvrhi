@@ -36,6 +36,7 @@ namespace nvrhi::vulkan
             desc.byteSize = size;
             desc.cpuAccess = CpuAccessMode::None;
             desc.debugName = "ScratchBufferChunk";
+            desc.canHaveUAVs = true;
 
             chunk->buffer = m_Device->createBuffer(desc);
             chunk->mappedMemory = nullptr;
