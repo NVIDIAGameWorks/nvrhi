@@ -83,6 +83,8 @@ namespace nvrhi::vulkan
 
     void CommandList::clearState()
     {
+        endRenderPass();
+
         m_CurrentPipelineLayout = vk::PipelineLayout();
         m_CurrentPipelineShaderStages = vk::ShaderStageFlagBits();
 
