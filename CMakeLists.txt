@@ -30,8 +30,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CMakeDependentOption)
 
 option(NVRHI_BUILD_SHARED "Build NVRHI as a shared library (DLL or .so)" OFF)
-option(NVHRI_INSTALL "Generate install rules for NVRHI" ON)
-cmake_dependent_option(NVHRI_INSTALL_EXPORTS "Install CMake exports" OFF "NVHRI_INSTALL" OFF)
+option(NVRHI_INSTALL "Generate install rules for NVRHI" ON)
+cmake_dependent_option(NVRHI_INSTALL_EXPORTS "Install CMake exports" OFF "NVRHI_INSTALL" OFF)
 
 option(NVRHI_WITH_SHADER_COMPILER "Build the NVRHI shader compiler executable" ON)
 option(NVRHI_WITH_VALIDATION "Build NVRHI the validation layer" ON)
@@ -305,7 +305,7 @@ if (NVRHI_WITH_VULKAN)
 endif()
 
 
-if (NVHRI_INSTALL)
+if (NVRHI_INSTALL)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/nvrhi
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
@@ -329,7 +329,7 @@ if (NVHRI_INSTALL)
         endif()
     endif()
 
-    if (NVHRI_INSTALL_EXPORTS)
+    if (NVRHI_INSTALL_EXPORTS)
         set(nvrhi_CONFIG_PATH "lib/cmake/nvrhi")
 
         include(CMakePackageConfigHelpers)

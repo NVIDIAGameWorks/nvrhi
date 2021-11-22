@@ -46,7 +46,7 @@ set_target_properties(shaderCompiler PROPERTIES OUTPUT_NAME "nvrhi-scomp")
 
 set_property(TARGET shaderCompiler PROPERTY FOLDER "Tools")
 
-if (NVHRI_INSTALL)
+if (NVRHI_INSTALL)
     install(TARGETS shaderCompiler
         RUNTIME DESTINATION bin)
 endif()
