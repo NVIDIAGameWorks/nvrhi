@@ -26,5 +26,5 @@
 
 namespace nvrhi::validation
 {
-    DeviceHandle createValidationLayer(IDevice* underlyingDevice);
+    NVRHI_API DeviceHandle createValidationLayer(IDevice* underlyingDevice);
 }
