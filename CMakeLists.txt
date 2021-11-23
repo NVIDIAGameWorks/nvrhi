@@ -47,7 +47,8 @@ if (NVRHI_BUILD_SHARED)
 endif()
 
 if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /MP")
+    string(REGEX REPLACE "/W[0-4]\\s*" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(APPEND CMAKE_CXX_FLAGS " /W4 /MP")
 endif()
 
 
