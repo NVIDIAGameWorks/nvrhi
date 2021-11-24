@@ -1,0 +1,91 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        include:
+          - rtxmu: OFF
+            output-name: nvrhi
+          - rtxmu: ON
+            output-name: nvrhi-rtxmu
+
+    steps:
+    - name: Setup variables
+      uses: actions/github-script@v5
+      with:
+        script: core.exportVariable('GITHUB_SHA_SHORT', context.sha.substring(0, 7))
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+      
+    - name: Configure
+      run: cmake -B ${{github.workspace}}/build "-DCMAKE_SYSTEM_VERSION=10.0.19041.0" -DNVRHI_WITH_RTXMU=${{matrix.rtxmu}} -DNVRHI_BUILD_SHARED=ON -DNVRHI_INSTALL=ON -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/build/install
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Install
+      run: cmake --install ${{github.workspace}}/build
+
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{matrix.output-name}}-windows-${{env.GITHUB_SHA_SHORT}}
+        path: |
+           ${{github.workspace}}/build/install/lib/
+           ${{github.workspace}}/build/install/include/nvrhi/
+           ${{github.workspace}}/build/install/bin/
+
+  build-linux-x64:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - rtxmu: OFF
+            output-name: nvrhi
+          - rtxmu: ON
+            output-name: nvrhi-rtxmu
+
+    steps:
+    - name: Setup variables
+      uses: actions/github-script@v5
+      with:
+        script: core.exportVariable('GITHUB_SHA_SHORT', context.sha.substring(0, 7))
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+      
+    - name: Configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DNVRHI_WITH_RTXMU=${{matrix.rtxmu}} -DNVRHI_BUILD_SHARED=ON -DNVRHI_INSTALL=ON -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/build/install
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build -j2
+
+    - name: Install
+      run: cmake --install ${{github.workspace}}/build
+
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{matrix.output-name}}-linux-x64-${{env.GITHUB_SHA_SHORT}}
+        path: |
+           ${{github.workspace}}/build/install/lib/
+           ${{github.workspace}}/build/install/include/nvrhi/
+           ${{github.workspace}}/build/install/bin/
