@@ -84,8 +84,6 @@ namespace nvrhi::d3d12
 
     HRESULT StaticDescriptorHeap::Grow(uint32_t minRequiredSize)
     {
-        std::lock_guard lockGuard(m_Mutex);
-
         uint32_t oldSize = m_NumDescriptors;
         uint32_t newSize = nextPowerOf2(minRequiredSize);
 
