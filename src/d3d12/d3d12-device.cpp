@@ -512,18 +512,10 @@ namespace nvrhi::d3d12
         heapDesc.Properties.CreationNodeMask = 1; // no mGPU support in nvrhi so far
         heapDesc.Properties.VisibleNodeMask = 1;
 
-        switch (m_Options.ResourceHeapTier)
-        {
-        case D3D12_RESOURCE_HEAP_TIER_1:
+        if (m_Options.ResourceHeapTier == D3D12_RESOURCE_HEAP_TIER_1)
             heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
-            break;
-        case D3D12_RESOURCE_HEAP_TIER_2:
+        else
             heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
-            break;
-        default:
-            utils::InvalidEnum();
-            return nullptr;
-        }
 
         switch (d.type)
         {
