@@ -521,7 +521,7 @@ namespace nvrhi::d3d12
             heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
             break;
         default:
-            utils::InvalidEnum( );
+            utils::InvalidEnum();
             return nullptr;
         }
 
