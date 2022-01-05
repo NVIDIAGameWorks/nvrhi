@@ -102,6 +102,7 @@ namespace nvrhi::d3d12
         m_Resources.shaderResourceViewHeap.allocateResources(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, desc.shaderResourceViewHeapSize, true);
         m_Resources.samplerHeap.allocateResources(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, desc.samplerHeapSize, true);
 
+        m_Context.device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &m_Options, sizeof(m_Options));
         bool hasOptions5 = SUCCEEDED(m_Context.device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &m_Options5, sizeof(m_Options5)));
         bool hasOptions6 = SUCCEEDED(m_Context.device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &m_Options6, sizeof(m_Options6)));
         bool hasOptions7 = SUCCEEDED(m_Context.device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &m_Options7, sizeof(m_Options7)));
@@ -505,12 +506,24 @@ namespace nvrhi::d3d12
     {
         D3D12_HEAP_DESC heapDesc;
         heapDesc.SizeInBytes = d.capacity;
-        heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
         heapDesc.Alignment = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT;
         heapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
         heapDesc.Properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         heapDesc.Properties.CreationNodeMask = 1; // no mGPU support in nvrhi so far
         heapDesc.Properties.VisibleNodeMask = 1;
+
+        switch (m_Options.ResourceHeapTier)
+        {
+        case D3D12_RESOURCE_HEAP_TIER_1:
+            heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+            break;
+        case D3D12_RESOURCE_HEAP_TIER_2:
+            heapDesc.Flags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
+            break;
+        default:
+            utils::InvalidEnum( );
+            return nullptr;
+        }
 
         switch (d.type)
         {
