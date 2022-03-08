@@ -90,6 +90,12 @@ namespace nvrhi::d3d11
         if (cpuAccess == CpuAccessMode::Write)
             cpuAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
+        UINT miscFlags = 0;
+        if (d.isSharedAcrossDevice)
+            miscFlags |= D3D11_RESOURCE_MISC_SHARED;
+        if (d.isSharedAcrossAdapter)
+            miscFlags |= D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
+
         RefCountPtr<ID3D11Resource> pResource;
 
         switch (d.dimension)
@@ -105,7 +111,7 @@ namespace nvrhi::d3d11
             desc11.Usage = usage;
             desc11.BindFlags = bindFlags;
             desc11.CPUAccessFlags = cpuAccessFlags;
-            desc11.MiscFlags = 0;
+            desc11.MiscFlags = miscFlags;
 
             RefCountPtr<ID3D11Texture1D> newTexture;
             const HRESULT res = m_Context.device->CreateTexture1D(&desc11, nullptr, &newTexture);
@@ -141,9 +147,9 @@ namespace nvrhi::d3d11
             desc11.CPUAccessFlags = cpuAccessFlags;
 
             if (d.dimension == TextureDimension::TextureCube || d.dimension == TextureDimension::TextureCubeArray)
-                desc11.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+                desc11.MiscFlags = miscFlags | D3D11_RESOURCE_MISC_TEXTURECUBE;
             else
-                desc11.MiscFlags = 0;
+                desc11.MiscFlags = miscFlags;
 
             RefCountPtr<ID3D11Texture2D> newTexture;
             const HRESULT res = m_Context.device->CreateTexture2D(&desc11, nullptr, &newTexture);
@@ -171,7 +177,7 @@ namespace nvrhi::d3d11
             desc11.Usage = usage;
             desc11.BindFlags = bindFlags;
             desc11.CPUAccessFlags = cpuAccessFlags;
-            desc11.MiscFlags = 0;
+            desc11.MiscFlags = miscFlags;
 
             RefCountPtr<ID3D11Texture3D> newTexture;
             HRESULT res = m_Context.device->CreateTexture3D(&desc11, nullptr, &newTexture);

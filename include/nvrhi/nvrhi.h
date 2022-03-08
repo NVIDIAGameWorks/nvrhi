@@ -390,6 +390,9 @@ namespace nvrhi
         bool isTypeless = false;
         bool isShadingRateSurface = false;
 
+        bool isSharedAcrossDevice = false;
+        bool isSharedAcrossAdapter = false;
+
         // Indicates that the texture is created with no backing memory,
         // and memory is bound to the texture later using bindTextureMemory.
         // On DX12, the texture resource is created at the time of memory binding.
@@ -581,6 +584,9 @@ namespace nvrhi
         bool keepInitialState = false;
 
         CpuAccessMode cpuAccess = CpuAccessMode::None;
+
+        bool isSharedAcrossDevice = false;
+        bool isSharedAcrossAdapter = false;
 
         constexpr BufferDesc& setByteSize(uint64_t value) { byteSize = value; return *this; }
         constexpr BufferDesc& setStructStride(uint32_t value) { structStride = value; return *this; }
