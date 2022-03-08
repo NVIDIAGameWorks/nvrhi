@@ -266,7 +266,7 @@ namespace nvrhi::vulkan
             : m_Context(context)
         { }
 
-        vk::Result allocateBufferMemory(Buffer* buffer) const;
+        vk::Result allocateBufferMemory(Buffer* buffer, bool enableBufferAddress = false) const;
         void freeBufferMemory(Buffer* buffer) const;
 
         vk::Result allocateTextureMemory(Texture* texture) const;
@@ -274,7 +274,8 @@ namespace nvrhi::vulkan
 
         vk::Result allocateMemory(MemoryResource* res,
             vk::MemoryRequirements memRequirements,
-            vk::MemoryPropertyFlags memPropertyFlags) const;
+            vk::MemoryPropertyFlags memPropertyFlags,
+            bool enableDeviceAddress = false) const;
         void freeMemory(MemoryResource* res) const;
 
     private:
