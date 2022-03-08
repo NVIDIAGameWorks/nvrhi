@@ -41,6 +41,12 @@ namespace nvrhi::vulkan
         if (desc.byteSize == 0)
             return nullptr;
 
+        if (desc.isSharedAcrossAdapter || desc.isSharedAcrossDevice) {
+            std::stringstream ss;
+            ss << "Vk layer doesn't support shared flags, since Vulkan's VkExternalMemoryHandleTypeFlagBits requires explicit definition of the other hand of the API. " << utils::DebugNameToString(desc.debugName);
+            m_Context.error(ss.str());
+            return nullptr;
+        }
 
         Buffer *buffer = new Buffer(m_Context, m_Allocator);
         buffer->desc = desc;

@@ -292,7 +292,18 @@ namespace nvrhi::d3d12
 
     TextureHandle Device::createTexture(const TextureDesc & d)
     {
-        Texture* texture = new Texture(m_Context, m_Resources, d, convertTextureDesc(d));
+        D3D12_RESOURCE_DESC rd = convertTextureDesc(d);
+        D3D12_HEAP_PROPERTIES heapProps = {};
+        D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
+
+        if (d.isSharedAcrossDevice)
+            heapFlags |= D3D12_HEAP_FLAG_SHARED;
+        if (d.isSharedAcrossAdapter) {
+            rd.Flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
+            heapFlags |= D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER;
+        }
+
+        Texture* texture = new Texture(m_Context, m_Resources, d, rd);
 
         if (d.isVirtual)
         {
@@ -300,14 +311,13 @@ namespace nvrhi::d3d12
             return TextureHandle::Create(texture);
         }
 
-        D3D12_HEAP_PROPERTIES heapProps = {};
         heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-        
+
         D3D12_CLEAR_VALUE clearValue = convertTextureClearValue(d);
 
         HRESULT hr = m_Context.device->CreateCommittedResource(
             &heapProps,
-            D3D12_HEAP_FLAG_NONE,
+            heapFlags,
             &texture->resourceDesc,
             convertResourceStates(d.initialState),
             d.useClearValue ? &clearValue : nullptr,

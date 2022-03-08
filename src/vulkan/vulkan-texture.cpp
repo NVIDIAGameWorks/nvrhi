@@ -307,6 +307,13 @@ namespace nvrhi::vulkan
 
     TextureHandle Device::createTexture(const TextureDesc& desc)
     {
+        if (desc.isSharedAcrossAdapter || desc.isSharedAcrossDevice) {
+            std::stringstream ss;
+            ss << "Vk layer doesn't support shared flags, since Vulkan's VkExternalMemoryHandleTypeFlagBits requires explicit definition of the other hand of the API. " << utils::DebugNameToString(desc.debugName);
+            m_Context.error(ss.str());
+            return TextureHandle();
+        }
+
         Texture *texture = new Texture(m_Context, m_Allocator);
         assert(texture);
         fillTextureInfo(texture, desc);
