@@ -127,7 +127,7 @@ namespace nvrhi::vulkan
 
         if (!desc.isVirtual)
         {
-            res = m_Allocator.allocateBufferMemory(buffer);
+            res = m_Allocator.allocateBufferMemory(buffer, (usageFlags & vk::BufferUsageFlagBits::eShaderDeviceAddress) != vk::BufferUsageFlags(0));
             CHECK_VK_FAIL(res)
 
             m_Context.nameVKObject(buffer->memory, vk::DebugReportObjectTypeEXT::eDeviceMemory, desc.debugName.c_str());
