@@ -296,9 +296,9 @@ namespace nvrhi::d3d12
         D3D12_HEAP_PROPERTIES heapProps = {};
         D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
 
-        if (d.isSharedAcrossDevice)
+        if ((d.sharedResouceFlags & SharedResourceFlags::Shared) != 0)
             heapFlags |= D3D12_HEAP_FLAG_SHARED;
-        if (d.isSharedAcrossAdapter) {
+        if ((d.sharedResouceFlags & SharedResourceFlags::Shared_CrossAdapter) != 0) {
             rd.Flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
             heapFlags |= D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER;
         }
