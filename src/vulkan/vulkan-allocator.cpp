@@ -45,14 +45,14 @@ namespace nvrhi::vulkan
         return flags;
     }
 
-    vk::Result VulkanAllocator::allocateBufferMemory(Buffer *buffer) const
+    vk::Result VulkanAllocator::allocateBufferMemory(Buffer *buffer, bool enableDeviceAddress) const
     {
         // figure out memory requirements
         vk::MemoryRequirements memRequirements;
         m_Context.device.getBufferMemoryRequirements(buffer->buffer, &memRequirements);
 
         // allocate memory
-        const vk::Result res = allocateMemory(buffer, memRequirements, pickBufferMemoryProperties(buffer->desc));
+        const vk::Result res = allocateMemory(buffer, memRequirements, pickBufferMemoryProperties(buffer->desc), enableDeviceAddress);
         CHECK_VK_RETURN(res)
 
         m_Context.device.bindBufferMemory(buffer->buffer, buffer->memory, 0);
@@ -88,7 +88,8 @@ namespace nvrhi::vulkan
 
     vk::Result VulkanAllocator::allocateMemory(MemoryResource *res,
                                                vk::MemoryRequirements memRequirements,
-                                               vk::MemoryPropertyFlags memPropertyFlags) const
+                                               vk::MemoryPropertyFlags memPropertyFlags,
+                                                bool enableDeviceAddress) const
     {
         res->managed = true;
 
@@ -113,9 +114,14 @@ namespace nvrhi::vulkan
         }
 
         // allocate memory
+        auto allocFlags = vk::MemoryAllocateFlagsInfo();
+        if (enableDeviceAddress)
+            allocFlags.flags |= vk::MemoryAllocateFlagBits::eDeviceAddress;
+
         auto allocInfo = vk::MemoryAllocateInfo()
                             .setAllocationSize(memRequirements.size)
                             .setMemoryTypeIndex(memTypeIndex);
+        allocInfo.setPNext(&allocFlags);
 
         return m_Context.device.allocateMemory(&allocInfo, m_Context.allocationCallbacks, &res->memory);
     }
