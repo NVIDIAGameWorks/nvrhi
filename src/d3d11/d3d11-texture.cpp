@@ -91,10 +91,10 @@ namespace nvrhi::d3d11
             cpuAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
         UINT miscFlags = 0;
-        if (d.isSharedAcrossDevice)
-            miscFlags |= D3D11_RESOURCE_MISC_SHARED;
-        if (d.isSharedAcrossAdapter)
+        if ((d.sharedResourceFlags & SharedResourceFlags::Shared_NTHandle) != 0)
             miscFlags |= D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
+        else if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
+            miscFlags |= D3D11_RESOURCE_MISC_SHARED;
 
         RefCountPtr<ID3D11Resource> pResource;
 

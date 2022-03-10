@@ -372,6 +372,17 @@ namespace nvrhi
     typedef uint32_t MipLevel;
     typedef uint32_t ArraySlice;
 
+    /// Flags apply to resources that need to be shared with other graphics APIs or other GPU devices when allocation.
+    enum class SharedResourceFlags : uint32_t
+    {
+        None                = 0,
+        Shared              = 0x0000'0001, //< This flag is valid in D3D11 and 12. Ingored on other platforms. D3D11_RESOURCE_MISC_SHARED is applied for the allocated resource in D3D11. D3D12_HEAP_FLAG_SHARED is applied in D3D12.
+        Shared_NTHandle     = 0x0000'0002, //< This flag is valid in D3D11. Ignored on ohter platform. D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE is applied in D3D11.
+        Shared_CrossAdapter = 0x0000'0004, //< This flag is valid in D3D12. Ignored on ohter platform. D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER and D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER are applied in D3D12.
+    };
+
+    NVRHI_ENUM_CLASS_FLAG_OPERATORS(SharedResourceFlags)
+
     struct TextureDesc
     {
         uint32_t width = 1;
@@ -390,8 +401,7 @@ namespace nvrhi
         bool isTypeless = false;
         bool isShadingRateSurface = false;
 
-        bool isSharedAcrossDevice = false;
-        bool isSharedAcrossAdapter = false;
+        SharedResourceFlags sharedResourceFlags = SharedResourceFlags::None;
 
         // Indicates that the texture is created with no backing memory,
         // and memory is bound to the texture later using bindTextureMemory.
@@ -585,8 +595,7 @@ namespace nvrhi
 
         CpuAccessMode cpuAccess = CpuAccessMode::None;
 
-        bool isSharedAcrossDevice = false;
-        bool isSharedAcrossAdapter = false;
+        SharedResourceFlags sharedResourceFlags = SharedResourceFlags::None;
 
         constexpr BufferDesc& setByteSize(uint64_t value) { byteSize = value; return *this; }
         constexpr BufferDesc& setStructStride(uint32_t value) { structStride = value; return *this; }
