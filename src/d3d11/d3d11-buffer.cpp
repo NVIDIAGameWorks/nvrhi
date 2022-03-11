@@ -103,6 +103,11 @@ namespace nvrhi::d3d11
 
         desc11.StructureByteStride = (UINT)d.structStride;
 
+        if ((d.sharedResourceFlags & SharedResourceFlags::Shared_NTHandle) != 0)
+            desc11.MiscFlags |= D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
+        else if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
+            desc11.MiscFlags |= D3D11_RESOURCE_MISC_SHARED;
+
         RefCountPtr<ID3D11Buffer> newBuffer;
         const HRESULT res = m_Context.device->CreateBuffer(&desc11, nullptr, &newBuffer);
         if (FAILED(res))

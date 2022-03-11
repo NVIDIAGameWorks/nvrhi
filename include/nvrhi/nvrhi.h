@@ -372,6 +372,27 @@ namespace nvrhi
     typedef uint32_t MipLevel;
     typedef uint32_t ArraySlice;
 
+    // Flags for resources that need to be shared with other graphics APIs or other GPU devices.
+    enum class SharedResourceFlags : uint32_t
+    {
+        None                = 0,
+
+        // D3D11: adds D3D11_RESOURCE_MISC_SHARED
+        // D3D12: adds D3D12_HEAP_FLAG_SHARED
+        // Vulkan: ignored
+        Shared              = 0x01,
+
+        // D3D11: adds (D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE)
+        // D3D12, Vulkan: ignored
+        Shared_NTHandle     = 0x02,
+
+        // D3D12: adds D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER and D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER
+        // D3D11, Vulkan: ignored
+        Shared_CrossAdapter = 0x04,
+    };
+
+    NVRHI_ENUM_CLASS_FLAG_OPERATORS(SharedResourceFlags)
+
     struct TextureDesc
     {
         uint32_t width = 1;
@@ -389,6 +410,8 @@ namespace nvrhi
         bool isUAV = false;
         bool isTypeless = false;
         bool isShadingRateSurface = false;
+
+        SharedResourceFlags sharedResourceFlags = SharedResourceFlags::None;
 
         // Indicates that the texture is created with no backing memory,
         // and memory is bound to the texture later using bindTextureMemory.
@@ -581,6 +604,8 @@ namespace nvrhi
         bool keepInitialState = false;
 
         CpuAccessMode cpuAccess = CpuAccessMode::None;
+
+        SharedResourceFlags sharedResourceFlags = SharedResourceFlags::None;
 
         constexpr BufferDesc& setByteSize(uint64_t value) { byteSize = value; return *this; }
         constexpr BufferDesc& setStructStride(uint32_t value) { structStride = value; return *this; }

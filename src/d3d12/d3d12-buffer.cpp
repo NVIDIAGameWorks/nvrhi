@@ -86,7 +86,15 @@ namespace nvrhi::d3d12
         }
 
         D3D12_HEAP_PROPERTIES heapProps = {};
+        D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+
+        if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
+            heapFlags |= D3D12_HEAP_FLAG_SHARED;
+        if ((d.sharedResourceFlags & SharedResourceFlags::Shared_CrossAdapter) != 0) {
+            resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
+            heapFlags |= D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER;
+        }
 
         switch(buffer->desc.cpuAccess)
         {
@@ -108,7 +116,7 @@ namespace nvrhi::d3d12
 
         HRESULT res = m_Context.device->CreateCommittedResource(
             &heapProps,
-            D3D12_HEAP_FLAG_NONE,
+            heapFlags,
             &resourceDesc,
             initialState,
             nullptr,
