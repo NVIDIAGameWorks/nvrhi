@@ -904,6 +904,7 @@ namespace nvrhi::d3d12
         // D3D12 specific methods
 
         bool allocateUploadBuffer(size_t size, void** pCpuAddress, D3D12_GPU_VIRTUAL_ADDRESS* pGpuAddress) override;
+        bool allocateDxrScratchBuffer(size_t size, void** pCpuAddress, D3D12_GPU_VIRTUAL_ADDRESS* pGpuAddress);
         bool commitDescriptorHeaps() override;
         D3D12_GPU_VIRTUAL_ADDRESS getBufferGpuVA(IBuffer* buffer) override;
 
@@ -1076,6 +1077,8 @@ namespace nvrhi::d3d12
 
         // Internal interface
         Queue* getQueue(CommandQueue type) { return m_Queues[int(type)].get(); }
+
+        Context& getContext() { return m_Context; }
 
     private:
         Context m_Context;

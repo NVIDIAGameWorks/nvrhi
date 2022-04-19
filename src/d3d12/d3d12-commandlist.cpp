@@ -118,6 +118,12 @@ namespace nvrhi::d3d12
             m_RecordingVersion, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     }
 
+    bool CommandList::allocateDxrScratchBuffer(size_t size, void** pCpuAddress, D3D12_GPU_VIRTUAL_ADDRESS* pGpuAddress)
+    {
+        return m_DxrScratchManager.suballocateBuffer(size, m_ActiveCommandList->commandList, nullptr, nullptr, pCpuAddress, pGpuAddress,
+            m_RecordingVersion, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT);
+    }
+
     D3D12_GPU_VIRTUAL_ADDRESS CommandList::getBufferGpuVA(IBuffer* _buffer)
     {
         if (!_buffer)
