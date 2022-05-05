@@ -58,6 +58,10 @@ if (NVRHI_WITH_VULKAN)
     add_subdirectory(thirdparty/Vulkan-Headers)
 endif()
 
+if (NVRHI_WITH_DX11 OR NVRHI_WITH_DX12)
+    add_subdirectory(thirdparty/DirectX-Headers)
+endif()
+
 if (NVRHI_WITH_RTXMU)
     if (TARGET Vulkan-Headers)
         get_target_property(RTXMU_VULKAN_INCLUDE_DIR Vulkan-Headers INTERFACE_INCLUDE_DIRECTORIES)
@@ -235,7 +239,13 @@ if (NVRHI_WITH_DX11)
         target_include_directories(${nvrhi_d3d11_target} PRIVATE include)
     endif()
 
-    target_link_libraries(${nvrhi_d3d11_target} d3d11 dxguid)
+    target_link_libraries(${nvrhi_d3d11_target} 
+        PUBLIC
+            d3d11 
+            dxguid
+        PRIVATE
+            $<BUILD_INTERFACE:Microsoft::DirectX-Headers>
+    )
 
     if (NVRHI_WITH_NVAPI)
         target_link_libraries(${nvrhi_d3d11_target} nvapi)
@@ -268,7 +278,13 @@ if (NVRHI_WITH_DX12)
         target_link_libraries(${nvrhi_d3d12_target} rtxmu)
     endif()
 
-    target_link_libraries(${nvrhi_d3d12_target} d3d12 dxguid)
+    target_link_libraries(${nvrhi_d3d12_target} 
+        PUBLIC
+            d3d12 
+            dxguid
+        PRIVATE
+            $<BUILD_INTERFACE:Microsoft::DirectX-Headers>
+    )
 
     if (NVRHI_WITH_NVAPI)
         target_link_libraries(${nvrhi_d3d12_target} nvapi)
@@ -301,7 +317,7 @@ if (NVRHI_WITH_VULKAN)
         target_link_libraries(${nvrhi_vulkan_target} rtxmu)
     endif()
 
-    target_link_libraries(${nvrhi_vulkan_target} Vulkan-Headers)
+    target_link_libraries(${nvrhi_vulkan_target} PRIVATE $<BUILD_INTERFACE:Vulkan-Headers>)
 
 endif()
 

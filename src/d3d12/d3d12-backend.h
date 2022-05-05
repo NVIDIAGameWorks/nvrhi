@@ -22,6 +22,11 @@
 
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <directx/d3d12.h>
 #include <nvrhi/d3d12.h>
 
 #ifndef NVRHI_D3D12_WITH_NVAPI

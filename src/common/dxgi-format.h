@@ -23,7 +23,7 @@
 #pragma once
 
 #include <nvrhi/nvrhi.h>
-#include <dxgi.h>
+#include <directx/dxgiformat.h>
 
 namespace nvrhi
 {
