@@ -682,8 +682,8 @@ namespace nvrhi::vulkan
 #if ENABLE_SHORTCUT_CONVERSIONS
         static_assert(uint32_t(rt::AccelStructBuildFlags::AllowUpdate) == uint32_t(VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR));
         static_assert(uint32_t(rt::AccelStructBuildFlags::AllowCompaction) == uint32_t(VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR));
-        static_assert(uint32_t(rt::AccelStructBuildFlags::PerferFastTrace) == uint32_t(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR));
-        static_assert(uint32_t(rt::AccelStructBuildFlags::PerferFastBuild) == uint32_t(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR));
+        static_assert(uint32_t(rt::AccelStructBuildFlags::PreferFastTrace) == uint32_t(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR));
+        static_assert(uint32_t(rt::AccelStructBuildFlags::PreferFastBuild) == uint32_t(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR));
         static_assert(uint32_t(rt::AccelStructBuildFlags::MinimizeMemory) == uint32_t(VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR));
 
         return vk::BuildAccelerationStructureFlagsKHR(uint32_t(buildFlags) & 0x1f);

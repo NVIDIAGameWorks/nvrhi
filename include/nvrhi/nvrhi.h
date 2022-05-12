@@ -1383,8 +1383,8 @@ namespace nvrhi
             None = 0,
             AllowUpdate = 1,
             AllowCompaction = 2,
-            PerferFastTrace = 4,
-            PerferFastBuild = 8,
+            PreferFastTrace = 4,
+            PreferFastBuild = 8,
             MinimizeMemory = 0x10,
             PerformUpdate = 0x20
         };
