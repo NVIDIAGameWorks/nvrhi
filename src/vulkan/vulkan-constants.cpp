@@ -689,15 +689,15 @@ namespace nvrhi::vulkan
         return vk::BuildAccelerationStructureFlagsKHR(uint32_t(buildFlags) & 0x1f);
 #else
         vk::BuildAccelerationStructureFlagsKHR flags = vk::BuildAccelerationStructureFlagBitsKHR(0);
-        if (buildFlags & rt::AccelStructBuildFlags::ALLOW_UPDATE)
+        if ((buildFlags & rt::AccelStructBuildFlags::AllowUpdate) != 0)
             flags |= vk::BuildAccelerationStructureFlagBitsKHR::eAllowUpdate;
-        if (buildFlags & rt::AccelStructBuildFlags::ALLOW_COMPACTION)
+        if ((buildFlags & rt::AccelStructBuildFlags::AllowCompaction) != 0)
             flags |= vk::BuildAccelerationStructureFlagBitsKHR::eAllowCompaction;
-        if (buildFlags & rt::AccelStructBuildFlags::PERFER_FAST_TRACE)
+        if ((buildFlags & rt::AccelStructBuildFlags::PreferFastTrace) != 0)
             flags |= vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace;
-        if (buildFlags & rt::AccelStructBuildFlags::PERFER_FAST_BUILD)
+        if ((buildFlags & rt::AccelStructBuildFlags::PreferFastBuild) != 0)
             flags |= vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastBuild;
-        if (buildFlags & rt::AccelStructBuildFlags::MINIMIZE_MEMORY)
+        if ((buildFlags & rt::AccelStructBuildFlags::MinimizeMemory) != 0)
             flags |= vk::BuildAccelerationStructureFlagBitsKHR::eLowMemory;
         return flags;
 #endif
@@ -714,13 +714,13 @@ namespace nvrhi::vulkan
         return vk::GeometryInstanceFlagsKHR(uint32_t(instanceFlags) & 0x0f);
 #else
         vk::GeometryInstanceFlagsKHR flags = vk::GeometryInstanceFlagBitsKHR(0);
-        if (instanceFlags & rt::InstanceFlags::FORCE_NON_OPAQUE)
+        if ((instanceFlags & rt::InstanceFlags::ForceNonOpaque) != 0)
             flags |= vk::GeometryInstanceFlagBitsKHR::eForceNoOpaque;
-        if (instanceFlags & rt::InstanceFlags::FORCE_OPAQUE)
+        if ((instanceFlags & rt::InstanceFlags::ForceOpaque) != 0)
             flags |= vk::GeometryInstanceFlagBitsKHR::eForceOpaque;
-        if (instanceFlags & rt::InstanceFlags::TRIANGLE_CULL_DISABLE)
+        if ((instanceFlags & rt::InstanceFlags::TriangleCullDisable) != 0)
             flags |= vk::GeometryInstanceFlagBitsKHR::eTriangleCullDisable;
-        if (instanceFlags & rt::InstanceFlags::TRIANGLE_FRONT_COUNTERCLOCKWISE)
+        if ((instanceFlags & rt::InstanceFlags::TriangleFrontCounterclockwise) != 0)
             flags |= vk::GeometryInstanceFlagBitsKHR::eTriangleFrontCounterclockwise;
         return flags;
 #endif
