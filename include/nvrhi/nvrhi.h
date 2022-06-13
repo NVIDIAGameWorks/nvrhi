@@ -1376,7 +1376,7 @@ namespace nvrhi
             InstanceDesc& setBLAS(IAccelStruct* value) { bottomLevelAS = value; return *this; }
         };
 
-        static_assert(sizeof(InstanceDesc) == 64);
+        static_assert(sizeof(InstanceDesc) == 64, "sizeof(InstanceDesc) is supposed to be 64 bytes");
 
         enum class AccelStructBuildFlags : uint8_t
         {
