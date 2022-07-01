@@ -166,3 +166,29 @@ Ray tracing pipelines correspond directly to DXR or Vulkan RT pipelines. They co
 Once a pipeline is created, a shader table also needs to be created through `rt::IPipeline::createShaderTable` in order to use the pipeline. The shader table object is used to build the SBT at dispatch time, in every instance of the command list that uses the shader table. Unlike the GAPI interfaces that use shader handles or pointers, NVRHI makes the shader table reference shaders and hit groups by their name - which is admittedly slower but is sufficient for the typical use case. The shader table is mutable and versioned, so it is valid to use one version of the shader table in a dispatch command, then modify the shader table, and use it again in the same command list.
 
 To trace some rays using the pipeline method, use `ICommandList::setRayTracingState`, which includes a reference to a shader table; and then use `ICommandList::dispatchRays`.
+
+## Readbacks
+
+Sometimes it is necessary to move data from the GPU to the CPU. It could be contents of a buffer with debug output, or a processed texture such as a lighting probe, or a GPU timer query result. These scenarios are supported by NVRHI.
+
+### Buffers
+
+To read contents of a GPU buffer, first create a staging buffer that will make the data available from the CPU. A staging buffer is created with `BufferDesc::cpuAccess` set to `CpuAccessMode::Read`. Then, in a command list, copy the contents of the GPU buffer or portion thereof to the staging buffer using `ICommandList::copyBuffer`.
+
+Once the command list is submitted for execution, use `IDevice::mapBuffer` to gain access to the contents of the staging buffer. Note that `mapBuffer` is a blocking function, i.e. it will wait until the last command list that accessed the staging buffer completes. If that wait is not desirable, such as when reading profiling data from a real-time renderer without affecting the frame rate, a more elaborate solution with multiple staging buffers is necessary. Cycle through these staging buffers by using a new one on every frame, and only map the buffer when its command list has already finished. Use event queries (`IDevice::pollEventQuery`) to find out if a particular command list has finished executing. Once the data has been copied to CPU memory or otherwise processed, unmap the staging buffer using `IDevice::unmapStagingBuffer`.
+
+### Textures
+
+Similar to buffers, accessing texture data from the CPU requires a staging texture. Staging textures in NVRHI have a separate resource type, `IStagingTexture`, because the implementation of staging textures is significantly different from regular textures and differs between the underlying graphics APIs as well.
+
+Performing a texture readback follows the same logic as buffer readbacks. First, copy the contents of a texture slice (or multiple slices) from the GPU texture to the staging texture using one or multiple `ICommandList::copyTexture` calls. Then map the staging texture using `IDevice::mapStagingTexture`. Note that this function is blocking, similar to `IDevice::mapBuffer`. Once the data has been copied to CPU memory, unmap the staging texture using `IDevice::unmapStagingTexture`.
+
+The data in a staging texture is stored in a pitch-linear layout, meaning that pixels in the same row are densely packed. Rows of pixels are packed with a format-dependent pitch that is returned by `mapStagingTexture` through the `outRowPitch` parameter.
+
+### Timer Queries
+
+Timer queries are represented by `ITimerQuery` type objects and allow measuring time elapsed on the GPU between two points in the same command list with high precision. To use a timer query, first create it using `IDevice::createTimerQuery`, and then use `ICommandList::beginTimerQuery` to mark the beginning of the profiled region and `ICommandList::endTimerQuery` to mark the end. Once the command list completes on the GPU, the timer query data will be available through `IDevice::getTimerQueryTime` which returns the measured duration in seconds. After use, a timer query must be reset using `IDevice::resetTimerQuery` before it can be used in a command list again.
+
+Note that the `IDevice::getTimerQueryTime` function is blocking, meaning it will wait for the command list to finish executing. That's often undesirable, so use the same strategy as with staging buffers, i.e. create multiple timer queries and poll them after a frame or two. Use `IDevice::pollTimerQuery` to find out if the data is already available.
+
+Timer queries do not map directly to DX12 or Vulkan objects. There is an implicit query heap (DX12) or query pool (Vulkan) that is managed by the NVRHI backends. The capacity of this heap/pool is set with `DeviceDesc::maxTimerQueries` at device initialization.
