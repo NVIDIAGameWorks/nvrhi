@@ -45,17 +45,10 @@ namespace nvrhi::vulkan
     bool Device::pollEventQuery(IEventQuery* _query)
     {
         EventQuery* query = checked_cast<EventQuery*>(_query);
-
-        if (query->commandListID == 0)
-            return false;
-
-        auto& queue = *m_Queues[uint32_t(query->queue)];
-        bool completed = queue.getLastFinishedID() >= query->commandListID;
-        if (completed)
-            return true;
         
-        completed = queue.updateLastFinishedID() >= query->commandListID;
-        return completed;
+        auto& queue = *m_Queues[uint32_t(query->queue)];
+
+        return queue.pollCommandList(query->commandListID);
     }
 
     void Device::waitEventQuery(IEventQuery* _query)
@@ -65,20 +58,11 @@ namespace nvrhi::vulkan
         if (query->commandListID == 0)
             return;
 
-        if (pollEventQuery(_query))
-            return;
-
         auto& queue = *m_Queues[uint32_t(query->queue)];
-        std::array<const vk::Semaphore, 1> semaphores = { queue.trackingSemaphore };
-        std::array<uint64_t, 1> waitValues = { query->commandListID };
 
-        auto waitInfo = vk::SemaphoreWaitInfo()
-            .setSemaphores(semaphores)
-            .setValues(waitValues);
-
-       vk::Result result = m_Context.device.waitSemaphores(waitInfo, ~0ull);
-       assert(result == vk::Result::eSuccess); // TODO: add support for limited-time waits
-       (void)result;
+        bool success = queue.waitCommandList(query->commandListID, ~0ull);
+        assert(success);
+        (void)success;
     }
 
     void Device::resetEventQuery(IEventQuery* _query)

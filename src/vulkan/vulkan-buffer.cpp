@@ -171,8 +171,15 @@ namespace nvrhi::vulkan
 
         assert(m_CurrentCmdBuf);
 
-        m_CurrentCmdBuf->referencedResources.push_back(dest);
-        m_CurrentCmdBuf->referencedResources.push_back(src);
+        if (dest->desc.cpuAccess != CpuAccessMode::None)
+            m_CurrentCmdBuf->referencedStagingBuffers.push_back(dest);
+        else
+            m_CurrentCmdBuf->referencedResources.push_back(dest);
+
+        if (src->desc.cpuAccess != CpuAccessMode::None)
+            m_CurrentCmdBuf->referencedStagingBuffers.push_back(src);
+        else
+            m_CurrentCmdBuf->referencedResources.push_back(src);
 
         if (m_EnableAutomaticBarriers)
         {
@@ -501,6 +508,13 @@ namespace nvrhi::vulkan
         Buffer* buffer = checked_cast<Buffer*>(_buffer);
 
         assert(flags != CpuAccessMode::None);
+
+        // If the buffer has been used in a command list before, wait for that CL to complete
+        if (buffer->lastUseCommandListID != 0)
+        {
+            auto& queue = m_Queues[uint32_t(buffer->lastUseQueue)];
+            queue->waitCommandList(buffer->lastUseCommandListID, ~0ull);
+        }
 
         vk::AccessFlags accessFlags;
 

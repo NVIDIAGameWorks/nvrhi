@@ -178,6 +178,7 @@ namespace nvrhi::vulkan
         vk::CommandPool cmdPool = vk::CommandPool();
 
         std::vector<RefCountPtr<IResource>> referencedResources; // to keep them alive
+        std::vector<RefCountPtr<Buffer>> referencedStagingBuffers; // to allow synchronous mapBuffer
 
         uint64_t recordingID = 0;
         uint64_t submissionID = 0;
@@ -229,6 +230,9 @@ namespace nvrhi::vulkan
         uint64_t getLastFinishedID() const { return m_LastFinishedID; }
         CommandQueue getQueueID() const { return m_QueueID; }
         vk::Queue getVkQueue() const { return m_Queue; }
+
+        bool pollCommandList(uint64_t commandListID);
+        bool waitCommandList(uint64_t commandListID, uint64_t timeout);
 
     private:
         const VulkanContext& m_Context;
@@ -507,6 +511,10 @@ namespace nvrhi::vulkan
         std::vector<BufferVersionItem> versionTracking;
         void* mappedMemory = nullptr;
         uint32_t versionSearchStart = 0;
+
+        // For staging buffers only
+        CommandQueue lastUseQueue = CommandQueue::Graphics;
+        uint64_t lastUseCommandListID = 0;
 
         Buffer(const VulkanContext& context, VulkanAllocator& allocator)
             : BufferStateExtension(desc)

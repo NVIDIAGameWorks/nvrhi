@@ -127,6 +127,8 @@ namespace nvrhi::vulkan
             waitStageArray[i] = vk::PipelineStageFlagBits::eTopOfPipe;
         }
 
+        m_LastSubmittedID++;
+
         for (size_t i = 0; i < numCmd; i++)
         {
             CommandList* commandList = checked_cast<CommandList*>(ppCmd[i]);
@@ -134,10 +136,14 @@ namespace nvrhi::vulkan
 
             commandBuffers[i] = commandBuffer->cmdBuf;
             m_CommandBuffersInFlight.push_back(commandBuffer);
+
+            for (const auto& buffer : commandBuffer->referencedStagingBuffers)
+            {
+                buffer->lastUseQueue = m_QueueID;
+                buffer->lastUseCommandListID = m_LastSubmittedID;
+            }
         }
-
-        m_LastSubmittedID++;
-
+        
         m_SignalSemaphores.push_back(trackingSemaphore);
         m_SignalSemaphoreValues.push_back(m_LastSubmittedID);
 
@@ -189,6 +195,7 @@ namespace nvrhi::vulkan
             if (cmd->submissionID <= lastFinishedID)
             {
                 cmd->referencedResources.clear();
+                cmd->referencedStagingBuffers.clear();
                 cmd->submissionID = 0;
                 m_CommandBuffersPool.push_back(cmd);
 
@@ -258,4 +265,36 @@ namespace nvrhi::vulkan
         return m_Context.device.getSemaphoreCounterValue(getQueueSemaphore(queue));
     }
 
+    bool Queue::pollCommandList(uint64_t commandListID)
+    {
+        if (commandListID > m_LastSubmittedID || commandListID == 0)
+            return false;
+        
+        bool completed = getLastFinishedID() >= commandListID;
+        if (completed)
+            return true;
+
+        completed = updateLastFinishedID() >= commandListID;
+        return completed;
+    }
+
+    bool Queue::waitCommandList(uint64_t commandListID, uint64_t timeout)
+    {
+        if (commandListID > m_LastSubmittedID || commandListID == 0)
+            return false;
+
+        if (pollCommandList(commandListID))
+            return true;
+
+        std::array<const vk::Semaphore, 1> semaphores = { trackingSemaphore };
+        std::array<uint64_t, 1> waitValues = { commandListID };
+
+        auto waitInfo = vk::SemaphoreWaitInfo()
+            .setSemaphores(semaphores)
+            .setValues(waitValues);
+
+        vk::Result result = m_Context.device.waitSemaphores(waitInfo, timeout);
+
+        return (result == vk::Result::eSuccess);
+    }
 } // namespace nvrhi::vulkan

@@ -210,6 +210,10 @@ namespace nvrhi::vulkan
         }
         commitBarriers();
 
+        m_CurrentCmdBuf->referencedResources.push_back(src);
+        m_CurrentCmdBuf->referencedResources.push_back(dst);
+        m_CurrentCmdBuf->referencedStagingBuffers.push_back(dst->buffer);
+
         m_CurrentCmdBuf->cmdBuf.copyImageToBuffer(src->image, vk::ImageLayout::eTransferSrcOptimal,
                                       dst->buffer->buffer, 1, &imageCopy);
     }
@@ -261,6 +265,7 @@ namespace nvrhi::vulkan
 
         m_CurrentCmdBuf->referencedResources.push_back(src);
         m_CurrentCmdBuf->referencedResources.push_back(dst);
+        m_CurrentCmdBuf->referencedStagingBuffers.push_back(src->buffer);
 
         m_CurrentCmdBuf->cmdBuf.copyBufferToImage(src->buffer->buffer,
                                       dst->image, vk::ImageLayout::eTransferDstOptimal,
