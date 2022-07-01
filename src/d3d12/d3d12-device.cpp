@@ -62,7 +62,7 @@ namespace nvrhi::d3d12
         , depthStencilViewHeap(context)
         , shaderResourceViewHeap(context)
         , samplerHeap(context)
-        , timerQueries(desc.timerQueryHeapSize, true)
+        , timerQueries(desc.maxTimerQueries, true)
         , m_Context(context)
     {
     }
@@ -147,18 +147,6 @@ namespace nvrhi::d3d12
             argDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
             m_Context.device->CreateCommandSignature(&csDesc, nullptr, IID_PPV_ARGS(&m_Context.dispatchIndirectSignature));
         }
-        
-        D3D12_QUERY_HEAP_DESC queryHeapDesc = {};
-        queryHeapDesc.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-        queryHeapDesc.Count = desc.timerQueryHeapSize;
-        m_Context.device->CreateQueryHeap(&queryHeapDesc, IID_PPV_ARGS(&m_Context.timerQueryHeap));
-
-        BufferDesc qbDesc;
-        qbDesc.byteSize = queryHeapDesc.Count * 8;
-        qbDesc.cpuAccess = CpuAccessMode::Read;
-
-        BufferHandle timerQueryBuffer = createBuffer(qbDesc);
-        m_Context.timerQueryResolveBuffer = checked_cast<Buffer*>(timerQueryBuffer.Get());
         
         m_FenceEvent = CreateEvent(nullptr, false, false, nullptr);
 

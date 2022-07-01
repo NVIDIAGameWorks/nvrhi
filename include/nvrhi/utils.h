@@ -115,6 +115,7 @@ namespace nvrhi::utils
 
         int allocate();
         void release(int index);
+        [[nodiscard]] size_t getCapacity() const { return m_Allocated.size(); }
 
     private:
         int m_NextAvailable = 0;

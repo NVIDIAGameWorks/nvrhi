@@ -76,6 +76,8 @@ namespace nvrhi::vulkan
         
         const char **deviceExtensions = nullptr;
         size_t numDeviceExtensions = 0;
+
+        uint32_t maxTimerQueries = 256;
     };
 
     NVRHI_API DeviceHandle createDevice(const DeviceDesc& desc);

@@ -50,7 +50,7 @@ namespace nvrhi::vulkan
     Device::Device(const DeviceDesc& desc)
         : m_Context(desc.instance, desc.physicalDevice, desc.device, desc.allocationCallbacks)
         , m_Allocator(m_Context)
-        , m_TimerQueryAllocator(c_NumTimerQueries, true)
+        , m_TimerQueryAllocator(desc.maxTimerQueries, true)
     {
         if (desc.graphicsQueue)
         {

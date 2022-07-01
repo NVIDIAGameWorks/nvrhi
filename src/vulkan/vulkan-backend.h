@@ -1074,10 +1074,11 @@ namespace nvrhi::vulkan
     private:
         VulkanContext m_Context;
         VulkanAllocator m_Allocator;
-
-        static constexpr uint32_t c_NumTimerQueries = 512;
+        
         vk::QueryPool m_TimerQueryPool = nullptr;
         utils::BitSetAllocator m_TimerQueryAllocator;
+
+        std::mutex m_Mutex;
 
         // array of submission queues
         std::array<std::unique_ptr<Queue>, uint32_t(CommandQueue::Count)> m_Queues;

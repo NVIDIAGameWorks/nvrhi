@@ -92,6 +92,26 @@ namespace nvrhi::d3d12
     
     TimerQueryHandle Device::createTimerQuery(void)
     {
+        if (!m_Context.timerQueryHeap)
+        {
+            std::lock_guard lockGuard(m_Mutex);
+
+            if (!m_Context.timerQueryHeap)
+            {
+                D3D12_QUERY_HEAP_DESC queryHeapDesc = {};
+                queryHeapDesc.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+                queryHeapDesc.Count = uint32_t(m_Resources.timerQueries.getCapacity()) * 2; // Use 2 D3D12 queries per 1 TimerQuery
+                m_Context.device->CreateQueryHeap(&queryHeapDesc, IID_PPV_ARGS(&m_Context.timerQueryHeap));
+
+                BufferDesc qbDesc;
+                qbDesc.byteSize = queryHeapDesc.Count * 8;
+                qbDesc.cpuAccess = CpuAccessMode::Read;
+
+                BufferHandle timerQueryBuffer = createBuffer(qbDesc);
+                m_Context.timerQueryResolveBuffer = checked_cast<Buffer*>(timerQueryBuffer.Get());
+            }
+        }
+
         int queryIndex = m_Resources.timerQueries.allocate();
 
         if (queryIndex < 0)

@@ -1087,6 +1087,8 @@ namespace nvrhi::d3d12
         std::array<std::unique_ptr<Queue>, (int)CommandQueue::Count> m_Queues;
         HANDLE m_FenceEvent;
 
+        std::mutex m_Mutex;
+
         std::vector<ID3D12CommandList*> m_CommandListsToExecute; // used locally in executeCommandLists, member to avoid re-allocations
         
         bool m_NvapiIsInitialized = false;

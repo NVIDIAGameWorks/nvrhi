@@ -116,7 +116,7 @@ namespace nvrhi::d3d12
         uint32_t depthStencilViewHeapSize = 1024;
         uint32_t shaderResourceViewHeapSize = 16384;
         uint32_t samplerHeapSize = 1024;
-        uint32_t timerQueryHeapSize = 256;
+        uint32_t maxTimerQueries = 256;
     };
 
     NVRHI_API DeviceHandle createDevice(const DeviceDesc& desc);

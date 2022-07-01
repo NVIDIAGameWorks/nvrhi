@@ -77,13 +77,18 @@ namespace nvrhi::vulkan
     {
         if (!m_TimerQueryPool)
         {
-            // set up the timer query pool on first use
-            auto poolInfo = vk::QueryPoolCreateInfo()
-                                .setQueryType(vk::QueryType::eTimestamp)
-                                .setQueryCount(c_NumTimerQueries * 2);
+            std::lock_guard lockGuard(m_Mutex);
 
-            const vk::Result res = m_Context.device.createQueryPool(&poolInfo, m_Context.allocationCallbacks, &m_TimerQueryPool);
-            CHECK_VK_FAIL(res)
+            if (!m_TimerQueryPool)
+            {
+                // set up the timer query pool on first use
+                auto poolInfo = vk::QueryPoolCreateInfo()
+                    .setQueryType(vk::QueryType::eTimestamp)
+                    .setQueryCount(uint32_t(m_TimerQueryAllocator.getCapacity()) * 2); // use 2 Vulkan queries per 1 TimerQuery
+
+                const vk::Result res = m_Context.device.createQueryPool(&poolInfo, m_Context.allocationCallbacks, &m_TimerQueryPool);
+                CHECK_VK_FAIL(res)
+            }
         }
 
         int queryIndex = m_TimerQueryAllocator.allocate();
