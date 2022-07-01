@@ -50,6 +50,12 @@ namespace nvrhi::d3d12
             else
                 return nullptr;
 
+        case ObjectTypes::D3D12_CommandAllocator:
+            if (m_ActiveCommandList)
+                return Object(m_ActiveCommandList->allocator.Get());
+            else
+                return nullptr;
+
         case ObjectTypes::Nvrhi_D3D12_CommandList:
             return this;
 

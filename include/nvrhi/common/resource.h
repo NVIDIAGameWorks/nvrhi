@@ -58,6 +58,7 @@ namespace nvrhi
         constexpr ObjectType D3D12_UnorderedAccessViewGpuDescripror = 0x00020008;
         constexpr ObjectType D3D12_RootSignature                    = 0x00020009;
         constexpr ObjectType D3D12_PipelineState                    = 0x0002000a;
+        constexpr ObjectType D3D12_CommandAllocator                 = 0x0002000b;
 
         constexpr ObjectType VK_Device                              = 0x00030001;
         constexpr ObjectType VK_PhysicalDevice                      = 0x00030002;
