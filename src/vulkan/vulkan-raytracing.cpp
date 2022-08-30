@@ -716,7 +716,7 @@ namespace nvrhi::vulkan
                         shaderGroupHandleSize);
                     sbtIndex++;
                 }
-                missHandles.setSize(shaderGroupBaseAlignment * uint32_t(shaderTable->hitGroups.size()));
+                missHandles.setSize(shaderGroupBaseAlignment * uint32_t(shaderTable->missShaders.size()));
                 missHandles.setStride(shaderGroupBaseAlignment);
             }
 
