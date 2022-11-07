@@ -901,7 +901,7 @@ namespace nvrhi::d3d12
                                     continue;
                                 }
 
-                                if (updateThisSet || volatileData != m_CurrentGraphicsVolatileCBs[newVolatileCBs.size()].address)
+                                if (updateThisSet || volatileData != m_CurrentComputeVolatileCBs[newVolatileCBs.size()].address)
                                 {
                                     m_ActiveCommandList->commandList->SetComputeRootConstantBufferView(rootParameterIndex, volatileData);
                                 }
