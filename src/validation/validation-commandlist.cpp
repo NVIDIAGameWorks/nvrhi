@@ -683,8 +683,14 @@ namespace nvrhi::validation
         m_CommandList->drawIndexed(args);
     }
 
-    void CommandListWrapper::drawIndirect(uint32_t offsetBytes)
+    void CommandListWrapper::drawIndirect(uint32_t drawCount, uint32_t offsetBytes)
     {
+        if (drawCount == 0)
+        {
+            error("drawCount is is 0");
+            return;
+        }
+
         if (!requireOpenState())
             return;
 
@@ -701,7 +707,7 @@ namespace nvrhi::validation
         if (!validatePushConstants("graphics", "setGraphicsState"))
             return;
 
-        m_CommandList->drawIndirect(offsetBytes);
+        m_CommandList->drawIndirect(drawCount, offsetBytes);
     }
 
     void CommandListWrapper::setComputeState(const ComputeState& state)

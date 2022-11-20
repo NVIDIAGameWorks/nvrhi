@@ -853,7 +853,7 @@ namespace nvrhi::d3d12
         void setGraphicsState(const GraphicsState& state) override;
         void draw(const DrawArguments& args) override;
         void drawIndexed(const DrawArguments& args) override;
-        void drawIndirect(uint32_t offsetBytes) override;
+        void drawIndirect(uint32_t drawCount, uint32_t offsetBytes) override;
 
         void setComputeState(const ComputeState& state) override;
         void dispatch(uint32_t groupsX, uint32_t groupsY = 1, uint32_t groupsZ = 1) override;
