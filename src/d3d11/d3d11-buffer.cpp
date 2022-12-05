@@ -167,7 +167,11 @@ namespace nvrhi::d3d11
     void CommandList::clearBufferUInt(IBuffer* buffer, uint32_t clearValue)
     {
         const BufferDesc& bufferDesc = buffer->getDesc();
-        ResourceType viewType = bufferDesc.structStride != 0 ? ResourceType::StructuredBuffer_UAV : ResourceType::TypedBuffer_UAV;
+        ResourceType viewType = bufferDesc.structStride != 0
+            ? ResourceType::StructuredBuffer_UAV
+            : (bufferDesc.canHaveRawViews && bufferDesc.format == Format::UNKNOWN)
+                ? ResourceType::RawBuffer_UAV
+                : ResourceType::TypedBuffer_UAV;
         ID3D11UnorderedAccessView* uav = checked_cast<Buffer*>(buffer)->getUAV(Format::UNKNOWN, EntireBuffer, viewType);
 
         UINT clearValues[4] = { clearValue, clearValue, clearValue, clearValue };
