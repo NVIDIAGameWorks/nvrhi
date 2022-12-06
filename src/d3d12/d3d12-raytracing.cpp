@@ -414,6 +414,7 @@ namespace nvrhi::d3d12
         std::vector<D3D12_HIT_GROUP_DESC> d3dHitGroups;
         std::unordered_map<IShader*, std::wstring> hitGroupShaderNames;
         std::vector<std::wstring> hitGroupExportNames;
+        hitGroupExportNames.reserve(desc.hitGroups.size());
 
         for (const rt::PipelineHitGroupDesc& hitGroupDesc : desc.hitGroups)
         {
