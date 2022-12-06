@@ -2395,7 +2395,7 @@ namespace nvrhi
         virtual void setGraphicsState(const GraphicsState& state) = 0;
         virtual void draw(const DrawArguments& args) = 0;
         virtual void drawIndexed(const DrawArguments& args) = 0;
-        virtual void drawIndirect(uint32_t drawCount, uint32_t offsetBytes) = 0;
+        virtual void drawIndirect(uint32_t offsetBytes, uint32_t drawCount = 1) = 0;
         
         virtual void setComputeState(const ComputeState& state) = 0;
         virtual void dispatch(uint32_t groupsX, uint32_t groupsY = 1, uint32_t groupsZ = 1) = 0;

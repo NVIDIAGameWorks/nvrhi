@@ -807,7 +807,7 @@ namespace nvrhi::vulkan
             args.startInstanceLocation);
     }
 
-    void CommandList::drawIndirect(uint32_t drawCount, uint32_t offsetBytes)
+    void CommandList::drawIndirect(uint32_t offsetBytes, uint32_t drawCount)
     {
         assert(m_CurrentCmdBuf);
 
