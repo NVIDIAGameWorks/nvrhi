@@ -687,7 +687,7 @@ namespace nvrhi::validation
     {
         if (drawCount == 0)
         {
-            error("drawCount is is 0");
+            error("drawCount is 0");
             return;
         }
 
