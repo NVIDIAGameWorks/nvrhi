@@ -807,7 +807,7 @@ namespace nvrhi::vulkan
             args.startInstanceLocation);
     }
 
-    void CommandList::drawIndirect(uint32_t offsetBytes)
+    void CommandList::drawIndirect(uint32_t offsetBytes, uint32_t drawCount)
     {
         assert(m_CurrentCmdBuf);
 
@@ -816,8 +816,7 @@ namespace nvrhi::vulkan
         Buffer* indirectParams = checked_cast<Buffer*>(m_CurrentGraphicsState.indirectParams);
         assert(indirectParams);
 
-        // TODO: is this right?
-        m_CurrentCmdBuf->cmdBuf.drawIndirect(indirectParams->buffer, offsetBytes, 1, 0);
+        m_CurrentCmdBuf->cmdBuf.drawIndirect(indirectParams->buffer, offsetBytes, drawCount, sizeof(DrawIndirectArguments));
     }
 
 } // namespace nvrhi::vulkan

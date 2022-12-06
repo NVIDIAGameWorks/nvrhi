@@ -357,7 +357,7 @@ namespace nvrhi::d3d11
         m_Context.immediateContext->DrawIndexedInstanced(args.vertexCount, args.instanceCount, args.startIndexLocation, args.startVertexLocation, args.startInstanceLocation);
     }
 
-    void CommandList::drawIndirect(uint32_t offsetBytes)
+    void CommandList::drawIndirect(uint32_t offsetBytes, uint32_t /*drawCount*/)
     {
         Buffer* indirectParams = checked_cast<Buffer*>(m_CurrentIndirectBuffer.Get());
         
