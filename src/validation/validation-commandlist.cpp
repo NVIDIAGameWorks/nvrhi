@@ -685,12 +685,6 @@ namespace nvrhi::validation
 
     void CommandListWrapper::drawIndirect(uint32_t offsetBytes, uint32_t drawCount)
     {
-        if (drawCount == 0)
-        {
-            error("drawCount is 0");
-            return;
-        }
-
         if (!requireOpenState())
             return;
 
@@ -701,6 +695,12 @@ namespace nvrhi::validation
         {
             error("Graphics state is not set before a drawIndirect call.\n"
                 "Note that setting compute state invalidates the graphics state.");
+            return;
+        }
+
+        if (!m_CurrentGraphicsState.indirectParams)
+        {
+            error("Indirect params buffer is not set before a drawIndirect call.");
             return;
         }
 

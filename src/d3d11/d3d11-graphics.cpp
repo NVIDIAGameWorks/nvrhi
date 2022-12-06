@@ -357,13 +357,18 @@ namespace nvrhi::d3d11
         m_Context.immediateContext->DrawIndexedInstanced(args.vertexCount, args.instanceCount, args.startIndexLocation, args.startVertexLocation, args.startInstanceLocation);
     }
 
-    void CommandList::drawIndirect(uint32_t offsetBytes, uint32_t /*drawCount*/)
+    void CommandList::drawIndirect(uint32_t offsetBytes, uint32_t drawCount)
     {
         Buffer* indirectParams = checked_cast<Buffer*>(m_CurrentIndirectBuffer.Get());
         
         if (indirectParams) // validation layer will issue an error otherwise
         {
-            m_Context.immediateContext->DrawInstancedIndirect(indirectParams->resource, offsetBytes);
+            // Simulate multi-command D3D12 ExecuteIndirect or Vulkan vkCmdDrawIndirect with a loop
+            for (uint32_t drawIndex = 0; drawIndex < drawCount; ++drawIndex)
+            {
+                m_Context.immediateContext->DrawInstancedIndirect(indirectParams->resource, offsetBytes);
+                offsetBytes += sizeof(DrawIndirectArguments);
+            }
         }
     }
 
