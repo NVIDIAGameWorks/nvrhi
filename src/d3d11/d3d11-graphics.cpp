@@ -34,8 +34,8 @@ namespace nvrhi::d3d11
     {
         Framebuffer *ret = new Framebuffer();
         ret->desc = desc;
-        ret->framebufferInfo = FramebufferInfo(desc);
-
+        ret->framebufferInfo = FramebufferInfoEx(desc);
+        
         for(auto colorAttachment : desc.colorAttachments)
         {
             assert(colorAttachment.valid());

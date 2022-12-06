@@ -176,12 +176,12 @@ namespace nvrhi::d3d11
     {
     public:
         FramebufferDesc desc;
-        FramebufferInfo framebufferInfo;
+        FramebufferInfoEx framebufferInfo;
         static_vector<RefCountPtr<ID3D11RenderTargetView>, c_MaxRenderTargets> RTVs;
         RefCountPtr<ID3D11DepthStencilView> DSV;
         
         const FramebufferDesc& getDesc() const override { return desc; }
-        const FramebufferInfo& getFramebufferInfo() const override { return framebufferInfo; }
+        const FramebufferInfoEx& getFramebufferInfo() const override { return framebufferInfo; }
     };
 
     struct DX11_ViewportState

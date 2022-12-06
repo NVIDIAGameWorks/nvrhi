@@ -151,21 +151,34 @@ namespace nvrhi
         {
             const TextureDesc& textureDesc = desc.depthAttachment.texture->getDesc();
             depthFormat = textureDesc.format;
-            width = textureDesc.width >> desc.depthAttachment.subresources.baseMipLevel;
-            height = textureDesc.height >> desc.depthAttachment.subresources.baseMipLevel;
             sampleCount = textureDesc.sampleCount;
             sampleQuality = textureDesc.sampleQuality;
         }
         else if (!desc.colorAttachments.empty() && desc.colorAttachments[0].valid())
         {
             const TextureDesc& textureDesc = desc.colorAttachments[0].texture->getDesc();
-            width = textureDesc.width >> desc.colorAttachments[0].subresources.baseMipLevel;
-            height = textureDesc.height >> desc.colorAttachments[0].subresources.baseMipLevel;
             sampleCount = textureDesc.sampleCount;
             sampleQuality = textureDesc.sampleQuality;
         }
     }
-    
+
+    FramebufferInfoEx::FramebufferInfoEx(const FramebufferDesc& desc)
+        : FramebufferInfo(desc)
+    {
+        if (desc.depthAttachment.valid())
+        {
+            const TextureDesc& textureDesc = desc.depthAttachment.texture->getDesc();
+            width = textureDesc.width >> desc.depthAttachment.subresources.baseMipLevel;
+            height = textureDesc.height >> desc.depthAttachment.subresources.baseMipLevel;
+        }
+        else if (!desc.colorAttachments.empty() && desc.colorAttachments[0].valid())
+        {
+            const TextureDesc& textureDesc = desc.colorAttachments[0].texture->getDesc();
+            width = textureDesc.width >> desc.colorAttachments[0].subresources.baseMipLevel;
+            height = textureDesc.height >> desc.colorAttachments[0].subresources.baseMipLevel;
+        }
+    }
+
     void ICommandList::setResourceStatesForFramebuffer(IFramebuffer* framebuffer)
     {
         const FramebufferDesc& desc = framebuffer->getDesc();

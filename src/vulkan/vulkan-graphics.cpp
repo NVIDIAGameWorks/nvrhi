@@ -61,7 +61,7 @@ namespace nvrhi::vulkan
     {
         Framebuffer *fb = new Framebuffer(m_Context);
         fb->desc = desc;
-        fb->framebufferInfo = FramebufferInfo(desc);
+        fb->framebufferInfo = FramebufferInfoEx(desc);
 
         attachment_vector<vk::AttachmentDescription2> attachmentDescs(desc.colorAttachments.size());
         attachment_vector<vk::AttachmentReference2> colorAttachmentRefs(desc.colorAttachments.size());
@@ -240,7 +240,7 @@ namespace nvrhi::vulkan
     {
         Framebuffer* fb = new Framebuffer(m_Context);
         fb->desc = desc;
-        fb->framebufferInfo = FramebufferInfo(desc);
+        fb->framebufferInfo = FramebufferInfoEx(desc);
         fb->renderPass = renderPass;
         fb->framebuffer = framebuffer;
         fb->managed = transferOwnership;

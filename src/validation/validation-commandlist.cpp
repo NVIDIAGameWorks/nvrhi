@@ -613,7 +613,7 @@ namespace nvrhi::validation
         if (state.framebuffer->getFramebufferInfo() != state.pipeline->getFramebufferInfo())
         {
             ss << "The framebuffer used in the draw call does not match the framebuffer used to create the pipeline." << std::endl <<
-                "Width, height, and formats of the framebuffers must match." << std::endl;
+                "Formats and sample counts of the framebuffers must match." << std::endl;
             anyErrors = true;
         }
 

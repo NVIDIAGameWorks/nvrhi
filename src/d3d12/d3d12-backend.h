@@ -452,7 +452,7 @@ namespace nvrhi::d3d12
     {
     public:
         FramebufferDesc desc;
-        FramebufferInfo framebufferInfo;
+        FramebufferInfoEx framebufferInfo;
 
         static_vector<TextureHandle, c_MaxRenderTargets + 1> textures;
         static_vector<DescriptorIndex, c_MaxRenderTargets> RTVs;
@@ -467,7 +467,7 @@ namespace nvrhi::d3d12
         ~Framebuffer() override;
 
         const FramebufferDesc& getDesc() const override { return desc; }
-        const FramebufferInfo& getFramebufferInfo() const override { return framebufferInfo; }
+        const FramebufferInfoEx& getFramebufferInfo() const override { return framebufferInfo; }
 
     private:
         DeviceResources& m_Resources;
@@ -585,7 +585,7 @@ namespace nvrhi::d3d12
         DeviceResources& m_Resources;
     };
 
-    DX12_ViewportState convertViewportState(const RasterState& rasterState, const FramebufferInfo& framebufferInfo, const ViewportState& vpState);
+    DX12_ViewportState convertViewportState(const RasterState& rasterState, const FramebufferInfoEx& framebufferInfo, const ViewportState& vpState);
 
     class TextureState
     {

@@ -669,7 +669,7 @@ namespace nvrhi::vulkan
     {
     public:
         FramebufferDesc desc;
-        FramebufferInfo framebufferInfo;
+        FramebufferInfoEx framebufferInfo;
         
         vk::RenderPass renderPass = vk::RenderPass();
         vk::Framebuffer framebuffer = vk::Framebuffer();
@@ -684,7 +684,7 @@ namespace nvrhi::vulkan
 
         ~Framebuffer() override;
         const FramebufferDesc& getDesc() const override { return desc; }
-        const FramebufferInfo& getFramebufferInfo() const override { return framebufferInfo; }
+        const FramebufferInfoEx& getFramebufferInfo() const override { return framebufferInfo; }
         Object getNativeObject(ObjectType objectType) override;
 
     private:

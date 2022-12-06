@@ -206,7 +206,7 @@ namespace nvrhi::d3d12
     {
         Framebuffer *fb = new Framebuffer(m_Resources);
         fb->desc = desc;
-        fb->framebufferInfo = FramebufferInfo(desc);
+        fb->framebufferInfo = FramebufferInfoEx(desc);
 
         if (!desc.colorAttachments.empty())
         {
@@ -548,7 +548,7 @@ namespace nvrhi::d3d12
         m_ActiveCommandList->commandList->ExecuteIndirect(m_Context.drawIndirectSignature, 1, indirectParams->resource, offsetBytes, nullptr, 0);
     }
     
-    DX12_ViewportState convertViewportState(const RasterState& rasterState, const FramebufferInfo& framebufferInfo, const ViewportState& vpState)
+    DX12_ViewportState convertViewportState(const RasterState& rasterState, const FramebufferInfoEx& framebufferInfo, const ViewportState& vpState)
     {
         DX12_ViewportState ret;
 
