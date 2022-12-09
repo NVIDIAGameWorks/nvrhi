@@ -372,6 +372,16 @@ namespace nvrhi::d3d11
         }
     }
 
+    void CommandList::drawIndexedIndirect(uint32_t offsetBytes)
+    {
+        Buffer* indirectParams = checked_cast<Buffer*>(m_CurrentIndirectBuffer.Get());
+
+        if (indirectParams)
+        {
+            m_Context.immediateContext->DrawIndexedInstancedIndirect(indirectParams->resource, offsetBytes);
+        }
+    }
+
     namespace
     {
         //Unfortunately we can't memcmp the structs since they have padding bytes in them

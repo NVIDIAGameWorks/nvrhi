@@ -710,6 +710,27 @@ namespace nvrhi::validation
         m_CommandList->drawIndirect(offsetBytes, drawCount);
     }
 
+    void CommandListWrapper::drawIndexedIndirect(uint32_t offsetBytes)
+    {
+        if (!requireOpenState())
+            return;
+
+        if (!requireType(CommandQueue::Graphics, "drawIndexedIndirect"))
+            return;
+
+        if (!m_GraphicsStateSet)
+        {
+            error("Graphics state is not set before a drawIndexedIndirect call.\n"
+                "Note that setting compute state invalidates the graphics state.");
+            return;
+        }
+
+        if (!validatePushConstants("graphics", "setGraphicsState"))
+            return;
+
+        m_CommandList->drawIndexedIndirect(offsetBytes);
+    }
+
     void CommandListWrapper::setComputeState(const ComputeState& state)
     {
         if (!requireOpenState())
