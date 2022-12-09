@@ -378,12 +378,12 @@ namespace nvrhi::d3d11
 
         if (indirectParams)
         {
-			// Simulate multi-command D3D12 ExecuteIndirect or Vulkan vkCmdDrawIndirect with a loop
+            // Simulate multi-command D3D12 ExecuteIndirect or Vulkan vkCmdDrawIndirect with a loop
             for (uint32_t drawIndex = 0; drawIndex < drawCount; ++drawIndex)
             {
-            	m_Context.immediateContext->DrawIndexedInstancedIndirect(indirectParams->resource, offsetBytes);
-				offsetBytes += sizeof(DrawIndexedIndirectArguments);
-			}
+                m_Context.immediateContext->DrawIndexedInstancedIndirect(indirectParams->resource, offsetBytes);
+                offsetBytes += sizeof(DrawIndexedIndirectArguments);
+            }
         }
     }
 
