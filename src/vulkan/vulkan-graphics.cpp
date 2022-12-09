@@ -819,7 +819,7 @@ namespace nvrhi::vulkan
         m_CurrentCmdBuf->cmdBuf.drawIndirect(indirectParams->buffer, offsetBytes, drawCount, sizeof(DrawIndirectArguments));
     }
 
-    void CommandList::drawIndexedIndirect(uint32_t offsetBytes)
+    void CommandList::drawIndexedIndirect(uint32_t offsetBytes, uint32_t drawCount)
     {
         assert(m_CurrentCmdBuf);
 
@@ -828,7 +828,7 @@ namespace nvrhi::vulkan
         Buffer* indirectParams = checked_cast<Buffer*>(m_CurrentGraphicsState.indirectParams);
         assert(indirectParams);
 
-        m_CurrentCmdBuf->cmdBuf.drawIndexedIndirect(indirectParams->buffer, offsetBytes, 1, 0);
+        m_CurrentCmdBuf->cmdBuf.drawIndexedIndirect(indirectParams->buffer, offsetBytes, drawCount, sizeof(DrawIndexedIndirectArguments));
     }
 
 } // namespace nvrhi::vulkan

@@ -2152,6 +2152,21 @@ namespace nvrhi
         constexpr DrawIndirectArguments& setStartInstanceLocation(uint32_t value) { startInstanceLocation = value; return *this; }
     };
 
+    struct DrawIndexedIndirectArguments
+    {
+        uint32_t indexCount = 0;
+        uint32_t instanceCount = 1;
+        uint32_t startIndexLocation = 0;
+        int32_t  baseVertexLocation = 0;
+        uint32_t startInstanceLocation = 0;
+
+        constexpr DrawIndexedIndirectArguments& setIndexCount(uint32_t value) { indexCount = value; return *this; }
+        constexpr DrawIndexedIndirectArguments& setInstanceCount(uint32_t value) { instanceCount = value; return *this; }
+        constexpr DrawIndexedIndirectArguments& setStartIndexLocation(uint32_t value) { startIndexLocation = value; return *this; }
+        constexpr DrawIndexedIndirectArguments& setBaseVertexLocation(int32_t value) { baseVertexLocation = value; return *this; }
+        constexpr DrawIndexedIndirectArguments& setStartInstanceLocation(uint32_t value) { startInstanceLocation = value; return *this; }
+    };
+
     struct ComputeState
     {
         IComputePipeline* pipeline = nullptr;
@@ -2407,7 +2422,7 @@ namespace nvrhi
         virtual void draw(const DrawArguments& args) = 0;
         virtual void drawIndexed(const DrawArguments& args) = 0;
         virtual void drawIndirect(uint32_t offsetBytes, uint32_t drawCount = 1) = 0;
-        virtual void drawIndexedIndirect(uint32_t offsetBytes) = 0;
+        virtual void drawIndexedIndirect(uint32_t offsetBytes, uint32_t drawCount = 1) = 0;
         
         virtual void setComputeState(const ComputeState& state) = 0;
         virtual void dispatch(uint32_t groupsX, uint32_t groupsY = 1, uint32_t groupsZ = 1) = 0;
