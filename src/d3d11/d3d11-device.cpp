@@ -146,6 +146,12 @@ namespace nvrhi::d3d11
             return m_SinglePassStereoSupported;
         case Feature::FastGeometryShader:
             return m_FastGeometryShaderSupported;
+        case Feature::ConservativeRasterization:
+#if NVRHI_D3D11_WITH_NVAPI
+            return true;
+#else
+            return false;
+#endif
         default:
             return false;
         }

@@ -151,11 +151,13 @@ namespace nvrhi::vulkan
             bool KHR_ray_tracing_pipeline = false;
             bool NV_mesh_shader = false;
             bool KHR_fragment_shading_rate = false;
+            bool EXT_conservative_rasterization = false;
         } extensions;
 
         vk::PhysicalDeviceProperties physicalDeviceProperties;
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties;
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR accelStructProperties;
+        vk::PhysicalDeviceConservativeRasterizationPropertiesEXT conservativeRasterizationProperties;
         vk::PhysicalDeviceFragmentShadingRatePropertiesKHR shadingRateProperties;
         vk::PhysicalDeviceFragmentShadingRateFeaturesKHR shadingRateFeatures;
         IMessageCallback* messageCallback = nullptr;

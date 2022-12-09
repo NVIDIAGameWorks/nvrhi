@@ -1004,6 +1004,12 @@ namespace nvrhi::validation
             }
         }
 
+        if (renderState.rasterState.conservativeRasterEnable && !m_Device->queryFeatureSupport(Feature::ConservativeRasterization))
+        {
+            warning("Conservative rasterization is not supported on this device");
+            return false;
+        }
+
         return true;
     }
 
