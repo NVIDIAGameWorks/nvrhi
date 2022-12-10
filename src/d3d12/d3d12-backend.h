@@ -671,6 +671,8 @@ namespace nvrhi::d3d12
             : m_Context(context)
         { }
 
+        ~AccelStruct() override;
+
         void createSRV(size_t descriptor) const;
 
         Object getNativeObject(ObjectType objectType) override;
