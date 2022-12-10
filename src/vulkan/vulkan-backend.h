@@ -506,7 +506,7 @@ namespace nvrhi::vulkan
 
         HeapHandle heap;
         
-        std::unordered_map<vk::Format, vk::BufferView> viewCache;
+        std::unordered_map<uint64_t, vk::BufferView> viewCache;
 
         std::vector<BufferVersionItem> versionTracking;
         void* mappedMemory = nullptr;
