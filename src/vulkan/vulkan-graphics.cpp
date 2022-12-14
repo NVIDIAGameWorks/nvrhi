@@ -479,6 +479,14 @@ namespace nvrhi::vulkan
                             .setDepthBiasSlopeFactor(rasterState.slopeScaledDepthBias)
                             .setLineWidth(1.0f);
         
+        // Conservative raster state
+        auto conservativeRasterState = vk::PipelineRasterizationConservativeStateCreateInfoEXT()
+            .setConservativeRasterizationMode(vk::ConservativeRasterizationModeEXT::eOverestimate);
+		if (rasterState.conservativeRasterEnable)
+		{
+			rasterizer.setPNext(&conservativeRasterState);
+		}
+
         auto multisample = vk::PipelineMultisampleStateCreateInfo()
                             .setRasterizationSamples(vk::SampleCountFlagBits(fb->framebufferInfo.sampleCount))
                             .setAlphaToCoverageEnable(blendState.alphaToCoverageEnable);

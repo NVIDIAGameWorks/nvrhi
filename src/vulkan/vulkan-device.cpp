@@ -80,6 +80,7 @@ namespace nvrhi::vulkan
             { VK_KHR_RAY_QUERY_EXTENSION_NAME,&m_Context.extensions.KHR_ray_query },
             { VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, &m_Context.extensions.KHR_ray_tracing_pipeline },
             { VK_NV_MESH_SHADER_EXTENSION_NAME, &m_Context.extensions.NV_mesh_shader },
+            { VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME, &m_Context.extensions.EXT_conservative_rasterization},
             { VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, &m_Context.extensions.KHR_fragment_shading_rate },
         };
 
@@ -107,6 +108,7 @@ namespace nvrhi::vulkan
         void* pNext = nullptr;
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR accelStructProperties;
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties;
+        vk::PhysicalDeviceConservativeRasterizationPropertiesEXT conservativeRasterizationProperties;
         vk::PhysicalDeviceFragmentShadingRatePropertiesKHR shadingRateProperties;
         vk::PhysicalDeviceProperties2 deviceProperties2;
 
@@ -128,6 +130,12 @@ namespace nvrhi::vulkan
             pNext = &shadingRateProperties;
         }
 
+        if (m_Context.extensions.EXT_conservative_rasterization)
+        {
+            conservativeRasterizationProperties.pNext = pNext;
+            pNext = &conservativeRasterizationProperties;
+        }
+
         deviceProperties2.pNext = pNext;
 
         m_Context.physicalDevice.getProperties2(&deviceProperties2);
@@ -135,6 +143,7 @@ namespace nvrhi::vulkan
         m_Context.physicalDeviceProperties = deviceProperties2.properties;
         m_Context.accelStructProperties = accelStructProperties;
         m_Context.rayTracingPipelineProperties = rayTracingPipelineProperties;
+        m_Context.conservativeRasterizationProperties = conservativeRasterizationProperties;
         m_Context.shadingRateProperties = shadingRateProperties;
         m_Context.messageCallback = desc.errorCB;
 
@@ -250,6 +259,8 @@ namespace nvrhi::vulkan
                     utils::NotSupported();
             }
             return m_Context.extensions.KHR_fragment_shading_rate && m_Context.shadingRateFeatures.attachmentFragmentShadingRate;
+        case Feature::ConservativeRasterization:
+            return m_Context.extensions.EXT_conservative_rasterization;
         case Feature::VirtualResources:
             return true;
         case Feature::ComputeQueue:

@@ -2312,6 +2312,7 @@ namespace nvrhi
         RayQuery,
         FastGeometryShader,
         Meshlets,
+        ConservativeRasterization,
         VariableRateShading,
         ShaderSpecializations,
         VirtualResources,
