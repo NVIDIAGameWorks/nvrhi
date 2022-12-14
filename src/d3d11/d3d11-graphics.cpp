@@ -372,6 +372,21 @@ namespace nvrhi::d3d11
         }
     }
 
+    void CommandList::drawIndexedIndirect(uint32_t offsetBytes, uint32_t drawCount)
+    {
+        Buffer* indirectParams = checked_cast<Buffer*>(m_CurrentIndirectBuffer.Get());
+
+        if (indirectParams)
+        {
+            // Simulate multi-command D3D12 ExecuteIndirect or Vulkan vkCmdDrawIndirect with a loop
+            for (uint32_t drawIndex = 0; drawIndex < drawCount; ++drawIndex)
+            {
+                m_Context.immediateContext->DrawIndexedInstancedIndirect(indirectParams->resource, offsetBytes);
+                offsetBytes += sizeof(DrawIndexedIndirectArguments);
+            }
+        }
+    }
+
     namespace
     {
         //Unfortunately we can't memcmp the structs since they have padding bytes in them

@@ -143,6 +143,10 @@ namespace nvrhi::d3d12
             argDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
             m_Context.device->CreateCommandSignature(&csDesc, nullptr, IID_PPV_ARGS(&m_Context.drawIndirectSignature));
 
+            csDesc.ByteStride = 20;
+            argDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+            m_Context.device->CreateCommandSignature(&csDesc, nullptr, IID_PPV_ARGS(&m_Context.drawIndexedIndirectSignature));
+
             csDesc.ByteStride = 12;
             argDesc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
             m_Context.device->CreateCommandSignature(&csDesc, nullptr, IID_PPV_ARGS(&m_Context.dispatchIndirectSignature));
