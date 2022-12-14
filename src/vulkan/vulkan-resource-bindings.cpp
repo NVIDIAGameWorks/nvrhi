@@ -450,13 +450,18 @@ namespace nvrhi::vulkan
                 }
 
                 auto vkformat = nvrhi::vulkan::convertFormat(format);
+                const auto range = binding.range.resolve(buffer->desc);
 
-                const auto& bufferViewFound = buffer->viewCache.find(vkformat);
-                auto& bufferViewRef = (bufferViewFound != buffer->viewCache.end()) ? bufferViewFound->second : buffer->viewCache[vkformat];
+                uint64_t viewInfoHash = 0;
+                nvrhi::hash_combine(viewInfoHash, range.byteOffset);
+                nvrhi::hash_combine(viewInfoHash, range.byteSize);
+                nvrhi::hash_combine(viewInfoHash, (uint64_t)vkformat);
+
+                const auto& bufferViewFound = buffer->viewCache.find(viewInfoHash);
+                auto& bufferViewRef = (bufferViewFound != buffer->viewCache.end()) ? bufferViewFound->second : buffer->viewCache[viewInfoHash];
                 if (bufferViewFound == buffer->viewCache.end())
                 {
                     assert(format != Format::UNKNOWN);
-                    const auto range = binding.range.resolve(buffer->desc);
 
                     auto bufferViewInfo = vk::BufferViewCreateInfo()
                         .setBuffer(buffer->buffer)
@@ -522,7 +527,7 @@ namespace nvrhi::vulkan
                     else
                     {
                         ResourceStates requiredState;
-                        if (binding.type == ResourceType::StructuredBuffer_UAV || binding.type == ResourceType::RawBuffer_SRV)
+                        if (binding.type == ResourceType::StructuredBuffer_UAV || binding.type == ResourceType::RawBuffer_UAV)
                             requiredState = ResourceStates::UnorderedAccess;
                         else if (binding.type == ResourceType::ConstantBuffer)
                             requiredState = ResourceStates::ConstantBuffer;
@@ -765,12 +770,17 @@ namespace nvrhi::vulkan
 
                     auto vkformat = nvrhi::vulkan::convertFormat(binding.format);
 
-                    const auto& bufferViewFound = buffer->viewCache.find(vkformat);
-                    auto& bufferViewRef = (bufferViewFound != buffer->viewCache.end()) ? bufferViewFound->second : buffer->viewCache[vkformat];
+                    const auto range = binding.range.resolve(buffer->desc);
+                    uint64_t viewInfoHash = 0;
+                    nvrhi::hash_combine(viewInfoHash, range.byteOffset);
+                    nvrhi::hash_combine(viewInfoHash, range.byteSize);
+                    nvrhi::hash_combine(viewInfoHash, (uint64_t)vkformat);
+
+                    const auto& bufferViewFound = buffer->viewCache.find(viewInfoHash);
+                    auto& bufferViewRef = (bufferViewFound != buffer->viewCache.end()) ? bufferViewFound->second : buffer->viewCache[viewInfoHash];
                     if (bufferViewFound == buffer->viewCache.end())
                     {
                         assert(binding.format != Format::UNKNOWN);
-                        const auto range = binding.range.resolve(buffer->desc);
 
                         auto bufferViewInfo = vk::BufferViewCreateInfo()
                             .setBuffer(buffer->buffer)
