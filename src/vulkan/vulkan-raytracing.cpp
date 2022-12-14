@@ -579,6 +579,12 @@ namespace nvrhi::vulkan
     {
 #ifdef NVRHI_WITH_RTXMU
         bool isManaged = desc.isTopLevel;
+        if (!isManaged && rtxmuId != ~0ull)
+        {
+            std::vector<uint64_t> delAccel = { rtxmuId };
+            m_Context.rtxMemUtil->RemoveAccelerationStructures(delAccel);
+            rtxmuId = ~0ull;
+        }
 #else
         bool isManaged = true;
 #endif
