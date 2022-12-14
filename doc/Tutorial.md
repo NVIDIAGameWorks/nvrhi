@@ -338,7 +338,7 @@ auto tlasDesc = nvrhi::rt::AccelStructDesc()
     .setIsTopLevel(true)
     .setTopLevelMaxInstances(1);
 
-nvrhi::rt::AccelStructHandle blas = nvrhiDevice->createAccelStruct(blasDesc);
+nvrhi::rt::AccelStructHandle tlas = nvrhiDevice->createAccelStruct(tlasDesc);
 ```
 
 When the AS objects are created, we can build them. If the geometry is static, they can be built just once, at startup.
