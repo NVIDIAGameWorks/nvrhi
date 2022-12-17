@@ -334,6 +334,7 @@ namespace nvrhi::vulkan
             m_Context.rtxMemUtil->PopulateUpdateCommandList(m_CurrentCmdBuf->cmdBuf,
                                                             buildInfos.data(),
                                                             buildRangeArrays.data(),
+                                                            maxPrimArrays.data(),
                                                             (uint32_t)buildInfos.size(),
                                                             buildsToUpdate);
         }
