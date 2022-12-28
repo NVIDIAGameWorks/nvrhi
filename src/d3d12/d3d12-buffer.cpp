@@ -270,14 +270,16 @@ namespace nvrhi::d3d12
         return BufferHandle::Create(buffer);
     }
 
-    void Buffer::createCBV(size_t descriptor) const
+    void Buffer::createCBV(size_t descriptor, BufferRange range) const
     {
         assert(desc.isConstantBuffer);
-        assert(desc.byteSize <= UINT_MAX);
+
+        range = range.resolve(desc);
+        assert(range.byteSize <= UINT_MAX);
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC viewDesc;
-        viewDesc.BufferLocation = resource->GetGPUVirtualAddress();
-        viewDesc.SizeInBytes = (UINT)desc.byteSize;
+        viewDesc.BufferLocation = resource->GetGPUVirtualAddress() + range.byteOffset;
+        viewDesc.SizeInBytes = align((UINT)range.byteSize, c_ConstantBufferOffsetSizeAlignment);
         m_Context.device->CreateConstantBufferView(&viewDesc, { descriptor });
     }
     

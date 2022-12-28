@@ -48,6 +48,7 @@ namespace nvrhi::d3d11
     {
         m_Context.messageCallback = desc.messageCallback;
         m_Context.immediateContext = desc.context;
+        m_Context.immediateContext->QueryInterface(IID_PPV_ARGS(&m_Context.immediateContext1));
         desc.context->GetDevice(&m_Context.device);
 
 #if NVRHI_D3D11_WITH_NVAPI
@@ -152,6 +153,8 @@ namespace nvrhi::d3d11
 #else
             return false;
 #endif
+        case Feature::ConstantBufferRanges:
+            return m_Context.immediateContext1 != nullptr;
         default:
             return false;
         }

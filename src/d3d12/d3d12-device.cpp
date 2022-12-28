@@ -410,6 +410,8 @@ namespace nvrhi::d3d12
             return (getQueue(CommandQueue::Copy) != nullptr);
         case Feature::ConservativeRasterization:
             return true;
+        case Feature::ConstantBufferRanges:
+            return true;
         default:
             return false;
         }

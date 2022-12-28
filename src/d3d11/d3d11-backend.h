@@ -55,6 +55,7 @@ namespace nvrhi::d3d11
     {
         RefCountPtr<ID3D11Device> device;
         RefCountPtr<ID3D11DeviceContext> immediateContext;
+        RefCountPtr<ID3D11DeviceContext1> immediateContext1;
         RefCountPtr<ID3D11Buffer> pushConstantBuffer;
         IMessageCallback* messageCallback = nullptr;
         bool nvapiAvailable = false;
@@ -255,6 +256,8 @@ namespace nvrhi::d3d11
         uint32_t maxSamplerSlot = 0;
 
         ID3D11Buffer* constantBuffers[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT] = {};
+        UINT constantBufferOffsets[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT] = {};
+        UINT constantBufferCounts[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT] = {};
         uint32_t minConstantBufferSlot = D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT;
         uint32_t maxConstantBufferSlot = 0;
 

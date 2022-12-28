@@ -267,6 +267,8 @@ namespace nvrhi::vulkan
             return (m_Queues[uint32_t(CommandQueue::Compute)] != nullptr);
         case Feature::CopyQueue:
             return (m_Queues[uint32_t(CommandQueue::Copy)] != nullptr);
+        case Feature::ConstantBufferRanges:
+            return true;
         default:
             return false;
         }

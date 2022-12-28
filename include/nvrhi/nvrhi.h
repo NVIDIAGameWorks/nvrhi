@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 7;
+    static constexpr uint32_t c_HeaderVersion = 8;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -76,6 +76,7 @@ namespace nvrhi
     static constexpr uint32_t c_MaxVolatileConstantBuffersPerLayout = 6;
     static constexpr uint32_t c_MaxVolatileConstantBuffers = 32;
     static constexpr uint32_t c_MaxPushConstantSize = 128; // D3D12: root signature is 256 bytes max., Vulkan: 128 bytes of push constants guaranteed
+    static constexpr uint32_t c_ConstantBufferOffsetSizeAlignment = 256; // Partially bound constant buffers must have offsets aligned to this and sizes multiple of this
 
     //////////////////////////////////////////////////////////////////////////
     // Basic Types
@@ -1688,7 +1689,7 @@ namespace nvrhi
             return result;
         }
 
-        static BindingSetItem ConstantBuffer(uint32_t slot, IBuffer* buffer)
+        static BindingSetItem ConstantBuffer(uint32_t slot, IBuffer* buffer, BufferRange range = EntireBuffer)
         {
             bool isVolatile = buffer && buffer->getDesc().isVolatile;
 
@@ -1698,7 +1699,7 @@ namespace nvrhi
             result.resourceHandle = buffer;
             result.format = Format::UNKNOWN;
             result.dimension = TextureDimension::Unknown;
-            result.range = EntireBuffer;
+            result.range = range;
             result.unused = 0;
             return result;
         }
@@ -2317,7 +2318,8 @@ namespace nvrhi
         ShaderSpecializations,
         VirtualResources,
         ComputeQueue,
-        CopyQueue
+        CopyQueue,
+        ConstantBufferRanges
     };
 
     enum class MessageSeverity : uint8_t

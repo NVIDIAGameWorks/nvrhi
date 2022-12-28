@@ -1259,7 +1259,7 @@ namespace nvrhi::validation
         return false;
     }
 
-    bool DeviceWrapper::validateBindingSetItem(const BindingSetItem& binding, bool isDescriptorTable, std::stringstream& errorStream) const
+    bool DeviceWrapper::validateBindingSetItem(const BindingSetItem& binding, bool isDescriptorTable, std::stringstream& errorStream)
     {
         switch (binding.type)
         {
@@ -1406,6 +1406,38 @@ namespace nvrhi::validation
             {
                 errorStream << "Both binding for typed buffer " << utils::DebugNameToString(desc.debugName)
                     << " and its BufferDesc have format == UNKNOWN." << std::endl;
+                return false;
+            }
+
+            if (binding.type == ResourceType::ConstantBuffer && !binding.range.isEntireBuffer(desc))
+            {
+                if (!queryFeatureSupport(Feature::ConstantBufferRanges))
+                {
+                    errorStream << "Partial binding of constant buffers is not supported by the device (used for " << utils::DebugNameToString(desc.debugName) << ")";
+                    return false;
+                }
+
+                const BufferRange range = binding.range.resolve(desc);
+                if ((range.byteOffset % c_ConstantBufferOffsetSizeAlignment) != 0)
+                {
+                    errorStream << "Constant buffer offsets must be a multiple of " << c_ConstantBufferOffsetSizeAlignment << " bytes. Buffer "
+                        << utils::DebugNameToString(desc.debugName) << " is bound with effective byteOffset = " << range.byteOffset << ".";
+                    return false;
+                }
+
+                if (range.byteSize == 0 || (range.byteSize % c_ConstantBufferOffsetSizeAlignment) != 0)
+                {
+                    errorStream << "Constant buffer bindings must have nonzero byteSize that is a multiple of " << c_ConstantBufferOffsetSizeAlignment << " bytes. Buffer "
+                        << utils::DebugNameToString(desc.debugName) << " is bound with effective byteSize = " << range.byteSize << ".";
+                    return false;
+                }
+            }
+
+            if (binding.type == ResourceType::VolatileConstantBuffer && !binding.range.isEntireBuffer(desc))
+            {
+                const BufferRange range = binding.range.resolve(desc);
+                errorStream << "Volatile constant buffers cannot be partially bound. Buffer " << utils::DebugNameToString(desc.debugName)
+                    << " is bound with effective byteOffset = " << range.byteOffset << ", byteSize = " << range.byteSize << ".";
                 return false;
             }
 

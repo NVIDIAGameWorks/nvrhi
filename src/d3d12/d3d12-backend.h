@@ -285,7 +285,7 @@ namespace nvrhi::d3d12
 
         void postCreate();
         DescriptorIndex getClearUAV();
-        void createCBV(size_t descriptor) const;
+        void createCBV(size_t descriptor, BufferRange range) const;
         void createSRV(size_t descriptor, Format format, BufferRange range, ResourceType type) const;
         void createUAV(size_t descriptor, Format format, BufferRange range, ResourceType type) const;
         static void createNullSRV(size_t descriptor, Format format, const Context& context);
