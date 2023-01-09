@@ -75,7 +75,7 @@ namespace nvrhi::vulkan
         if (desc.isAccelStructStorage)
             usageFlags |= vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR;
 
-        if (m_Context.extensions.KHR_buffer_device_address)
+        if (m_Context.extensions.buffer_device_address)
             usageFlags |= vk::BufferUsageFlagBits::eShaderDeviceAddress;
 
         uint64_t size = desc.byteSize;
@@ -132,7 +132,7 @@ namespace nvrhi::vulkan
                 assert(buffer->mappedMemory);
             }
 
-            if (m_Context.extensions.KHR_buffer_device_address)
+            if (m_Context.extensions.buffer_device_address)
             {
                 auto addressInfo = vk::BufferDeviceAddressInfo().setBuffer(buffer->buffer);
 
@@ -589,7 +589,7 @@ namespace nvrhi::vulkan
 
         buffer->heap = heap;
 
-        if (m_Context.extensions.KHR_buffer_device_address)
+        if (m_Context.extensions.buffer_device_address)
         {
             auto addressInfo = vk::BufferDeviceAddressInfo().setBuffer(buffer->buffer);
 

@@ -76,7 +76,7 @@ namespace nvrhi::vulkan
             { VK_EXT_DEBUG_REPORT_EXTENSION_NAME, &m_Context.extensions.EXT_debug_report },
             { VK_EXT_DEBUG_MARKER_EXTENSION_NAME, &m_Context.extensions.EXT_debug_marker },
             { VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, &m_Context.extensions.KHR_acceleration_structure },
-            { VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, &m_Context.extensions.KHR_buffer_device_address },
+            { VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, &m_Context.extensions.buffer_device_address },
             { VK_KHR_RAY_QUERY_EXTENSION_NAME,&m_Context.extensions.KHR_ray_query },
             { VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME, &m_Context.extensions.KHR_ray_tracing_pipeline },
             { VK_NV_MESH_SHADER_EXTENSION_NAME, &m_Context.extensions.NV_mesh_shader },
@@ -102,6 +102,10 @@ namespace nvrhi::vulkan
                 *(ext->second) = true;
             }
         }
+
+        // The Vulkan 1.2 way of enabling bufferDeviceAddress
+        if (desc.bufferDeviceAddressSupported)
+            m_Context.extensions.buffer_device_address = true;
 
         // Get the device properties with supported extensions
 
@@ -394,7 +398,10 @@ namespace nvrhi::vulkan
         heap->desc = d;
         heap->managed = true;
 
-        const vk::Result res = m_Allocator.allocateMemory(heap, memoryRequirements, memoryPropertyFlags);
+        // Set the Device Address bit if that feature is supported, because the heap might be used to store acceleration structures
+        const bool enableDeviceAddress = m_Context.extensions.buffer_device_address;
+
+        const vk::Result res = m_Allocator.allocateMemory(heap, memoryRequirements, memoryPropertyFlags, enableDeviceAddress);
 
         if (res != vk::Result::eSuccess)
         {

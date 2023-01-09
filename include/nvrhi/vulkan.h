@@ -78,6 +78,9 @@ namespace nvrhi::vulkan
         size_t numDeviceExtensions = 0;
 
         uint32_t maxTimerQueries = 256;
+
+        // Indicates if VkPhysicalDeviceVulkan12Features::bufferDeviceAddress was set to 'true' at device creation time
+        bool bufferDeviceAddressSupported = false;
     };
 
     NVRHI_API DeviceHandle createDevice(const DeviceDesc& desc);

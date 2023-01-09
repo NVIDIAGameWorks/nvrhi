@@ -146,7 +146,7 @@ namespace nvrhi::vulkan
             bool EXT_debug_report = false;
             bool EXT_debug_marker = false;
             bool KHR_acceleration_structure = false;
-            bool KHR_buffer_device_address = false;
+            bool buffer_device_address = false; // either KHR_ or Vulkan 1.2 versions
             bool KHR_ray_query = false;
             bool KHR_ray_tracing_pipeline = false;
             bool NV_mesh_shader = false;
