@@ -72,6 +72,7 @@ namespace nvrhi::vulkan
 
         // maps Vulkan extension strings into the corresponding boolean flags in Device
         const std::unordered_map<std::string, bool*> extensionStringMap = {
+            { VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME, &m_Context.extensions.KHR_synchronization2 },
             { VK_KHR_MAINTENANCE1_EXTENSION_NAME, &m_Context.extensions.KHR_maintenance1 },
             { VK_EXT_DEBUG_REPORT_EXTENSION_NAME, &m_Context.extensions.EXT_debug_report },
             { VK_EXT_DEBUG_MARKER_EXTENSION_NAME, &m_Context.extensions.EXT_debug_marker },
@@ -82,6 +83,7 @@ namespace nvrhi::vulkan
             { VK_NV_MESH_SHADER_EXTENSION_NAME, &m_Context.extensions.NV_mesh_shader },
             { VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME, &m_Context.extensions.EXT_conservative_rasterization},
             { VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, &m_Context.extensions.KHR_fragment_shading_rate },
+            { VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME, &m_Context.extensions.EXT_opacity_micromap },
         };
 
         // parse the extension/layer lists and figure out which extensions are enabled
@@ -107,13 +109,12 @@ namespace nvrhi::vulkan
         if (desc.bufferDeviceAddressSupported)
             m_Context.extensions.buffer_device_address = true;
 
-        // Get the device properties with supported extensions
-
         void* pNext = nullptr;
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR accelStructProperties;
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties;
         vk::PhysicalDeviceConservativeRasterizationPropertiesEXT conservativeRasterizationProperties;
         vk::PhysicalDeviceFragmentShadingRatePropertiesKHR shadingRateProperties;
+        vk::PhysicalDeviceOpacityMicromapPropertiesEXT opacityMicromapProperties;
         vk::PhysicalDeviceProperties2 deviceProperties2;
 
         if (m_Context.extensions.KHR_acceleration_structure)
@@ -140,6 +141,12 @@ namespace nvrhi::vulkan
             pNext = &conservativeRasterizationProperties;
         }
 
+        if (m_Context.extensions.EXT_opacity_micromap)
+        {
+            opacityMicromapProperties.pNext = pNext;
+            pNext = &opacityMicromapProperties;
+        }
+
         deviceProperties2.pNext = pNext;
 
         m_Context.physicalDevice.getProperties2(&deviceProperties2);
@@ -149,7 +156,14 @@ namespace nvrhi::vulkan
         m_Context.rayTracingPipelineProperties = rayTracingPipelineProperties;
         m_Context.conservativeRasterizationProperties = conservativeRasterizationProperties;
         m_Context.shadingRateProperties = shadingRateProperties;
+        m_Context.opacityMicromapProperties = opacityMicromapProperties;
         m_Context.messageCallback = desc.errorCB;
+
+        if (m_Context.extensions.EXT_opacity_micromap && !m_Context.extensions.KHR_synchronization2)
+        {
+            m_Context.warning(
+                "EXT_opacity_micromap is used without KHR_synchronization2 which is nessesary for OMM Array state transitions. Feature::RayTracingOpacityMicromap will be disabled.");
+        }
 
         if (m_Context.extensions.KHR_fragment_shading_rate)
         {
@@ -244,6 +258,8 @@ namespace nvrhi::vulkan
             return m_Context.extensions.KHR_acceleration_structure;
         case Feature::RayTracingPipeline:
             return m_Context.extensions.KHR_ray_tracing_pipeline;
+        case Feature::RayTracingOpacityMicromap:
+            return m_Context.extensions.EXT_opacity_micromap && m_Context.extensions.KHR_synchronization2;
         case Feature::RayQuery:
             return m_Context.extensions.KHR_ray_query;
         case Feature::ShaderSpecializations:
@@ -448,6 +464,11 @@ namespace nvrhi::vulkan
     void VulkanContext::error(const std::string& message) const
     {
         messageCallback->message(MessageSeverity::Error, message.c_str());
+    }
+
+    void VulkanContext::warning(const std::string& message) const
+    {
+        messageCallback->message(MessageSeverity::Warning, message.c_str());
     }
 
 } // namespace nvrhi::vulkan

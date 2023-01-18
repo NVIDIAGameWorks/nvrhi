@@ -135,7 +135,7 @@ namespace nvrhi::utils
             desc.bottomLevelGeometries.size(),
             desc.buildFlags);
     }
-    
+
     void TextureUavBarrier(ICommandList* commandList, ITexture* texture)
     {
         commandList->setTextureState(texture, AllSubresources, ResourceStates::UnorderedAccess);

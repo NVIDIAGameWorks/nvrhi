@@ -141,30 +141,33 @@ namespace nvrhi::vulkan
         }
     }
 
-    vk::PipelineStageFlagBits convertShaderTypeToPipelineStageFlagBits(ShaderType shaderType)
+    vk::PipelineStageFlagBits2 convertShaderTypeToPipelineStageFlagBits(ShaderType shaderType)
     {
         if (shaderType == ShaderType::All)
-            return vk::PipelineStageFlagBits::eAllCommands;
+            return vk::PipelineStageFlagBits2::eAllCommands;
 
         uint32_t result = 0;
 
-        if ((shaderType & ShaderType::Compute) != 0)        result |= uint32_t(vk::PipelineStageFlagBits::eComputeShader);
-        if ((shaderType & ShaderType::Vertex) != 0)         result |= uint32_t(vk::PipelineStageFlagBits::eVertexShader);
-        if ((shaderType & ShaderType::Hull) != 0)           result |= uint32_t(vk::PipelineStageFlagBits::eTessellationControlShader);
-        if ((shaderType & ShaderType::Domain) != 0)         result |= uint32_t(vk::PipelineStageFlagBits::eTessellationEvaluationShader);
-        if ((shaderType & ShaderType::Geometry) != 0)       result |= uint32_t(vk::PipelineStageFlagBits::eGeometryShader);
-        if ((shaderType & ShaderType::Pixel) != 0)          result |= uint32_t(vk::PipelineStageFlagBits::eFragmentShader);
-        if ((shaderType & ShaderType::Amplification) != 0)  result |= uint32_t(vk::PipelineStageFlagBits::eTaskShaderNV);
-        if ((shaderType & ShaderType::Mesh) != 0)           result |= uint32_t(vk::PipelineStageFlagBits::eMeshShaderNV);
-        if ((shaderType & ShaderType::AllRayTracing) != 0)  result |= uint32_t(vk::PipelineStageFlagBits::eRayTracingShaderKHR); // or eRayTracingShaderNV, they have the same value
+        if ((shaderType & ShaderType::Compute) != 0)        result |= uint32_t(vk::PipelineStageFlagBits2::eComputeShader);
+        if ((shaderType & ShaderType::Vertex) != 0)         result |= uint32_t(vk::PipelineStageFlagBits2::eVertexShader);
+        if ((shaderType & ShaderType::Hull) != 0)           result |= uint32_t(vk::PipelineStageFlagBits2::eTessellationControlShader);
+        if ((shaderType & ShaderType::Domain) != 0)         result |= uint32_t(vk::PipelineStageFlagBits2::eTessellationEvaluationShader);
+        if ((shaderType & ShaderType::Geometry) != 0)       result |= uint32_t(vk::PipelineStageFlagBits2::eGeometryShader);
+        if ((shaderType & ShaderType::Pixel) != 0)          result |= uint32_t(vk::PipelineStageFlagBits2::eFragmentShader);
+        if ((shaderType & ShaderType::Amplification) != 0)  result |= uint32_t(vk::PipelineStageFlagBits2::eTaskShaderNV);
+        if ((shaderType & ShaderType::Mesh) != 0)           result |= uint32_t(vk::PipelineStageFlagBits2::eMeshShaderNV);
+        if ((shaderType & ShaderType::AllRayTracing) != 0)  result |= uint32_t(vk::PipelineStageFlagBits2::eRayTracingShaderKHR); // or eRayTracingShaderNV, they have the same value
 
-        return vk::PipelineStageFlagBits(result);
+        return vk::PipelineStageFlagBits2(result);
     }
 
     vk::ShaderStageFlagBits convertShaderTypeToShaderStageFlagBits(ShaderType shaderType)
     {
         if (shaderType == ShaderType::All)
             return vk::ShaderStageFlagBits::eAll;
+
+        if (shaderType == ShaderType::AllGraphics)
+            return vk::ShaderStageFlagBits::eAllGraphics;
 
 #if ENABLE_SHORTCUT_CONVERSIONS
         static_assert(uint32_t(ShaderType::Vertex)        == uint32_t(VK_SHADER_STAGE_VERTEX_BIT));
@@ -204,97 +207,133 @@ namespace nvrhi::vulkan
 #endif
     }
 
-    static const ResourceStateMapping g_ResourceStateMap[] = 
+    struct ResourceStateMappingInternal
     {
-        { ResourceStates::Common,
-            vk::PipelineStageFlagBits::eTopOfPipe,
-            vk::AccessFlags(),
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::ConstantBuffer,
-            vk::PipelineStageFlagBits::eAllCommands,
-            vk::AccessFlagBits::eUniformRead,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::VertexBuffer,
-            vk::PipelineStageFlagBits::eVertexInput,
-            vk::AccessFlagBits::eVertexAttributeRead,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::IndexBuffer,
-            vk::PipelineStageFlagBits::eVertexInput,
-            vk::AccessFlagBits::eIndexRead,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::IndirectArgument,
-            vk::PipelineStageFlagBits::eDrawIndirect,
-            vk::AccessFlagBits::eIndirectCommandRead,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::ShaderResource,
-            vk::PipelineStageFlagBits::eAllCommands,
-            vk::AccessFlagBits::eShaderRead,
-            vk::ImageLayout::eShaderReadOnlyOptimal },
-        { ResourceStates::UnorderedAccess,
-            vk::PipelineStageFlagBits::eAllCommands,
-            vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
-            vk::ImageLayout::eGeneral },
-        { ResourceStates::RenderTarget,
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite,
-            vk::ImageLayout::eColorAttachmentOptimal },
-        { ResourceStates::DepthWrite,
-            vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-            vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-            vk::ImageLayout::eDepthStencilAttachmentOptimal },
-        { ResourceStates::DepthRead,
-            vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
-            vk::AccessFlagBits::eDepthStencilAttachmentRead,
-            vk::ImageLayout::eDepthStencilAttachmentOptimal },
-        { ResourceStates::StreamOut,
-            vk::PipelineStageFlagBits::eTransformFeedbackEXT,
-            vk::AccessFlagBits::eTransformFeedbackWriteEXT,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::CopyDest,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::AccessFlagBits::eTransferWrite,
-            vk::ImageLayout::eTransferDstOptimal },
-        { ResourceStates::CopySource,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::AccessFlagBits::eTransferRead,
-            vk::ImageLayout::eTransferSrcOptimal },
-        { ResourceStates::ResolveDest,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::AccessFlagBits::eTransferWrite,
-            vk::ImageLayout::eTransferDstOptimal },
-        { ResourceStates::ResolveSource,
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::AccessFlagBits::eTransferRead,
-            vk::ImageLayout::eTransferSrcOptimal },
-        { ResourceStates::Present,
-            vk::PipelineStageFlagBits::eAllCommands,
-            vk::AccessFlagBits::eMemoryRead,
-            vk::ImageLayout::ePresentSrcKHR },
-        { ResourceStates::AccelStructRead,
-            vk::PipelineStageFlagBits::eRayTracingShaderKHR | vk::PipelineStageFlagBits::eComputeShader,
-            vk::AccessFlagBits::eAccelerationStructureReadKHR,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::AccelStructWrite,
-            vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR,
-            vk::AccessFlagBits::eAccelerationStructureWriteKHR,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::AccelStructBuildInput,
-            vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR,
-            vk::AccessFlagBits::eAccelerationStructureReadKHR,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::AccelStructBuildBlas,
-            vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR,
-            vk::AccessFlagBits::eAccelerationStructureReadKHR,
-            vk::ImageLayout::eUndefined },
-        { ResourceStates::ShadingRateSurface,
-            vk::PipelineStageFlagBits::eFragmentShadingRateAttachmentKHR,
-            vk::AccessFlagBits::eFragmentShadingRateAttachmentReadKHR,
-            vk::ImageLayout::eFragmentShadingRateAttachmentOptimalKHR },
+        ResourceStates nvrhiState;
+        vk::PipelineStageFlags2 stageFlags;
+        vk::AccessFlags2 accessMask;
+        vk::ImageLayout imageLayout;
+
+        ResourceStateMapping AsResourceStateMapping() const 
+        {
+            // It's safe to cast vk::AccessFlags2 -> vk::AccessFlags and vk::PipelineStageFlags2 -> vk::PipelineStageFlags (as long as the enum exist in both versions!),
+            // synchronization2 spec says: "The new flags are identical to the old values within the 32-bit range, with new stages and bits beyond that."
+            // The below stages are exclustive to synchronization2
+            assert((stageFlags & vk::PipelineStageFlagBits2::eMicromapBuildEXT) != vk::PipelineStageFlagBits2::eMicromapBuildEXT);
+            assert((accessMask & vk::AccessFlagBits2::eMicromapWriteEXT) != vk::AccessFlagBits2::eMicromapWriteEXT);
+            return
+                ResourceStateMapping(nvrhiState,
+                    reinterpret_cast<const vk::PipelineStageFlags&>(stageFlags),
+                    reinterpret_cast<const vk::AccessFlags&>(accessMask),
+                    imageLayout
+                );
+        }
+
+        ResourceStateMapping2 AsResourceStateMapping2() const
+        {
+            return ResourceStateMapping2(nvrhiState, stageFlags, accessMask, imageLayout);
+        }
     };
 
-    ResourceStateMapping convertResourceState(ResourceStates state)
+    static const ResourceStateMappingInternal g_ResourceStateMap[] =
     {
-        ResourceStateMapping result = {};
+        { ResourceStates::Common,
+            vk::PipelineStageFlagBits2::eTopOfPipe,
+            vk::AccessFlagBits2(),
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::ConstantBuffer,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eUniformRead,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::VertexBuffer,
+            vk::PipelineStageFlagBits2::eVertexInput,
+            vk::AccessFlagBits2::eVertexAttributeRead,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::IndexBuffer,
+            vk::PipelineStageFlagBits2::eVertexInput,
+            vk::AccessFlagBits2::eIndexRead,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::IndirectArgument,
+            vk::PipelineStageFlagBits2::eDrawIndirect,
+            vk::AccessFlagBits2::eIndirectCommandRead,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::ShaderResource,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::ImageLayout::eShaderReadOnlyOptimal },
+        { ResourceStates::UnorderedAccess,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite,
+            vk::ImageLayout::eGeneral },
+        { ResourceStates::RenderTarget,
+            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
+            vk::ImageLayout::eColorAttachmentOptimal },
+        { ResourceStates::DepthWrite,
+            vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+            vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+            vk::ImageLayout::eDepthStencilAttachmentOptimal },
+        { ResourceStates::DepthRead,
+            vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+            vk::AccessFlagBits2::eDepthStencilAttachmentRead,
+            vk::ImageLayout::eDepthStencilAttachmentOptimal },
+        { ResourceStates::StreamOut,
+            vk::PipelineStageFlagBits2::eTransformFeedbackEXT,
+            vk::AccessFlagBits2::eTransformFeedbackWriteEXT,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::CopyDest,
+            vk::PipelineStageFlagBits2::eTransfer,
+            vk::AccessFlagBits2::eTransferWrite,
+            vk::ImageLayout::eTransferDstOptimal },
+        { ResourceStates::CopySource,
+            vk::PipelineStageFlagBits2::eTransfer,
+            vk::AccessFlagBits2::eTransferRead,
+            vk::ImageLayout::eTransferSrcOptimal },
+        { ResourceStates::ResolveDest,
+            vk::PipelineStageFlagBits2::eTransfer,
+            vk::AccessFlagBits2::eTransferWrite,
+            vk::ImageLayout::eTransferDstOptimal },
+        { ResourceStates::ResolveSource,
+            vk::PipelineStageFlagBits2::eTransfer,
+            vk::AccessFlagBits2::eTransferRead,
+            vk::ImageLayout::eTransferSrcOptimal },
+        { ResourceStates::Present,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eMemoryRead,
+            vk::ImageLayout::ePresentSrcKHR },
+        { ResourceStates::AccelStructRead,
+            vk::PipelineStageFlagBits2::eRayTracingShaderKHR | vk::PipelineStageFlagBits2::eComputeShader,
+            vk::AccessFlagBits2::eAccelerationStructureReadKHR,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::AccelStructWrite,
+            vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            vk::AccessFlagBits2::eAccelerationStructureWriteKHR,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::AccelStructBuildInput,
+            vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            vk::AccessFlagBits2::eAccelerationStructureReadKHR,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::AccelStructBuildBlas,
+            vk::PipelineStageFlagBits2::eAccelerationStructureBuildKHR,
+            vk::AccessFlagBits2::eAccelerationStructureReadKHR,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::ShadingRateSurface,
+            vk::PipelineStageFlagBits2::eFragmentShadingRateAttachmentKHR,
+            vk::AccessFlagBits2::eFragmentShadingRateAttachmentReadKHR,
+            vk::ImageLayout::eFragmentShadingRateAttachmentOptimalKHR },
+        { ResourceStates::OpacityMicromapWrite,
+            vk::PipelineStageFlagBits2::eMicromapBuildEXT,
+            vk::AccessFlagBits2::eMicromapWriteEXT,
+            vk::ImageLayout::eUndefined },
+        { ResourceStates::OpacityMicromapBuildInput,
+            vk::PipelineStageFlagBits2::eMicromapBuildEXT,
+            vk::AccessFlagBits2::eShaderRead,
+            vk::ImageLayout::eUndefined },
+    };
+
+    ResourceStateMappingInternal convertResourceStateInternal(ResourceStates state)
+    {
+        ResourceStateMappingInternal result = {};
 
         constexpr uint32_t numStateBits = sizeof(g_ResourceStateMap) / sizeof(g_ResourceStateMap[0]);
 
@@ -307,7 +346,7 @@ namespace nvrhi::vulkan
 
             if (stateTmp & bit)
             {
-                const ResourceStateMapping& mapping = g_ResourceStateMap[bitIndex];
+                const ResourceStateMappingInternal& mapping = g_ResourceStateMap[bitIndex];
 
                 assert(uint32_t(mapping.nvrhiState) == bit);
                 assert(result.imageLayout == vk::ImageLayout::eUndefined || mapping.imageLayout == vk::ImageLayout::eUndefined || result.imageLayout == mapping.imageLayout);
@@ -327,6 +366,18 @@ namespace nvrhi::vulkan
         assert(result.nvrhiState == state);
 
         return result;
+    }
+
+    ResourceStateMapping convertResourceState(ResourceStates state)
+    {
+        const ResourceStateMappingInternal mapping = convertResourceStateInternal(state);
+        return mapping.AsResourceStateMapping();
+    }
+
+    ResourceStateMapping2 convertResourceState2(ResourceStates state)
+    {
+        const ResourceStateMappingInternal mapping = convertResourceStateInternal(state);
+        return mapping.AsResourceStateMapping2();
     }
 
     const char* resultToString(VkResult result)
@@ -710,14 +761,20 @@ namespace nvrhi::vulkan
         static_assert(uint32_t(rt::InstanceFlags::TriangleFrontCounterclockwise) == uint32_t(VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR));
         static_assert(uint32_t(rt::InstanceFlags::ForceOpaque) == uint32_t(VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR));
         static_assert(uint32_t(rt::InstanceFlags::ForceNonOpaque) == uint32_t(VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_KHR));
+        static_assert(uint32_t(rt::InstanceFlags::ForceOMM2State) == uint32_t(VK_GEOMETRY_INSTANCE_FORCE_OPACITY_MICROMAP_2_STATE_EXT));
+        static_assert(uint32_t(rt::InstanceFlags::DisableOMMs) == uint32_t(VK_GEOMETRY_INSTANCE_DISABLE_OPACITY_MICROMAPS_EXT));
 
-        return vk::GeometryInstanceFlagsKHR(uint32_t(instanceFlags) & 0x0f);
+        return vk::GeometryInstanceFlagsKHR(uint32_t(instanceFlags) );
 #else
         vk::GeometryInstanceFlagsKHR flags = vk::GeometryInstanceFlagBitsKHR(0);
         if ((instanceFlags & rt::InstanceFlags::ForceNonOpaque) != 0)
             flags |= vk::GeometryInstanceFlagBitsKHR::eForceNoOpaque;
         if ((instanceFlags & rt::InstanceFlags::ForceOpaque) != 0)
             flags |= vk::GeometryInstanceFlagBitsKHR::eForceOpaque;
+        if ((instanceFlags & rt::InstanceFlags::ForceOMM2State) != 0)
+            flags |= vk::GeometryInstanceFlagBitsKHR::eForceOpacityMicromap2StateEXT;
+        if ((instanceFlags & rt::InstanceFlags::DisableOMMs) != 0)
+            flags |= vk::GeometryInstanceFlagBitsKHR::eDisableOpacityMicromapsEXT;
         if ((instanceFlags & rt::InstanceFlags::TriangleCullDisable) != 0)
             flags |= vk::GeometryInstanceFlagBitsKHR::eTriangleCullDisable;
         if ((instanceFlags & rt::InstanceFlags::TriangleFrontCounterclockwise) != 0)

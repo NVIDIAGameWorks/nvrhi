@@ -175,6 +175,11 @@ namespace nvrhi::d3d11
         utils::NotSupported();
     }
 
+    void CommandList::buildOpacityMicromap(rt::IOpacityMicromap* , const rt::OpacityMicromapDesc& )
+    {
+        utils::NotSupported();
+    }
+
     void CommandList::buildBottomLevelAccelStruct(rt::IAccelStruct*, const rt::GeometryDesc*, size_t, rt::AccelStructBuildFlags)
     {
         utils::NotSupported();

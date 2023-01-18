@@ -214,6 +214,12 @@ namespace nvrhi::d3d11
     {
         return nullptr;
     }
+
+    rt::OpacityMicromapHandle Device::createOpacityMicromap(const rt::OpacityMicromapDesc& )
+    {
+        utils::NotSupported();
+        return nullptr;
+    }
     
     rt::AccelStructHandle Device::createAccelStruct(const rt::AccelStructDesc&)
     {

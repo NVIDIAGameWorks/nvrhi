@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 9;
+    static constexpr uint32_t c_HeaderVersion = 10;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -344,28 +344,30 @@ namespace nvrhi
     
     enum class ResourceStates : uint32_t
     {
-        Unknown               = 0,
-        Common                = 0x00000001,
-        ConstantBuffer        = 0x00000002,
-        VertexBuffer          = 0x00000004,
-        IndexBuffer           = 0x00000008,
-        IndirectArgument      = 0x00000010,
-        ShaderResource        = 0x00000020,
-        UnorderedAccess       = 0x00000040,
-        RenderTarget          = 0x00000080,
-        DepthWrite            = 0x00000100,
-        DepthRead             = 0x00000200,
-        StreamOut             = 0x00000400,
-        CopyDest              = 0x00000800,
-        CopySource            = 0x00001000,
-        ResolveDest           = 0x00002000,
-        ResolveSource         = 0x00004000,
-        Present               = 0x00008000,
-        AccelStructRead       = 0x00010000,
-        AccelStructWrite      = 0x00020000,
-        AccelStructBuildInput = 0x00040000,
-        AccelStructBuildBlas  = 0x00080000,
-        ShadingRateSurface    = 0x00100000,
+        Unknown                     = 0,
+        Common                      = 0x00000001,
+        ConstantBuffer              = 0x00000002,
+        VertexBuffer                = 0x00000004,
+        IndexBuffer                 = 0x00000008,
+        IndirectArgument            = 0x00000010,
+        ShaderResource              = 0x00000020,
+        UnorderedAccess             = 0x00000040,
+        RenderTarget                = 0x00000080,
+        DepthWrite                  = 0x00000100,
+        DepthRead                   = 0x00000200,
+        StreamOut                   = 0x00000400,
+        CopyDest                    = 0x00000800,
+        CopySource                  = 0x00001000,
+        ResolveDest                 = 0x00002000,
+        ResolveSource               = 0x00004000,
+        Present                     = 0x00008000,
+        AccelStructRead             = 0x00010000,
+        AccelStructWrite            = 0x00020000,
+        AccelStructBuildInput       = 0x00040000,
+        AccelStructBuildBlas        = 0x00080000,
+        ShadingRateSurface          = 0x00100000,
+        OpacityMicromapWrite        = 0x00200000,
+        OpacityMicromapBuildInput   = 0x00400000,
     };
 
     NVRHI_ENUM_CLASS_FLAG_OPERATORS(ResourceStates)
@@ -1250,6 +1252,79 @@ namespace nvrhi
 
     namespace rt
     {
+        //////////////////////////////////////////////////////////////////////////
+        // rt::OpacityMicromap
+        //////////////////////////////////////////////////////////////////////////
+
+        enum class OpacityMicromapFormat
+        {
+            OC1_2_State = 1,
+            OC1_4_State = 2,
+        };
+
+        enum class OpacityMicromapBuildFlags : uint8_t
+        {
+            None = 0,
+            FastTrace = 1,
+            FastBuild = 2,
+        };
+
+        NVRHI_ENUM_CLASS_FLAG_OPERATORS(OpacityMicromapBuildFlags)
+
+        struct OpacityMicromapUsageCount
+        {
+            // Number of OMMs with the specified subdivision level and format.
+            uint32_t count;
+            // Micro triangle count is 4^N, where N is the subdivision level.
+            uint32_t subdivisionLevel;
+            // OMM input sub format.
+            OpacityMicromapFormat format;
+        };
+
+        struct OpacityMicromapDesc
+        {
+            std::string debugName;
+            bool trackLiveness = true;
+
+            // OMM flags. Applies to all OMMs in array.
+            OpacityMicromapBuildFlags flags;
+            // OMM counts for each subdivision level and format combination in the inputs.
+            std::vector<OpacityMicromapUsageCount> counts;
+
+            // Base pointer for raw OMM input data.
+            // Individual OMMs must be 1B aligned, though natural alignment is recommended.
+            // It's also recommended to try to organize OMMs together that are expected to be used spatially close together.
+            IBuffer* inputBuffer = nullptr;
+            uint64_t inputBufferOffset = 0;
+
+            // One NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_DESC entry per OMM.
+            IBuffer* perOmmDescs = nullptr;
+            uint64_t perOmmDescsOffset = 0;
+
+            OpacityMicromapDesc& setDebugName(const std::string& value) { debugName = value; return *this; }
+            OpacityMicromapDesc& setTrackLiveness(bool value) { trackLiveness = value; return *this; }
+            OpacityMicromapDesc& setFlags(OpacityMicromapBuildFlags value) { flags = value; return *this; }
+            OpacityMicromapDesc& setCounts(const std::vector<OpacityMicromapUsageCount>& value) { counts = value; return *this; }
+            OpacityMicromapDesc& setInputBuffer(IBuffer* value) { inputBuffer = value; return *this; }
+            OpacityMicromapDesc& setInputBufferOffset(uint64_t value) { inputBufferOffset = value; return *this; }
+            OpacityMicromapDesc& setPerOmmDescs(IBuffer* value) { perOmmDescs = value; return *this; }
+            OpacityMicromapDesc& setPerOmmDescsOffset(uint64_t value) { perOmmDescsOffset = value; return *this; }
+        };
+
+        class IOpacityMicromap : public IResource
+        {
+        public:
+            [[nodiscard]] virtual const OpacityMicromapDesc& getDesc() const = 0;
+            [[nodiscard]] virtual bool isCompacted() const = 0;
+            [[nodiscard]] virtual uint64_t getDeviceAddress() const = 0;
+        };
+
+        typedef RefCountPtr<IOpacityMicromap> OpacityMicromapHandle;
+
+        //////////////////////////////////////////////////////////////////////////
+        // rt::AccelStruct
+        //////////////////////////////////////////////////////////////////////////
+
         class IAccelStruct;
 
         typedef float AffineTransform[12];
@@ -1301,6 +1376,13 @@ namespace nvrhi
             uint32_t vertexCount = 0;
             uint32_t vertexStride = 0;
 
+            IOpacityMicromap* opacityMicromap = nullptr;
+            IBuffer* ommIndexBuffer = nullptr;
+            uint64_t ommIndexBufferOffset = 0;
+            Format ommIndexFormat = Format::UNKNOWN;
+            const OpacityMicromapUsageCount* pOmmUsageCounts = nullptr;
+            uint32_t numOmmUsageCounts = 0;
+
             GeometryTriangles& setIndexBuffer(IBuffer* value) { indexBuffer = value; return *this; }
             GeometryTriangles& setVertexBuffer(IBuffer* value) { vertexBuffer = value; return *this; }
             GeometryTriangles& setIndexFormat(Format value) { indexFormat = value; return *this; }
@@ -1310,6 +1392,12 @@ namespace nvrhi
             GeometryTriangles& setIndexCount(uint32_t value) { indexCount = value; return *this; }
             GeometryTriangles& setVertexCount(uint32_t value) { vertexCount = value; return *this; }
             GeometryTriangles& setVertexStride(uint32_t value) { vertexStride = value; return *this; }
+            GeometryTriangles& setOpacityMicromap(IOpacityMicromap* value) { opacityMicromap = value; return *this; }
+            GeometryTriangles& setOmmIndexBuffer(IBuffer* value) { ommIndexBuffer = value; return *this; }
+            GeometryTriangles& setOmmIndexBufferOffset(uint64_t value) { ommIndexBufferOffset = value; return *this; }
+            GeometryTriangles& setOmmIndexFormat(Format value) { ommIndexFormat = value; return *this; }
+            GeometryTriangles& setPOmmUsageCounts(const OpacityMicromapUsageCount* value) { pOmmUsageCounts = value; return *this; }
+            GeometryTriangles& setNumOmmUsageCounts(uint32_t value) { numOmmUsageCounts = value; return *this; }
         };
 
         struct GeometryAABBs
@@ -1353,7 +1441,9 @@ namespace nvrhi
             TriangleCullDisable = 1,
             TriangleFrontCounterclockwise = 2,
             ForceOpaque = 4,
-            ForceNonOpaque = 8
+            ForceNonOpaque = 8,
+            ForceOMM2State = 16,
+            DisableOMMs = 32,
         };
 
         NVRHI_ENUM_CLASS_FLAG_OPERATORS(InstanceFlags)
@@ -2310,6 +2400,7 @@ namespace nvrhi
         SinglePassStereo,
         RayTracingAccelStruct,
         RayTracingPipeline,
+        RayTracingOpacityMicromap,
         RayQuery,
         FastGeometryShader,
         Meshlets,
@@ -2436,6 +2527,8 @@ namespace nvrhi
 
         virtual void setRayTracingState(const rt::State& state) = 0;
         virtual void dispatchRays(const rt::DispatchRaysArguments& args) = 0;
+
+        virtual void buildOpacityMicromap(rt::IOpacityMicromap* omm, const rt::OpacityMicromapDesc& desc) = 0;
         
         virtual void buildBottomLevelAccelStruct(rt::IAccelStruct* as, const rt::GeometryDesc* pGeometries, size_t numGeometries,
             rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) = 0;
@@ -2572,6 +2665,7 @@ namespace nvrhi
         virtual void resizeDescriptorTable(IDescriptorTable* descriptorTable, uint32_t newSize, bool keepContents = true) = 0;
         virtual bool writeDescriptorTable(IDescriptorTable* descriptorTable, const BindingSetItem& item) = 0;
 
+        virtual rt::OpacityMicromapHandle createOpacityMicromap(const rt::OpacityMicromapDesc& desc) = 0;
         virtual rt::AccelStructHandle createAccelStruct(const rt::AccelStructDesc& desc) = 0;
         virtual MemoryRequirements getAccelStructMemoryRequirements(rt::IAccelStruct* as) = 0;
         virtual bool bindAccelStructMemory(rt::IAccelStruct* as, IHeap* heap, uint64_t offset) = 0;

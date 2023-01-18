@@ -79,6 +79,7 @@ namespace nvrhi
         constexpr ObjectType VK_DescriptorSet                       = 0x00030011;
         constexpr ObjectType VK_PipelineLayout                      = 0x00030012;
         constexpr ObjectType VK_Pipeline                            = 0x00030013;
+        constexpr ObjectType VK_Micromap                            = 0x00030014;
     };
 
     struct Object

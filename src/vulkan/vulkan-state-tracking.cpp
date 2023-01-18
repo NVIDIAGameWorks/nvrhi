@@ -151,13 +151,8 @@ namespace nvrhi::vulkan
         return !m_StateTracker.getBufferBarriers().empty() || !m_StateTracker.getTextureBarriers().empty();
     }
 
-    void CommandList::commitBarriers()
+    void CommandList::commitBarriersInternal()
     {
-        if (m_StateTracker.getBufferBarriers().empty() && m_StateTracker.getTextureBarriers().empty())
-            return;
-
-        endRenderPass();
-
         std::vector<vk::ImageMemoryBarrier> imageBarriers;
         std::vector<vk::BufferMemoryBarrier> bufferBarriers;
         vk::PipelineStageFlags beforeStageFlags = vk::PipelineStageFlags(0);
@@ -233,7 +228,7 @@ namespace nvrhi::vulkan
 
             beforeStageFlags = before.stageFlags;
             afterStageFlags = after.stageFlags;
-            
+
             Buffer* buffer = static_cast<Buffer*>(barrier.buffer);
 
             bufferBarriers.push_back(vk::BufferMemoryBarrier()
@@ -254,6 +249,105 @@ namespace nvrhi::vulkan
         bufferBarriers.clear();
 
         m_StateTracker.clearBarriers();
+    }
+
+    void CommandList::commitBarriersInternal_synchronization2()
+    {
+        std::vector<vk::ImageMemoryBarrier2> imageBarriers;
+        std::vector<vk::BufferMemoryBarrier2> bufferBarriers;
+
+        for (const TextureBarrier& barrier : m_StateTracker.getTextureBarriers())
+        {
+            ResourceStateMapping2 before = convertResourceState2(barrier.stateBefore);
+            ResourceStateMapping2 after = convertResourceState2(barrier.stateAfter);
+
+            assert(after.imageLayout != vk::ImageLayout::eUndefined);
+
+            Texture* texture = static_cast<Texture*>(barrier.texture);
+
+            const FormatInfo& formatInfo = getFormatInfo(texture->desc.format);
+
+            vk::ImageAspectFlags aspectMask = (vk::ImageAspectFlagBits)0;
+            if (formatInfo.hasDepth) aspectMask |= vk::ImageAspectFlagBits::eDepth;
+            if (formatInfo.hasStencil) aspectMask |= vk::ImageAspectFlagBits::eStencil;
+            if (!aspectMask) aspectMask = vk::ImageAspectFlagBits::eColor;
+
+            vk::ImageSubresourceRange subresourceRange = vk::ImageSubresourceRange()
+                .setBaseArrayLayer(barrier.entireTexture ? 0 : barrier.arraySlice)
+                .setLayerCount(barrier.entireTexture ? texture->desc.arraySize : 1)
+                .setBaseMipLevel(barrier.entireTexture ? 0 : barrier.mipLevel)
+                .setLevelCount(barrier.entireTexture ? texture->desc.mipLevels : 1)
+                .setAspectMask(aspectMask);
+
+            imageBarriers.push_back(vk::ImageMemoryBarrier2()
+                .setSrcAccessMask(before.accessMask)
+                .setDstAccessMask(after.accessMask)
+                .setSrcStageMask(before.stageFlags)
+                .setDstStageMask(after.stageFlags)
+                .setOldLayout(before.imageLayout)
+                .setNewLayout(after.imageLayout)
+                .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                .setImage(texture->image)
+                .setSubresourceRange(subresourceRange));
+        }
+
+        if (!imageBarriers.empty())
+        {
+            vk::DependencyInfo dep_info;
+            dep_info.setImageMemoryBarriers(imageBarriers);
+
+            m_CurrentCmdBuf->cmdBuf.pipelineBarrier2(dep_info);
+        }
+
+        imageBarriers.clear();
+
+        for (const BufferBarrier& barrier : m_StateTracker.getBufferBarriers())
+        {
+            ResourceStateMapping2 before = convertResourceState2(barrier.stateBefore);
+            ResourceStateMapping2 after = convertResourceState2(barrier.stateAfter);
+
+            Buffer* buffer = static_cast<Buffer*>(barrier.buffer);
+
+            bufferBarriers.push_back(vk::BufferMemoryBarrier2()
+                .setSrcAccessMask(before.accessMask)
+                .setDstAccessMask(after.accessMask)
+                .setSrcStageMask(before.stageFlags)
+                .setDstStageMask(after.stageFlags)
+                .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
+                .setBuffer(buffer->buffer)
+                .setOffset(0)
+                .setSize(buffer->desc.byteSize));
+        }
+
+        if (!bufferBarriers.empty())
+        {
+            vk::DependencyInfo dep_info;
+            dep_info.setBufferMemoryBarriers(bufferBarriers);
+
+            m_CurrentCmdBuf->cmdBuf.pipelineBarrier2(dep_info);
+        }
+        bufferBarriers.clear();
+
+        m_StateTracker.clearBarriers();
+    }
+
+    void CommandList::commitBarriers()
+    {
+        if (m_StateTracker.getBufferBarriers().empty() && m_StateTracker.getTextureBarriers().empty())
+            return;
+
+        endRenderPass();
+
+        if (m_Context.extensions.KHR_synchronization2)
+        {
+            commitBarriersInternal_synchronization2();
+        }
+        else
+        {
+            commitBarriersInternal();
+        }
     }
 
     void CommandList::beginTrackingTextureState(ITexture* _texture, TextureSubresourceSet subresources, ResourceStates stateBits)

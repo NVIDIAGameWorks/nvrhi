@@ -1119,6 +1119,17 @@ namespace nvrhi::validation
         m_CommandList->compactBottomLevelAccelStructs();
     }
 
+    void CommandListWrapper::buildOpacityMicromap(rt::IOpacityMicromap* omm, const rt::OpacityMicromapDesc& desc) 
+    {
+        if (!requireOpenState())
+            return;
+
+        if (!requireType(CommandQueue::Compute, "buildOpacityMicromap"))
+            return;
+
+        m_CommandList->buildOpacityMicromap(omm, desc);
+    }
+
     void CommandListWrapper::buildBottomLevelAccelStruct(rt::IAccelStruct* as, const rt::GeometryDesc* pGeometries, size_t numGeometries, rt::AccelStructBuildFlags buildFlags)
     {
         if (!requireOpenState())

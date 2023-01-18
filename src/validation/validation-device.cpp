@@ -1621,6 +1621,29 @@ namespace nvrhi::validation
         return m_Device->writeDescriptorTable(descriptorTable, patchedItem);
     }
 
+    rt::OpacityMicromapHandle DeviceWrapper::createOpacityMicromap(const rt::OpacityMicromapDesc& desc)
+    {
+        if (desc.inputBuffer == nullptr)
+        {
+            error("OpacityMicromapDesc:inputBuffer is nullptr");
+            return nullptr;
+        }
+
+        if (desc.perOmmDescs == nullptr)
+        {
+            error("OpacityMicromapDesc:perOmmDescs is nullptr");
+            return nullptr;
+        }
+
+        rt::OpacityMicromapHandle omm = m_Device->createOpacityMicromap(desc);
+        if (!omm)
+        {
+            error("createOpacityMicromap returned nullptr");
+            return nullptr;
+        }
+        return omm;
+    }
+
     rt::AccelStructHandle DeviceWrapper::createAccelStruct(const rt::AccelStructDesc& desc)
     {
         rt::AccelStructHandle as = m_Device->createAccelStruct(desc);

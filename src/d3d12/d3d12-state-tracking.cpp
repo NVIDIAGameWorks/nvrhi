@@ -160,6 +160,7 @@ namespace nvrhi::d3d12
             }
             else if ((barrier.stateBefore == ResourceStates::AccelStructWrite && (barrier.stateAfter & (ResourceStates::AccelStructRead | ResourceStates::AccelStructBuildBlas)) != 0) ||
                 (barrier.stateAfter == ResourceStates::AccelStructWrite && (barrier.stateBefore & (ResourceStates::AccelStructRead | ResourceStates::AccelStructBuildBlas)) != 0) ||
+                (barrier.stateBefore == ResourceStates::OpacityMicromapWrite && (barrier.stateAfter & (ResourceStates::AccelStructBuildInput)) != 0) ||
                 (stateAfter & D3D12_RESOURCE_STATE_UNORDERED_ACCESS) != 0)
             {
                 d3dbarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
