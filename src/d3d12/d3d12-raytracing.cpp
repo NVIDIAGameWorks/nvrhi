@@ -1318,7 +1318,7 @@ namespace nvrhi::d3d12
 #ifdef NVRHI_WITH_RTXMU
         std::vector<uint64_t> accelStructsToBuild;
         std::vector<D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS> buildInputs;
-        buildInputs.push_back(*inputs.GetAs<D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS>());
+        buildInputs.push_back(inputs.GetAs<D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS>());
 
         if(as->rtxmuId == ~0ull)
         {
@@ -1375,7 +1375,6 @@ namespace nvrhi::d3d12
             m_Context.error(ss.str());
             return;
         }
-#endif
 
         if (m_EnableAutomaticBarriers)
         {
@@ -1410,6 +1409,7 @@ namespace nvrhi::d3d12
             buildDesc.SourceAccelerationStructureData = performUpdate ? as->dataBuffer->gpuVA : 0;
             m_ActiveCommandList->commandList4->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
         }
+#endif // NVRHI_WITH_RTXMU
 
         if (as->desc.trackLiveness)
             m_Instance->referencedResources.push_back(as);

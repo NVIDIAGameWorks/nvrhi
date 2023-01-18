@@ -538,7 +538,7 @@ namespace nvrhi::vulkan
         // buffer->barrier(cmd, vk::PipelineStageFlagBits::eHost, accessFlags);
 
         void* ptr = nullptr;
-        const vk::Result res = m_Context.device.mapMemory(buffer->memory, offset, size, vk::MemoryMapFlags(), &ptr);
+        [[maybe_unused]] const vk::Result res = m_Context.device.mapMemory(buffer->memory, offset, size, vk::MemoryMapFlags(), &ptr);
         assert(res == vk::Result::eSuccess);
 
         return ptr;
