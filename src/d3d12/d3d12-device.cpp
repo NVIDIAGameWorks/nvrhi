@@ -180,6 +180,9 @@ namespace nvrhi::d3d12
         }
 
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
+#ifdef NVRHI_WITH_RTXMU
+        m_OpacityMicromapSupported = false; // RTXMU does not support OMMs
+#else
         if (m_NvapiIsInitialized)
         {
             NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_CAPS caps = NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_CAP_NONE;
@@ -195,6 +198,7 @@ namespace nvrhi::d3d12
             [[maybe_unused]] NvAPI_Status res = NvAPI_D3D12_SetCreatePipelineStateOptions(m_Context.device5, &params);
             assert(res == NVAPI_OK);
         }
+#endif
 #endif // #if NVRHI_WITH_NVAPI_OPACITY_MICROMAPS
 
 #endif // #if NVRHI_D3D12_WITH_NVAPI
