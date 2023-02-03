@@ -856,6 +856,8 @@ namespace nvrhi::d3d12
             }
             commitBarriers();
 
+            commitDescriptorHeaps();
+
             for (MipLevel mipLevel = subresources.baseMipLevel; mipLevel < subresources.baseMipLevel + subresources.numMipLevels; mipLevel++)
             {
                 DescriptorIndex index = t->getClearMipLevelUAV(mipLevel);
@@ -939,6 +941,8 @@ namespace nvrhi::d3d12
                 requireTextureState(t, subresources, ResourceStates::UnorderedAccess);
             }
             commitBarriers();
+
+            commitDescriptorHeaps();
 
             for (MipLevel mipLevel = subresources.baseMipLevel; mipLevel < subresources.baseMipLevel + subresources.numMipLevels; mipLevel++)
             {

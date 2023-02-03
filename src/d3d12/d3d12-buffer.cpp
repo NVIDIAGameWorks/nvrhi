@@ -466,6 +466,8 @@ namespace nvrhi::d3d12
         }
         commitBarriers();
 
+        commitDescriptorHeaps();
+
         DescriptorIndex clearUAV = b->getClearUAV();
         assert(clearUAV != c_InvalidDescriptorIndex);
 
