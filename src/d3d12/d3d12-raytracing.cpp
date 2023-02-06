@@ -1185,6 +1185,14 @@ namespace nvrhi::d3d12
 
             requireBufferState(omm->dataBuffer, nvrhi::ResourceStates::OpacityMicromapWrite);
         }
+
+        if (desc.trackLiveness)
+        {
+            m_Instance->referencedResources.push_back(desc.inputBuffer);
+            m_Instance->referencedResources.push_back(desc.perOmmDescs);
+            m_Instance->referencedResources.push_back(omm->dataBuffer);
+        }
+
         commitBarriers();
 
         NVAPI_D3D12_BUILD_RAYTRACING_OPACITY_MICROMAP_ARRAY_INPUTS inputs = {};

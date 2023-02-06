@@ -339,6 +339,14 @@ namespace nvrhi::vulkan
 
             requireBufferState(omm->dataBuffer, nvrhi::ResourceStates::OpacityMicromapWrite);
         }
+
+        if (desc.trackLiveness)
+        {
+            m_CurrentCmdBuf->referencedResources.push_back(desc.inputBuffer);
+            m_CurrentCmdBuf->referencedResources.push_back(desc.perOmmDescs);
+            m_CurrentCmdBuf->referencedResources.push_back(omm->dataBuffer);
+        }
+
         commitBarriers();
 
         auto buildInfo = vk::MicromapBuildInfoEXT()
