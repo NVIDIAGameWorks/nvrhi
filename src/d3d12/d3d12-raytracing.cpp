@@ -1445,6 +1445,9 @@ namespace nvrhi::d3d12
 
     void CommandList::buildTopLevelAccelStructInternal(AccelStruct* as, D3D12_GPU_VIRTUAL_ADDRESS instanceData, size_t numInstances, rt::AccelStructBuildFlags buildFlags)
     {
+        // Remove the internal flag
+        buildFlags = buildFlags & ~rt::AccelStructBuildFlags::AllowEmptyInstances;
+
         const bool performUpdate = (buildFlags & rt::AccelStructBuildFlags::PerformUpdate) != 0;
 
         if (performUpdate)
@@ -1517,26 +1520,31 @@ namespace nvrhi::d3d12
             const rt::InstanceDesc& instance = pInstances[i];
             D3D12_RAYTRACING_INSTANCE_DESC& dxrInstance = as->dxrInstances[i];
 
-            AccelStruct* blas = checked_cast<AccelStruct*>(instance.bottomLevelAS);
+            if (instance.bottomLevelAS)
+            {
+                AccelStruct* blas = checked_cast<AccelStruct*>(instance.bottomLevelAS);
 
-            if (blas->desc.trackLiveness)
-                as->bottomLevelASes.push_back(blas);
+                if (blas->desc.trackLiveness)
+                    as->bottomLevelASes.push_back(blas);
 
-            static_assert(sizeof(dxrInstance) == sizeof(instance));
-            memcpy(&dxrInstance, &instance, sizeof(instance));
+                static_assert(sizeof(dxrInstance) == sizeof(instance));
+                memcpy(&dxrInstance, &instance, sizeof(instance));
 
 #ifdef NVRHI_WITH_RTXMU
-            dxrInstance.AccelerationStructure = m_Context.rtxMemUtil->GetAccelStructGPUVA(blas->rtxmuId);
+                dxrInstance.AccelerationStructure = m_Context.rtxMemUtil->GetAccelStructGPUVA(blas->rtxmuId);
 #else
-            dxrInstance.AccelerationStructure = blas->dataBuffer->gpuVA;
-#endif
+                dxrInstance.AccelerationStructure = blas->dataBuffer->gpuVA;
 
-#ifndef NVRHI_WITH_RTXMU
-            if (m_EnableAutomaticBarriers)
-            {
-                requireBufferState(blas->dataBuffer, nvrhi::ResourceStates::AccelStructBuildBlas);
-            }
+                if (m_EnableAutomaticBarriers)
+                {
+                    requireBufferState(blas->dataBuffer, nvrhi::ResourceStates::AccelStructBuildBlas);
+                }
 #endif
+            }
+            else // !instance.bottomLevelAS
+            {
+                dxrInstance.AccelerationStructure = 0;
+            }
         }
 
 #ifdef NVRHI_WITH_RTXMU

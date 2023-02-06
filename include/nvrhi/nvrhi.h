@@ -1488,7 +1488,12 @@ namespace nvrhi
             PreferFastTrace = 4,
             PreferFastBuild = 8,
             MinimizeMemory = 0x10,
-            PerformUpdate = 0x20
+            PerformUpdate = 0x20,
+
+            // Removes the errors or warnings that NVRHI validation layer issues when a TLAS
+            // includes an instance that points at a NULL BLAS or has a zero instance mask.
+            // Only affects the validation layer, doesn't translate to Vk/DX12 AS build flags.
+            AllowEmptyInstances = 0x80
         };
 
         NVRHI_ENUM_CLASS_FLAG_OPERATORS(AccelStructBuildFlags)
