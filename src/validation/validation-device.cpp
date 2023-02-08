@@ -1325,10 +1325,10 @@ namespace nvrhi::validation
         {
             IBuffer* buffer = checked_cast<IBuffer*>(binding.resourceHandle);
 
-            if (buffer == nullptr && binding.type != ResourceType::TypedBuffer_SRV && m_Device->getGraphicsAPI() != GraphicsAPI::VULKAN)
+            if (buffer == nullptr && binding.type != ResourceType::TypedBuffer_SRV && binding.type != ResourceType::TypedBuffer_UAV && m_Device->getGraphicsAPI() != GraphicsAPI::VULKAN)
             {
                 errorStream << "Null resource bindings are not allowed for buffers, unless it's a "
-                    "TypedBuffer_SRV type binding on DX11 or DX12." << std::endl;
+                    "TypedBuffer_SRV or TypedBuffer_UAV type binding on DX11 or DX12." << std::endl;
                 return false;
             }
 
