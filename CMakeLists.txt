@@ -115,7 +115,9 @@ set(include_validation
 set(src_validation
     src/validation/validation-commandlist.cpp
     src/validation/validation-device.cpp
-    src/validation/validation-backend.h)
+    src/validation/validation-backend.h
+    src/common/sparse-bitset.h
+    src/common/sparse-bitset.cpp)
 
 set(include_d3d11
     include/nvrhi/d3d11.h)
