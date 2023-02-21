@@ -506,7 +506,7 @@ namespace nvrhi::d3d12
         }
     }
 
-    static void fillAsInputDesc(
+    static void fillAsInputDescForPreBuildInfo(
         D3D12BuildRaytracingAccelerationStructureInputs& outASInputs,
         const rt::AccelStructDesc& desc)
     {
@@ -523,8 +523,15 @@ namespace nvrhi::d3d12
             outASInputs.SetGeometryDescCount((UINT)desc.bottomLevelGeometries.size());
             for (uint32_t i = 0; i < desc.bottomLevelGeometries.size(); i++)
             {
+                const rt::GeometryDesc& srcDesc = desc.bottomLevelGeometries[i];
+                // useTransform sets a non-null dummy GPU VA. The reason is explained in the spec:
+                // "It (read: GetRaytracingAccelerationStructurePrebuildInfo) may not inspect/dereference
+                // any GPU virtual addresses, other than to check to see if a pointer is NULL or not,
+                // such as the optional Transform in D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC, without dereferencing it."
+                // Omitting this here will trigger a gpu hang due to incorrect memory calculation.
+                D3D12_GPU_VIRTUAL_ADDRESS transform4x4 = srcDesc.useTransform ? 16 : 0; 
                 D3D12RaytracingGeometryDesc& geomDesc = outASInputs.GetGeometryDesc(i);
-                fillD3dGeometryDesc(geomDesc, desc.bottomLevelGeometries[i], 0/* transform4x4 */);
+                fillD3dGeometryDesc(geomDesc, srcDesc, transform4x4);
             }
         }
     }
@@ -574,7 +581,7 @@ namespace nvrhi::d3d12
     bool Device::GetAccelStructPreBuildInfo(D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO& outPreBuildInfo, const rt::AccelStructDesc& desc) const
     {
         D3D12BuildRaytracingAccelerationStructureInputs ASInputs;
-        fillAsInputDesc(ASInputs, desc);
+        fillAsInputDescForPreBuildInfo(ASInputs, desc);
 
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
         if (m_NvapiIsInitialized)
@@ -1310,7 +1317,7 @@ namespace nvrhi::d3d12
             {
                 void* cpuVA = nullptr;
                 if (!m_UploadManager.suballocateBuffer(sizeof(rt::AffineTransform), nullptr, nullptr, nullptr,
-                    &cpuVA, &gpuVA, m_RecordingVersion, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT))
+                    &cpuVA, &gpuVA, m_RecordingVersion, D3D12_RAYTRACING_TRANSFORM3X4_BYTE_ALIGNMENT))
                 {
                     m_Context.error("Couldn't suballocate an upload buffer");
                     return;
