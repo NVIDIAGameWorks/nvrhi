@@ -685,6 +685,29 @@ namespace nvrhi::d3d12
         m_Context.device->CreateShaderResourceView(nullptr, &srvDesc, { descriptor });
     }
 
+    bool Device::setHlslExtensionsUAV(uint32_t slot)
+    {
+#if NVRHI_D3D12_WITH_NVAPI
+        if (GetNvapiIsInitialized())
+        {
+            NvAPI_Status status = NvAPI_D3D12_SetNvShaderExtnSlotSpaceLocalThread(m_Context.device.Get(), slot, 0);
+            if (status != S_OK)
+            {
+                m_Context.error("Failed to set NvAPI_D3D12_SetNvShaderExtnSlotSpaceLocalThread");
+                return false;
+            }
+            return true;
+        }
+        else
+        {
+            m_Context.error("HLSL extensions require an NVIDIA graphics device with NVAPI support");
+        }
+#else
+        m_Context.error("This version of NVRHI does not support NVIDIA HLSL extensions, please rebuild with NVAPI.");
+#endif
+        return false;
+    }
+
 #define NEW_ON_STACK(T) (T*)alloca(sizeof(T))
     
     rt::PipelineHandle Device::createRayTracingPipeline(const rt::PipelineDesc& desc)
@@ -971,11 +994,23 @@ namespace nvrhi::d3d12
         pipelineDesc.NumSubobjects = static_cast<UINT>(d3dSubobjects.size());
         pipelineDesc.pSubobjects = d3dSubobjects.data();
 
+        if (desc.hlslExtensionsUAV >= 0)
+        {
+            if (!setHlslExtensionsUAV(desc.hlslExtensionsUAV))
+                return nullptr;
+        }
+
         HRESULT hr = m_Context.device5->CreateStateObject(&pipelineDesc, IID_PPV_ARGS(&pso->pipelineState));
         if (FAILED(hr))
         {
             m_Context.error("Failed to create a DXR pipeline state object");
             return nullptr;
+        }
+
+        if (desc.hlslExtensionsUAV >= 0)
+        {
+            if (!setHlslExtensionsUAV(0xFFFFFFFF))  // disables magic slot
+                return nullptr;
         }
 
         hr = pso->pipelineState->QueryInterface(IID_PPV_ARGS(&pso->pipelineInfo));

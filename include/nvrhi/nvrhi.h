@@ -2337,6 +2337,7 @@ namespace nvrhi
             uint32_t maxPayloadSize = 0;
             uint32_t maxAttributeSize = sizeof(float) * 2; // typical case: float2 uv;
             uint32_t maxRecursionDepth = 1;
+            int32_t hlslExtensionsUAV = -1;
 
             PipelineDesc& addShader(const PipelineShaderDesc& value) { shaders.push_back(value); return *this; }
             PipelineDesc& addHitGroup(const PipelineHitGroupDesc& value) { hitGroups.push_back(value); return *this; }
@@ -2344,6 +2345,7 @@ namespace nvrhi
             PipelineDesc& setMaxPayloadSize(uint32_t value) { maxPayloadSize = value; return *this; }
             PipelineDesc& setMaxAttributeSize(uint32_t value) { maxAttributeSize = value; return *this; }
             PipelineDesc& setMaxRecursionDepth(uint32_t value) { maxRecursionDepth = value; return *this; }
+            PipelineDesc& setHlslExtensionsUAV(int32_t value) { hlslExtensionsUAV = value; return *this; }
         };
 
         class IPipeline;
