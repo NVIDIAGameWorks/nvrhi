@@ -839,9 +839,11 @@ namespace nvrhi::validation
 
                     anyDuplicateBindings = true;
                 }
-                else
+                else if (m_Device->getGraphicsAPI() == GraphicsAPI::D3D11)
                 {
-                    // Check for overlapping layouts.
+                    // Check for overlapping layouts on DX11, because the backend implements each binding set as a single
+                    // call to a function like PSSetShaderResources. If binding sets overlap, a set with higher index
+                    // will overwrite bindings from the lower-indexed sets, even if they are on different slots.
                     // Do this only when there are no duplicates, as with duplicates the layouts will always overlap.
 
                     bool overlapSRV = false;
