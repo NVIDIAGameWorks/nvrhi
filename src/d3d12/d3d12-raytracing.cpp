@@ -703,6 +703,7 @@ namespace nvrhi::d3d12
             m_Context.error("HLSL extensions require an NVIDIA graphics device with NVAPI support");
         }
 #else
+        (void)slot;
         m_Context.error("This version of NVRHI does not support NVIDIA HLSL extensions, please rebuild with NVAPI.");
 #endif
         return false;
@@ -1001,17 +1002,21 @@ namespace nvrhi::d3d12
         }
 
         HRESULT hr = m_Context.device5->CreateStateObject(&pipelineDesc, IID_PPV_ARGS(&pso->pipelineState));
+
+        if (desc.hlslExtensionsUAV >= 0)
+        {
+            // Disable the magic UAV slot - do it before the test for successful pipeline creation below
+            // to avoid leaving the slot set when there's an error in the pipeline.
+            if (!setHlslExtensionsUAV(0xFFFFFFFF))
+                return nullptr;
+        }
+
         if (FAILED(hr))
         {
             m_Context.error("Failed to create a DXR pipeline state object");
             return nullptr;
         }
 
-        if (desc.hlslExtensionsUAV >= 0)
-        {
-            if (!setHlslExtensionsUAV(0xFFFFFFFF))  // disables magic slot
-                return nullptr;
-        }
 
         hr = pso->pipelineState->QueryInterface(IID_PPV_ARGS(&pso->pipelineInfo));
         if (FAILED(hr))
