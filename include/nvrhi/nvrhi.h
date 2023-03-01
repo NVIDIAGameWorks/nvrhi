@@ -2409,6 +2409,7 @@ namespace nvrhi
         RayTracingPipeline,
         RayTracingOpacityMicromap,
         RayQuery,
+        ShaderExecutionReordering,
         FastGeometryShader,
         Meshlets,
         ConservativeRasterization,

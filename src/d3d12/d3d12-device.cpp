@@ -177,6 +177,12 @@ namespace nvrhi::d3d12
             {
                 m_FastGeometryShaderSupported = true;
             }
+
+            NVAPI_D3D12_RAYTRACING_THREAD_REORDERING_CAPS ser = NVAPI_D3D12_RAYTRACING_THREAD_REORDERING_CAP_NONE;
+            if (NvAPI_D3D12_GetRaytracingCaps(m_Context.device, NVAPI_D3D12_RAYTRACING_CAPS_TYPE_THREAD_REORDERING, &ser, sizeof(ser)) == NVAPI_OK)
+            {
+                m_ShaderExecutionReorderingSupported = (ser & NVAPI_D3D12_RAYTRACING_THREAD_REORDERING_CAP_STANDARD) == NVAPI_D3D12_RAYTRACING_THREAD_REORDERING_CAP_STANDARD;
+            }
         }
 
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
@@ -413,6 +419,8 @@ namespace nvrhi::d3d12
             return m_TraceRayInlineSupported;
         case Feature::FastGeometryShader:
             return m_FastGeometryShaderSupported;
+        case Feature::ShaderExecutionReordering:
+            return m_ShaderExecutionReorderingSupported;
         case Feature::Meshlets:
             return m_MeshletsSupported;
         case Feature::VariableRateShading:

@@ -167,6 +167,7 @@ namespace nvrhi::vulkan
             bool KHR_fragment_shading_rate = false;
             bool EXT_conservative_rasterization = false;
             bool EXT_opacity_micromap = false;
+            bool NV_ray_tracing_invocation_reorder = false;
         } extensions;
 
         vk::PhysicalDeviceProperties physicalDeviceProperties;
@@ -175,6 +176,7 @@ namespace nvrhi::vulkan
         vk::PhysicalDeviceConservativeRasterizationPropertiesEXT conservativeRasterizationProperties;
         vk::PhysicalDeviceFragmentShadingRatePropertiesKHR shadingRateProperties;
         vk::PhysicalDeviceOpacityMicromapPropertiesEXT opacityMicromapProperties;
+        vk::PhysicalDeviceRayTracingInvocationReorderPropertiesNV nvRayTracingInvocationReorderProperties;
         vk::PhysicalDeviceFragmentShadingRateFeaturesKHR shadingRateFeatures;
         IMessageCallback* messageCallback = nullptr;
 #ifdef NVRHI_WITH_RTXMU

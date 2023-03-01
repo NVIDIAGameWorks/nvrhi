@@ -84,6 +84,7 @@ namespace nvrhi::vulkan
             { VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME, &m_Context.extensions.EXT_conservative_rasterization},
             { VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, &m_Context.extensions.KHR_fragment_shading_rate },
             { VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME, &m_Context.extensions.EXT_opacity_micromap },
+            { VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, &m_Context.extensions.NV_ray_tracing_invocation_reorder },
         };
 
         // parse the extension/layer lists and figure out which extensions are enabled
@@ -115,6 +116,8 @@ namespace nvrhi::vulkan
         vk::PhysicalDeviceConservativeRasterizationPropertiesEXT conservativeRasterizationProperties;
         vk::PhysicalDeviceFragmentShadingRatePropertiesKHR shadingRateProperties;
         vk::PhysicalDeviceOpacityMicromapPropertiesEXT opacityMicromapProperties;
+        vk::PhysicalDeviceRayTracingInvocationReorderPropertiesNV nvRayTracingInvocationReorderProperties;
+        
         vk::PhysicalDeviceProperties2 deviceProperties2;
 
         if (m_Context.extensions.KHR_acceleration_structure)
@@ -147,6 +150,12 @@ namespace nvrhi::vulkan
             pNext = &opacityMicromapProperties;
         }
 
+        if (m_Context.extensions.NV_ray_tracing_invocation_reorder)
+        {
+            nvRayTracingInvocationReorderProperties.pNext = pNext;
+            pNext = &nvRayTracingInvocationReorderProperties;
+        }
+
         deviceProperties2.pNext = pNext;
 
         m_Context.physicalDevice.getProperties2(&deviceProperties2);
@@ -157,6 +166,7 @@ namespace nvrhi::vulkan
         m_Context.conservativeRasterizationProperties = conservativeRasterizationProperties;
         m_Context.shadingRateProperties = shadingRateProperties;
         m_Context.opacityMicromapProperties = opacityMicromapProperties;
+        m_Context.nvRayTracingInvocationReorderProperties = nvRayTracingInvocationReorderProperties;
         m_Context.messageCallback = desc.errorCB;
 
         if (m_Context.extensions.EXT_opacity_micromap && !m_Context.extensions.KHR_synchronization2)
@@ -271,6 +281,14 @@ namespace nvrhi::vulkan
 #endif
         case Feature::RayQuery:
             return m_Context.extensions.KHR_ray_query;
+        case Feature::ShaderExecutionReordering:
+        {
+            if (m_Context.extensions.NV_ray_tracing_invocation_reorder)
+            {
+                return vk::RayTracingInvocationReorderModeNV::eReorder == m_Context.nvRayTracingInvocationReorderProperties.rayTracingInvocationReorderReorderingHint;
+            }
+            return false;
+        }
         case Feature::ShaderSpecializations:
             return true;
         case Feature::Meshlets:
