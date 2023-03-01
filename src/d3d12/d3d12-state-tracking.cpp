@@ -169,10 +169,9 @@ namespace nvrhi::d3d12
             }
         }
 
-        assert(!m_D3DBarriers.empty()); // otherwise there's an early-out in the beginning of this function
+        if (m_D3DBarriers.size() > 0)
+            m_ActiveCommandList->commandList->ResourceBarrier(uint32_t(m_D3DBarriers.size()), m_D3DBarriers.data());
 
-        m_ActiveCommandList->commandList->ResourceBarrier(uint32_t(m_D3DBarriers.size()), m_D3DBarriers.data());
-        
         m_StateTracker.clearBarriers();
     }
 
