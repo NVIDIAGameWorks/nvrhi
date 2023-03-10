@@ -680,7 +680,7 @@ namespace nvrhi::vulkan
             }
 
             dst.setInstanceCustomIndex(src.instanceID);
-            dst.setInstanceShaderBindingTableRecordOffset(src.instanceContributionToHitGroupIndex * m_Context.rayTracingPipelineProperties.shaderGroupBaseAlignment);
+            dst.setInstanceShaderBindingTableRecordOffset(src.instanceContributionToHitGroupIndex);
             dst.setFlags(convertInstanceFlags(src.flags));
             dst.setMask(src.instanceMask);
             memcpy(dst.transform.matrix.data(), src.transform, sizeof(float) * 12);
