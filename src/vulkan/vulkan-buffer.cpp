@@ -114,6 +114,15 @@ namespace nvrhi::vulkan
             .setUsage(usageFlags)
             .setSharingMode(vk::SharingMode::eExclusive);
 
+#if WIN32
+        const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32;
+#else
+        const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd;
+#endif
+        vk::ExternalMemoryBufferCreateInfo externalBuffer{ handleType };
+        if (desc.sharedResourceFlags == SharedResourceFlags::Shared)
+            bufferInfo.setPNext(&externalBuffer);
+
         vk::Result res = m_Context.device.createBuffer(&bufferInfo, m_Context.allocationCallbacks, &buffer->buffer);
         CHECK_VK_FAIL(res);
 
@@ -137,6 +146,15 @@ namespace nvrhi::vulkan
                 auto addressInfo = vk::BufferDeviceAddressInfo().setBuffer(buffer->buffer);
 
                 buffer->deviceAddress = m_Context.device.getBufferAddress(addressInfo);
+            }
+
+            if (desc.sharedResourceFlags == SharedResourceFlags::Shared)
+            {
+#ifdef WIN32
+                buffer->sharedHandle = m_Context.device.getMemoryWin32HandleKHR({ buffer->memory, vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32 });
+#else
+                buffer->sharedHandle = (void*)m_Context.device.getMemoryFdKHR({ buffer->memory, vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd });
+#endif
             }
         }
 
@@ -488,6 +506,11 @@ namespace nvrhi::vulkan
                 memory = vk::DeviceMemory();
             }
         }
+    }
+
+    void* Buffer::getSharedHandle() const
+    {
+        return sharedHandle;
     }
 
     Object Buffer::getNativeObject(ObjectType objectType)

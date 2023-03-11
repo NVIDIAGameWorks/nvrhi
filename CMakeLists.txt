@@ -295,6 +295,12 @@ if (NVRHI_WITH_VULKAN)
         set_target_properties(${nvrhi_vulkan_target} PROPERTIES FOLDER "NVRHI")
         target_include_directories(${nvrhi_vulkan_target} PRIVATE include)
     endif()
+    
+    if(WIN32)
+        target_compile_definitions(${nvrhi_vulkan_target} PRIVATE 
+                VK_USE_PLATFORM_WIN32_KHR
+                NOMINMAX)
+    endif()
 
     if (NVRHI_WITH_RTXMU)
         target_compile_definitions(${nvrhi_vulkan_target} PUBLIC NVRHI_WITH_RTXMU=1)

@@ -296,11 +296,15 @@ namespace nvrhi::d3d12
         D3D12_HEAP_PROPERTIES heapProps = {};
         D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
 
-        if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
+        bool isShared = false;
+        if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0) {
             heapFlags |= D3D12_HEAP_FLAG_SHARED;
+            isShared = true;
+        }
         if ((d.sharedResourceFlags & SharedResourceFlags::Shared_CrossAdapter) != 0) {
             rd.Flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
             heapFlags |= D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER;
+            isShared = true;
         }
 
         Texture* texture = new Texture(m_Context, m_Resources, d, rd);
@@ -333,6 +337,28 @@ namespace nvrhi::d3d12
             
             delete texture;
             return nullptr;
+        }
+
+        if(isShared)
+        {
+            hr = m_Context.device->CreateSharedHandle(
+                texture->resource,
+                nullptr,
+                GENERIC_ALL,
+                nullptr,
+                &texture->sharedHandle);
+
+            if (FAILED(hr))
+            {
+                std::stringstream ss;
+                ss << "Failed to create shared handle " << utils::DebugNameToString(d.debugName) << ", error code = 0x";
+                ss.setf(std::ios::hex, std::ios::basefield);
+                ss << hr;
+                m_Context.error(ss.str());
+
+                delete texture;
+                return nullptr;
+            }
         }
 
         texture->postCreate();
@@ -405,6 +431,11 @@ namespace nvrhi::d3d12
         texture->postCreate();
 
         return TextureHandle::Create(texture);
+    }
+
+    void* Texture::getSharedHandle() const
+    {
+        return sharedHandle;
     }
 
     void Texture::postCreate()

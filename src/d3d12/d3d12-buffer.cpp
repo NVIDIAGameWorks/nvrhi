@@ -89,11 +89,15 @@ namespace nvrhi::d3d12
         D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
         D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 
-        if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
+        bool isShared = false;
+        if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0) {
             heapFlags |= D3D12_HEAP_FLAG_SHARED;
+            isShared = true;
+        }
         if ((d.sharedResourceFlags & SharedResourceFlags::Shared_CrossAdapter) != 0) {
             resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
             heapFlags |= D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER;
+            isShared = true;
         }
 
         switch(buffer->desc.cpuAccess)
@@ -133,6 +137,28 @@ namespace nvrhi::d3d12
             return nullptr;
         }
         
+        if (isShared)
+        {
+            res = m_Context.device->CreateSharedHandle(
+                buffer->resource,
+                nullptr,
+                GENERIC_ALL,
+                nullptr,
+                &buffer->sharedHandle);
+
+            if (FAILED(res))
+            {
+                std::stringstream ss;
+                ss << "Failed to create shared handle " << utils::DebugNameToString(d.debugName) << ", error code = 0x";
+                ss.setf(std::ios::hex, std::ios::basefield);
+                ss << res;
+                m_Context.error(ss.str());
+
+                delete buffer;
+                return nullptr;
+            }
+        }
+
         buffer->postCreate();
 
         return BufferHandle::Create(buffer);
@@ -268,6 +294,11 @@ namespace nvrhi::d3d12
         buffer->postCreate();
 
         return BufferHandle::Create(buffer);
+    }
+
+    void* Buffer::getSharedHandle() const
+    {
+        return sharedHandle;
     }
 
     void Buffer::createCBV(size_t descriptor, BufferRange range) const

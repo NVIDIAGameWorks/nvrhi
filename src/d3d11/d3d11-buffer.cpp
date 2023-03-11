@@ -103,10 +103,15 @@ namespace nvrhi::d3d11
 
         desc11.StructureByteStride = (UINT)d.structStride;
 
-        if ((d.sharedResourceFlags & SharedResourceFlags::Shared_NTHandle) != 0)
+        bool isShared = false;
+        if ((d.sharedResourceFlags & SharedResourceFlags::Shared_NTHandle) != 0) {
             desc11.MiscFlags |= D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
-        else if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
+            isShared = true;
+        }
+        else if ((d.sharedResourceFlags & SharedResourceFlags::Shared) != 0) {
             desc11.MiscFlags |= D3D11_RESOURCE_MISC_SHARED;
+            isShared = true;
+        }
 
         RefCountPtr<ID3D11Buffer> newBuffer;
         const HRESULT res = m_Context.device->CreateBuffer(&desc11, nullptr, &newBuffer);
@@ -119,12 +124,21 @@ namespace nvrhi::d3d11
             return nullptr;
         }
 
+        HANDLE sharedHandle = nullptr;
+        if (isShared)
+        {
+            RefCountPtr<IDXGIResource1 > pDxgiResource1;
+            if (SUCCEEDED(newBuffer->QueryInterface(IID_PPV_ARGS(&pDxgiResource1))))
+                pDxgiResource1->GetSharedHandle(&sharedHandle);
+        }
+
         if (!d.debugName.empty())
             SetDebugName(newBuffer, d.debugName.c_str());
 
         Buffer* buffer = new Buffer(m_Context);
         buffer->desc = d;
         buffer->resource = newBuffer;
+        buffer->sharedHandle = sharedHandle;
         return BufferHandle::Create(buffer);
     }
 
@@ -261,6 +275,11 @@ namespace nvrhi::d3d11
         buffer->desc = desc;
         buffer->resource = pBuffer;
         return BufferHandle::Create(buffer);
+    }
+
+    void* Buffer::getSharedHandle() const
+    {
+        return sharedHandle;
     }
 
     ID3D11ShaderResourceView* Buffer::getSRV(Format format, BufferRange range, ResourceType type)
