@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 10;
+    static constexpr uint32_t c_HeaderVersion = 11;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -592,6 +592,7 @@ namespace nvrhi
         bool isDrawIndirectArgs = false;
         bool isAccelStructBuildInput = false;
         bool isAccelStructStorage = false;
+        bool isShaderBindingTable = false;
 
         // A dynamic/upload buffer whose contents only live in the current command list
         bool isVolatile = false;
@@ -624,6 +625,7 @@ namespace nvrhi
         constexpr BufferDesc& setIsDrawIndirectArgs(bool value) { isDrawIndirectArgs = value; return *this; }
         constexpr BufferDesc& setIsAccelStructBuildInput(bool value) { isAccelStructBuildInput = value; return *this; }
         constexpr BufferDesc& setIsAccelStructStorage(bool value) { isAccelStructStorage = value; return *this; }
+        constexpr BufferDesc& setIsShaderBindingTable(bool value) { isShaderBindingTable = value; return *this; }
         constexpr BufferDesc& setIsVolatile(bool value) { isVolatile = value; return *this; }
         constexpr BufferDesc& setIsVirtual(bool value) { isVirtual = value; return *this; }
         constexpr BufferDesc& setInitialState(ResourceStates value) { initialState = value; return *this; }

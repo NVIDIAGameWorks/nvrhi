@@ -357,7 +357,7 @@ namespace nvrhi::validation
             return nullptr;
         }
 
-        if (d.isVolatile && (d.isVertexBuffer || d.isIndexBuffer || d.isDrawIndirectArgs || d.canHaveUAVs || d.isAccelStructBuildInput || d.isAccelStructStorage || d.isVirtual))
+        if (d.isVolatile && (d.isVertexBuffer || d.isIndexBuffer || d.isDrawIndirectArgs || d.canHaveUAVs || d.isAccelStructBuildInput || d.isAccelStructStorage || d.isShaderBindingTable || d.isVirtual))
         {
             std::stringstream ss;
             ss << "Buffer " << patchedDesc.debugName << " is volatile but has unsupported usage flags:";
@@ -367,6 +367,7 @@ namespace nvrhi::validation
             if (d.canHaveUAVs) ss << " CanHaveUAVs";
             if (d.isAccelStructBuildInput) ss << " IsAccelStructBuildInput";
             if (d.isAccelStructStorage) ss << " IsAccelStructStorage";
+            if (d.isShaderBindingTable) ss << " IsShaderBindingTable";
             if (d.isVirtual) ss << " IsVirtual";
             ss << "." << std::endl << "Only constant buffers can be made volatile, and volatile buffers cannot be virtual.";
             error(ss.str());

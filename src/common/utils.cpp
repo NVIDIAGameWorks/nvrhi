@@ -354,6 +354,7 @@ namespace nvrhi::utils
         if (desc.isDrawIndirectArgs) ss << ", IsDrawIndirectArgs";
         if (desc.isAccelStructBuildInput) ss << ", IsAccelStructBuildInput";
         if (desc.isAccelStructStorage) ss << ", IsAccelStructStorage";
+        if (desc.isShaderBindingTable) ss << ", IsShaderBindingTable";
 
         ss << ")";
 

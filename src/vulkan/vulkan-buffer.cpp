@@ -75,6 +75,9 @@ namespace nvrhi::vulkan
         if (desc.isAccelStructStorage)
             usageFlags |= vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR;
 
+        if (desc.isShaderBindingTable)
+            usageFlags |= vk::BufferUsageFlagBits::eShaderBindingTableKHR;
+
         if (m_Context.extensions.buffer_device_address)
             usageFlags |= vk::BufferUsageFlagBits::eShaderDeviceAddress;
 
