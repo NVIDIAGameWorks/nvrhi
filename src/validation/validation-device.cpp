@@ -222,6 +222,14 @@ namespace nvrhi::validation
             error(ss.str());
             anyErrors = true;
         }
+
+        if (d.keepInitialState && d.initialState == ResourceStates::Unknown)
+        {
+            std::stringstream ss;
+            ss << dimensionStr << " " << debugName << " has initialState = Unknown, which is incompatible with keepInitialState = true.";
+            error(ss.str());
+            anyErrors = true;
+        }
         
         if(anyErrors)
             return nullptr;
@@ -385,6 +393,14 @@ namespace nvrhi::validation
         if (d.isVirtual && !m_Device->queryFeatureSupport(Feature::VirtualResources))
         {
             error("The device does not support virtual resources");
+            return nullptr;
+        }
+
+        if (d.keepInitialState && d.initialState == ResourceStates::Unknown)
+        {
+            std::stringstream ss;
+            ss << "Buffer " << patchedDesc.debugName << " has initialState = Unknown, which is incompatible with keepInitialState = true.";
+            error(ss.str());
             return nullptr;
         }
 
