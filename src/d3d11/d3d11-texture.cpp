@@ -36,6 +36,8 @@ namespace nvrhi::d3d11
         {
         case ObjectTypes::D3D11_Resource:
             return Object(resource);
+        case ObjectTypes::SharedHandle:
+            return Object(resource);
         default:
             return nullptr;
         }
@@ -510,11 +512,6 @@ namespace nvrhi::d3d11
         t->mappedSubresource = UINT(-1);
     }
     
-    void* Texture::getSharedHandle() const
-    {
-        return sharedHandle;
-    }
-
     ID3D11ShaderResourceView* Texture::getSRV(Format format, TextureSubresourceSet subresources, TextureDimension dimension)
     {
         if (format == Format::UNKNOWN)

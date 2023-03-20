@@ -36,6 +36,8 @@ namespace nvrhi::d3d12
         {
         case ObjectTypes::D3D12_Resource:
             return Object(resource);
+        case ObjectTypes::SharedHandle:
+            return Object(sharedHandle);
         default:
             return nullptr;
         }
@@ -431,11 +433,6 @@ namespace nvrhi::d3d12
         texture->postCreate();
 
         return TextureHandle::Create(texture);
-    }
-
-    void* Texture::getSharedHandle() const
-    {
-        return sharedHandle;
     }
 
     void Texture::postCreate()

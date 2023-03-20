@@ -38,6 +38,8 @@ namespace nvrhi::d3d11
         case ObjectTypes::D3D11_Resource:
         case ObjectTypes::D3D11_Buffer:
             return Object(resource.Get());
+        case ObjectTypes::SharedHandle:
+            return Object(sharedHandle);
         default:
             return nullptr;
         }
@@ -275,11 +277,6 @@ namespace nvrhi::d3d11
         buffer->desc = desc;
         buffer->resource = pBuffer;
         return BufferHandle::Create(buffer);
-    }
-
-    void* Buffer::getSharedHandle() const
-    {
-        return sharedHandle;
     }
 
     ID3D11ShaderResourceView* Buffer::getSRV(Format format, BufferRange range, ResourceType type)

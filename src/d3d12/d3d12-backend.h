@@ -237,8 +237,6 @@ namespace nvrhi::d3d12
         
         const TextureDesc& getDesc() const override { return desc; }
 
-        void* getSharedHandle() const override;
-
         Object getNativeObject(ObjectType objectType) override;
         Object getNativeView(ObjectType objectType, Format format, TextureSubresourceSet subresources, TextureDimension dimension, bool isReadOnlyDSV = false) override;
 
@@ -284,8 +282,6 @@ namespace nvrhi::d3d12
         ~Buffer() override;
         
         const BufferDesc& getDesc() const override { return desc; }
-
-        void* getSharedHandle() const override;
 
         Object getNativeObject(ObjectType objectType) override;
 

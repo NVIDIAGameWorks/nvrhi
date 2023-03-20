@@ -391,7 +391,6 @@ namespace nvrhi::vulkan
 
         ~Texture() override;
         const TextureDesc& getDesc() const override { return desc; }
-        void* getSharedHandle() const override;
         Object getNativeObject(ObjectType objectType) override;
         Object getNativeView(ObjectType objectType, Format format, TextureSubresourceSet subresources, TextureDimension dimension, bool isReadOnlyDSV = false) override;
 
@@ -531,7 +530,6 @@ namespace nvrhi::vulkan
 
         ~Buffer() override;
         const BufferDesc& getDesc() const override { return desc; }
-        void* getSharedHandle() const override;
         Object getNativeObject(ObjectType type) override;
 
     private:

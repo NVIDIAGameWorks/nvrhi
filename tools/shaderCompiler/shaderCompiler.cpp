@@ -188,7 +188,7 @@ bool getHierarchicalUpdateTime(const fs::path& rootFilePath, list<fs::path>& cal
 string buildCompilerCommandLine(const CompilerOptions& options, const fs::path& shaderFile, const fs::path& outputFile)
 {
 	std::ostringstream ss;
-#ifdef WIN32
+#ifdef _WIN32
 	ss << "%COMPILER% ";
 #else
 	ss << "$COMPILER ";

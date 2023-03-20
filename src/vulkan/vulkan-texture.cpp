@@ -249,7 +249,7 @@ namespace nvrhi::vulkan
                                 .setSamples(sampleCount)
                                 .setFlags(flags);
         
-#if WIN32
+#if _WIN32
         const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32;
 #else
         const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd;
@@ -335,7 +335,7 @@ namespace nvrhi::vulkan
 
             if((desc.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
             {
-#ifdef WIN32
+#ifdef _WIN32
                 texture->sharedHandle = m_Context.device.getMemoryWin32HandleKHR({ texture->memory, vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32 });
 #else
                 texture->sharedHandle = (void*)m_Context.device.getMemoryFdKHR({ texture->memory, vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd });
@@ -656,6 +656,8 @@ namespace nvrhi::vulkan
             return Object(image);
         case ObjectTypes::VK_DeviceMemory:
             return Object(memory);
+        case ObjectTypes::SharedHandle:
+            return Object(sharedHandle);
         default:
             return nullptr;
         }
@@ -683,11 +685,6 @@ namespace nvrhi::vulkan
         default:
             return nullptr;
         }
-    }
-
-    void* Texture::getSharedHandle() const
-    {
-        return sharedHandle;
     }
 
     uint32_t Texture::getNumSubresources() const

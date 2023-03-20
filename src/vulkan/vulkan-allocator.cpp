@@ -122,7 +122,7 @@ namespace nvrhi::vulkan
         if (enableDeviceAddress)
             allocFlags.flags |= vk::MemoryAllocateFlagBits::eDeviceAddress;
 
-#ifdef WIN32
+#ifdef _WIN32
         const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32;
 #else
         const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd;

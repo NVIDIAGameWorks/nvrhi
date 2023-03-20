@@ -523,7 +523,6 @@ namespace nvrhi
     {
     public:
         [[nodiscard]] virtual const TextureDesc& getDesc() const = 0;
-        [[nodiscard]] virtual void* getSharedHandle() const = 0;
 
         // Similar to getNativeObject, returns a native view for a specified set of subresources. Returns nullptr if unavailable.
         // TODO: on D3D12, the views might become invalid later if the view heap is grown/reallocated, we should do something about that.
@@ -656,7 +655,6 @@ namespace nvrhi
     {
     public:
         [[nodiscard]] virtual const BufferDesc& getDesc() const = 0;
-        [[nodiscard]] virtual void* getSharedHandle() const = 0;
     };
 
     typedef RefCountPtr<IBuffer> BufferHandle;

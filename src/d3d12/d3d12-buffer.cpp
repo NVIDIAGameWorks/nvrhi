@@ -36,6 +36,8 @@ namespace nvrhi::d3d12
         {
         case ObjectTypes::D3D12_Resource:
             return Object(resource);
+        case ObjectTypes::SharedHandle:
+            return Object(sharedHandle);
         default:
             return nullptr;
         }
@@ -294,11 +296,6 @@ namespace nvrhi::d3d12
         buffer->postCreate();
 
         return BufferHandle::Create(buffer);
-    }
-
-    void* Buffer::getSharedHandle() const
-    {
-        return sharedHandle;
     }
 
     void Buffer::createCBV(size_t descriptor, BufferRange range) const
