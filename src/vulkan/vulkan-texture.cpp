@@ -248,6 +248,16 @@ namespace nvrhi::vulkan
                                 .setSharingMode(vk::SharingMode::eExclusive)
                                 .setSamples(sampleCount)
                                 .setFlags(flags);
+        
+#if _WIN32
+        const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32;
+#else
+        const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd;
+#endif
+
+        vk::ExternalMemoryImageCreateInfo externalImage{ handleType };
+        if (desc.sharedResourceFlags == SharedResourceFlags::Shared)
+            texture->imageInfo.setPNext(&externalImage);
     }
 
     TextureSubresourceView& Texture::getSubresourceView(const TextureSubresourceSet& subresource, TextureDimension dimension, TextureSubresourceViewType viewtype)
@@ -322,6 +332,15 @@ namespace nvrhi::vulkan
             res = m_Allocator.allocateTextureMemory(texture);
             ASSERT_VK_OK(res);
             CHECK_VK_FAIL(res)
+
+            if((desc.sharedResourceFlags & SharedResourceFlags::Shared) != 0)
+            {
+#ifdef _WIN32
+                texture->sharedHandle = m_Context.device.getMemoryWin32HandleKHR({ texture->memory, vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32 });
+#else
+                texture->sharedHandle = (void*)m_Context.device.getMemoryFdKHR({ texture->memory, vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd });
+#endif
+            }
 
             m_Context.nameVKObject(texture->memory, vk::DebugReportObjectTypeEXT::eDeviceMemory, desc.debugName.c_str());
         }
@@ -637,6 +656,8 @@ namespace nvrhi::vulkan
             return Object(image);
         case ObjectTypes::VK_DeviceMemory:
             return Object(memory);
+        case ObjectTypes::SharedHandle:
+            return Object(sharedHandle);
         default:
             return nullptr;
         }

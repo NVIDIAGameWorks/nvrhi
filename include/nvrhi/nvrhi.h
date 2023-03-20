@@ -382,7 +382,7 @@ namespace nvrhi
 
         // D3D11: adds D3D11_RESOURCE_MISC_SHARED
         // D3D12: adds D3D12_HEAP_FLAG_SHARED
-        // Vulkan: ignored
+        // Vulkan: adds vk::ExternalMemoryImageCreateInfo and vk::ExportMemoryAllocateInfo/vk::ExternalMemoryBufferCreateInfo
         Shared              = 0x01,
 
         // D3D11: adds (D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX | D3D11_RESOURCE_MISC_SHARED_NTHANDLE)

@@ -52,7 +52,8 @@ namespace nvrhi::vulkan
         m_Context.device.getBufferMemoryRequirements(buffer->buffer, &memRequirements);
 
         // allocate memory
-        const vk::Result res = allocateMemory(buffer, memRequirements, pickBufferMemoryProperties(buffer->desc), enableDeviceAddress);
+        const bool enableMemoryExport = (buffer->desc.sharedResourceFlags & SharedResourceFlags::Shared) != 0;
+        const vk::Result res = allocateMemory(buffer, memRequirements, pickBufferMemoryProperties(buffer->desc), enableDeviceAddress, enableMemoryExport);
         CHECK_VK_RETURN(res)
 
         m_Context.device.bindBufferMemory(buffer->buffer, buffer->memory, 0);
@@ -73,7 +74,9 @@ namespace nvrhi::vulkan
 
         // allocate memory
         const vk::MemoryPropertyFlags memProperties = vk::MemoryPropertyFlagBits::eDeviceLocal;
-        const vk::Result res = allocateMemory(texture, memRequirements, memProperties);
+        const bool enableDeviceAddress = false;
+        const bool enableMemoryExport = (texture->desc.sharedResourceFlags & SharedResourceFlags::Shared) != 0;
+        const vk::Result res = allocateMemory(texture, memRequirements, memProperties, enableDeviceAddress, enableMemoryExport);
         CHECK_VK_RETURN(res)
 
         m_Context.device.bindImageMemory(texture->image, texture->memory, 0);
@@ -89,7 +92,8 @@ namespace nvrhi::vulkan
     vk::Result VulkanAllocator::allocateMemory(MemoryResource *res,
                                                vk::MemoryRequirements memRequirements,
                                                vk::MemoryPropertyFlags memPropertyFlags,
-                                                bool enableDeviceAddress) const
+                                                bool enableDeviceAddress,
+                                                bool enableExportMemory) const
     {
         res->managed = true;
 
@@ -117,6 +121,17 @@ namespace nvrhi::vulkan
         auto allocFlags = vk::MemoryAllocateFlagsInfo();
         if (enableDeviceAddress)
             allocFlags.flags |= vk::MemoryAllocateFlagBits::eDeviceAddress;
+
+#ifdef _WIN32
+        const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32;
+#else
+        const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd;
+#endif
+        auto exportInfo = vk::ExportMemoryAllocateInfo()
+            .setHandleTypes(handleType);
+
+        if(enableExportMemory)
+            allocFlags.setPNext(&exportInfo);
 
         auto allocInfo = vk::MemoryAllocateInfo()
                             .setAllocationSize(memRequirements.size)

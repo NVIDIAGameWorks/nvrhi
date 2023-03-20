@@ -39,6 +39,8 @@ namespace nvrhi
 
     namespace ObjectTypes
     {
+        constexpr ObjectType SharedHandle                           = 0x00000001;
+
         constexpr ObjectType D3D11_Device                           = 0x00010001;
         constexpr ObjectType D3D11_DeviceContext                    = 0x00010002;
         constexpr ObjectType D3D11_Resource                         = 0x00010003;

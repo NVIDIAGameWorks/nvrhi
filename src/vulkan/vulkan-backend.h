@@ -300,7 +300,8 @@ namespace nvrhi::vulkan
         vk::Result allocateMemory(MemoryResource* res,
             vk::MemoryRequirements memRequirements,
             vk::MemoryPropertyFlags memPropertyFlags,
-            bool enableDeviceAddress = false) const;
+            bool enableDeviceAddress = false,
+            bool enableExportMemory = false) const;
         void freeMemory(MemoryResource* res) const;
 
     private:
@@ -386,6 +387,8 @@ namespace nvrhi::vulkan
         vk::Image image;
 
         HeapHandle heap;
+
+        void* sharedHandle = nullptr;
         
         // contains subresource views for this texture
         // note that we only create the views that the app uses, and that multiple views may map to the same subresources
@@ -531,6 +534,7 @@ namespace nvrhi::vulkan
 
         std::vector<BufferVersionItem> versionTracking;
         void* mappedMemory = nullptr;
+        void* sharedHandle = nullptr;
         uint32_t versionSearchStart = 0;
 
         // For staging buffers only
