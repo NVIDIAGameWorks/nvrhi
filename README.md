@@ -59,21 +59,30 @@ To build NVRHI as a shared library (DLL or .so):
 
 See the [programming guide](doc/ProgrammingGuide.md) and the [tutorial](doc/Tutorial.md).
 
-## Shader Compiler
+## Shader Compiler -- DEPRECATED
 
-NVRHI includes an optional tool for compiling shaders and generating shader permutations. The shader compiler is normally built together with NVRHI when the `NVRHI_WITH_SHADER_COMPILER` variable is `ON`. It can be used from CMake rules by its target name `shaderCompiler` or directly from its install location using the executable name `nvrhi-scomp`.
+The batch shader compiler that is included with NVRHI is superseded by [ShaderMake](https://github.com/NVIDIAGameWorks/ShaderMake) and will be removed soon. Please update your projects to use ShaderMake.
 
-The NVRHI shader compiler is just a front-end for [DXC](https://github.com/microsoft/DirectXShaderCompiler), it does not implement any shader language processing itself.
+Command line differences between `nvrhi-scomp` and `ShaderMake`:
 
-For the list of command line options, run `nvrhi-scomp --help`.
+- `-i/--infile` replaced with `-c/--config`.
+- `-p/--parallel` is now the default behavior, use `--serial` to get single-thread compilation.
+- `--keep` removed.
+- `--ignore` replaced with `--relaxedInclude`.
+- `--cflags` removed to support API interaction with the compilers, use individual feature settings instead.
+- `--platform` arguments now need to be uppercase: `DXIL`, `DXBC`, `SPIRV`.
+- `--vk-{s,t,b,u}-shift` replaced with `--{s,t,b,u}RegShift`
+- Add `--useAPI` on Windows to improve compilation performance.
 
-The shader compiler is driven by a configuration file that lists shaders, their targets and permutations. The file has one shader source per line, for example:
-```
-Shaders.hlsl -T vs_5_0 -E main_vs
-Shaders.hlsl -T ps_5_0 -E main_ps -D ENABLE_SOMETHING={0,1}
-```
+Config file differences:
 
-The above configuration will compile 3 shaders total: one vertex shader `main_vs` and two permutations of pixel shader `main_ps` with different values of the `ENABLE_SOMETHING` define. The pixel shader permutations will be combined into a single permutation blob. Permutation blobs can be parsed using functions declared in `<nvrhi/common/shader-blob.h>`.
+- `-T <type>_<model>` replaced with just `-T <type>`, and the shader model is now specified from ShaderMake command line with `--shaderModel <model>`.
+- Comments now start with `//` instead of `#`.
+- Added limited support for `#ifdef` and similar preprocessor directives to conditionally compile shaders.
+
+The format of shader permutation blobs remains the same, but NVRHI will no longer support it once ShaderCompiler is removed. Use the new `ShaderMakeBlob` library instead of `createShaderPermutation` and `createShaderLibraryPermutation` to parse the blobs on the application side.
+
+The shader compiler target and its dependency `cxxopts` can be removed from build by setting `NVRHI_WITH_SHADER_COMPILER` to `OFF` in CMake configuration.
 
 ## NVAPI Support
 

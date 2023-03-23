@@ -62,6 +62,7 @@ namespace nvrhi
         const ShaderConstant* constants,
         uint32_t numConstants);
 
+    [[deprecated]] // See README.md for more information
     NVRHI_API ShaderHandle createShaderPermutation(
         IDevice* device,
         const ShaderDesc& d,
@@ -71,6 +72,7 @@ namespace nvrhi
         uint32_t numConstants,
         bool errorIfNotFound = true);
 
+    [[deprecated]] // See README.md for more information
     NVRHI_API ShaderLibraryHandle createShaderLibraryPermutation(
         IDevice* device,
         const void* blob,
