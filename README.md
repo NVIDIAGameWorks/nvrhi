@@ -18,6 +18,18 @@ Key features:
 - Supports all types of pipelines: Graphics, Compute, Ray Tracing, and Meshlet.
 - Validation layer and resource reflection for easy debugging.
 
+NVRHI is used in several NVIDIA GameWorks SDKs:
+
+- [Adaptive and Variable-Rate Shading SDK](https://github.com/NVIDIAGameWorks/nas-sample)
+- [Donut Framework](https://github.com/NVIDIAGameWorks/donut) and its [Examples](https://github.com/NVIDIAGameWorks/donut_examples)
+- [Opacity Micro-Map SDK](https://github.com/NVIDIAGameWorks/Opacity-MicroMap-SDK)
+- [Path Tracing SDK](https://github.com/NVIDIAGameWorks/Path-Tracing-SDK)
+- [RTXDI SDK](https://github.com/NVIDIAGameWorks/RTXDI)
+
+Notable third-party projects using NVHRI:
+
+- [RBDoom3-BFG](https://github.com/RobertBeckebans/RBDOOM-3-BFG)
+
 Various early versions of NVRHI have been used in various projects created at NVIDIA, including:
 
 - [Asteroids demo](https://developer.nvidia.com/blog/using-turing-mesh-shaders-nvidia-asteroids-demo)
@@ -92,8 +104,11 @@ To enable NVAPI support, extract the NVAPI SDK into the `nvapi` subfolder of you
 
 The following extensions are supported:
 
-- Fast Geometry Shader with optional coordinate swizzling (Maxwell+)
+- Opacity Micro-Maps (DX12, Ada+)
+- Shader Execution Reordering on DX12 (DX12, Ada+)
 - Single Pass Stereo (Pascal+)
+- Fast Geometry Shader with optional coordinate swizzling (Maxwell+)
+- Conservative Raster and other rasterizer features (Maxwell+)
 - HLSL Extensions through a fake UAV slot (see [this blog post](https://developer.nvidia.com/unlocking-gpu-intrinsics-hlsl))
 
 ## RTXMU Integration
