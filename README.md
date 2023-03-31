@@ -26,7 +26,7 @@ NVRHI is used in several NVIDIA GameWorks SDKs:
 - [Path Tracing SDK](https://github.com/NVIDIAGameWorks/Path-Tracing-SDK)
 - [RTXDI SDK](https://github.com/NVIDIAGameWorks/RTXDI)
 
-Notable third-party projects using NVHRI:
+Notable third-party projects using NVRHI:
 
 - [RBDoom3-BFG](https://github.com/RobertBeckebans/RBDOOM-3-BFG)
 
