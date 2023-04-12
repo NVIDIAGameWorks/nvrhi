@@ -276,7 +276,7 @@ namespace nvrhi::vulkan
         { ResourceStates::DepthRead,
             vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
             vk::AccessFlagBits2::eDepthStencilAttachmentRead,
-            vk::ImageLayout::eDepthStencilAttachmentOptimal },
+            vk::ImageLayout::eDepthStencilReadOnlyOptimal },
         { ResourceStates::StreamOut,
             vk::PipelineStageFlagBits2::eTransformFeedbackEXT,
             vk::AccessFlagBits2::eTransformFeedbackWriteEXT,
