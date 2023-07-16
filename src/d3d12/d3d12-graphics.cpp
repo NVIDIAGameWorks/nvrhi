@@ -362,7 +362,8 @@ namespace nvrhi::d3d12
         if (updateVertexBuffers)
         {
             D3D12_VERTEX_BUFFER_VIEW VBVs[16] = {};
-
+            std::vector<uint32_t> ActiveBufferSlot;
+            ActiveBufferSlot.reserve(16);
             InputLayout* inputLayout = checked_cast<InputLayout*>(pso->desc.inputLayout.Get());
 
             for (size_t i = 0; i < state.vertexBuffers.size(); i++)
@@ -379,7 +380,7 @@ namespace nvrhi::d3d12
                 VBVs[binding.slot].StrideInBytes = inputLayout->elementStrides[binding.slot];
                 VBVs[binding.slot].SizeInBytes = (UINT)(std::min(buffer->desc.byteSize - binding.offset, (uint64_t)ULONG_MAX));
                 VBVs[binding.slot].BufferLocation = buffer->gpuVA + binding.offset;
-
+                ActiveBufferSlot.push_back(binding.slot);
                 m_Instance->referencedResources.push_back(buffer);
             }
 
@@ -389,7 +390,15 @@ namespace nvrhi::d3d12
 
             for (uint32_t i = 0; i < numVertexBuffers; i++)
             {
-                m_ActiveCommandList->commandList->IASetVertexBuffers(i, 1, VBVs[i].BufferLocation != 0 ? &VBVs[i] : nullptr);
+                if (i < ActiveBufferSlot.size())
+                {
+                    uint32_t ActiveSlot = ActiveBufferSlot[i];
+                    m_ActiveCommandList->commandList->IASetVertexBuffers(ActiveSlot, 1, &VBVs[ActiveSlot]);
+                }
+                else
+                {
+                    m_ActiveCommandList->commandList->IASetVertexBuffers(i, 1, nullptr);
+                }
             }
         }
 
