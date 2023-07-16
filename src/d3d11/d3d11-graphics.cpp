@@ -288,11 +288,11 @@ namespace nvrhi::d3d11
             for (size_t i = 0; i < state.vertexBuffers.size(); i++)
             {
                 const VertexBufferBinding& binding = state.vertexBuffers[i];
-
-                pVertexBuffers[i] = checked_cast<Buffer*>(binding.buffer)->resource;
-                pVertexBufferStrides[i] = inputLayout->elementStrides.at(binding.slot);
+                uint32_t slotIndex = binding.slot;
+                pVertexBuffers[slotIndex] = checked_cast<Buffer*>(binding.buffer)->resource;
+                pVertexBufferStrides[slotIndex] = inputLayout->elementStrides.at(slotIndex);
                 assert(binding.offset <= UINT_MAX);
-                pVertexBufferOffsets[i] = UINT(binding.offset);
+                pVertexBufferOffsets[slotIndex] = UINT(binding.offset);
             }
 
             uint32_t numVertexBuffers = m_CurrentGraphicsStateValid
