@@ -102,11 +102,12 @@ namespace nvrhi::vulkan
     static vk::ImageUsageFlags pickImageUsage(const TextureDesc& d)
     {
         const FormatInfo& formatInfo = getFormatInfo(d.format);
-
-        // xxxnsubtil: may want to consider exposing this through nvrhi instead
+        
         vk::ImageUsageFlags ret = vk::ImageUsageFlagBits::eTransferSrc |
-                                  vk::ImageUsageFlagBits::eTransferDst |
-                                  vk::ImageUsageFlagBits::eSampled;
+                                  vk::ImageUsageFlagBits::eTransferDst;
+        
+        if (d.isShaderResource)
+            ret |= vk::ImageUsageFlagBits::eSampled;
 
         if (d.isRenderTarget)
         {

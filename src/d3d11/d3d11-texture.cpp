@@ -75,11 +75,11 @@ namespace nvrhi::d3d11
 
         // convert flags
         UINT bindFlags;
-        if (cpuAccess != CpuAccessMode::None)
+        bindFlags = 0;
+        if (cpuAccess == CpuAccessMode::None)
         {
-            bindFlags = 0;
-        } else {
-            bindFlags = D3D11_BIND_SHADER_RESOURCE;
+            if (d.isShaderResource)
+                bindFlags |= D3D11_BIND_SHADER_RESOURCE;
             if (d.isRenderTarget)
                 bindFlags |= (formatInfo.hasDepth || formatInfo.hasStencil) ? D3D11_BIND_DEPTH_STENCIL : D3D11_BIND_RENDER_TARGET;
             if (d.isUAV)

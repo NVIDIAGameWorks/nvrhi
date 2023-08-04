@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 11;
+    static constexpr uint32_t c_HeaderVersion = 12;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -409,6 +409,7 @@ namespace nvrhi
         TextureDimension dimension = TextureDimension::Texture2D;
         std::string debugName;
 
+        bool isShaderResource = true; // Note: isShaderResource is initialized to 'true' for backward compatibility
         bool isRenderTarget = false;
         bool isUAV = false;
         bool isTypeless = false;

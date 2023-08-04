@@ -256,6 +256,9 @@ namespace nvrhi::d3d12
             break;
         }
 
+        if (!d.isShaderResource)
+            desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+
         if (d.isRenderTarget)
         {
             if (formatInfo.hasDepth || formatInfo.hasStencil)
