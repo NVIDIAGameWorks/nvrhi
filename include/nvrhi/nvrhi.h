@@ -1614,7 +1614,6 @@ namespace nvrhi
     typedef static_vector<BindingLayoutItem, c_MaxBindingsPerLayout> BindingLayoutItemArray;
 
     // Describes compile-time settings for HLSL -> SPIR-V register allocation.
-    // The default values match the offsets used by the NVRHI shaderCompiler tool.
     struct VulkanBindingOffsets
     {
         uint32_t shaderResource = 0;

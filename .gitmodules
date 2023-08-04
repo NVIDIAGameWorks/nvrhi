@@ -1,6 +1,3 @@
-[submodule "thirdparty/cxxopts"]
-	path = thirdparty/cxxopts
-	url = https://github.com/jarro2783/cxxopts.git
 [submodule "rtxmu"]
 	path = rtxmu
 	url = https://github.com/NVIDIAGameWorks/RTXMU.git

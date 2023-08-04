@@ -33,7 +33,6 @@ option(NVRHI_BUILD_SHARED "Build NVRHI as a shared library (DLL or .so)" OFF)
 option(NVRHI_INSTALL "Generate install rules for NVRHI" ON)
 cmake_dependent_option(NVRHI_INSTALL_EXPORTS "Install CMake exports" OFF "NVRHI_INSTALL" OFF)
 
-option(NVRHI_WITH_SHADER_COMPILER "Build the NVRHI shader compiler executable" ON)
 option(NVRHI_WITH_VALIDATION "Build NVRHI the validation layer" ON)
 option(NVRHI_WITH_VULKAN "Build the NVRHI Vulkan backend" ON)
 option(NVRHI_WITH_RTXMU "Use RTXMU for acceleration structure management" OFF)
@@ -69,15 +68,6 @@ if (NVRHI_WITH_RTXMU)
     add_subdirectory(rtxmu)
 endif()
 
-if (NVRHI_WITH_SHADER_COMPILER)
-    option(CXXOPTS_BUILD_EXAMPLES OFF)
-    option(CXXOPTS_BUILD_TESTS OFF)
-    option(CXXOPTS_ENABLE_INSTALL OFF)
-    add_subdirectory(thirdparty/cxxopts)
-
-    add_subdirectory(tools/shaderCompiler)
-endif()
-
 if (NVRHI_WITH_NVAPI AND NOT TARGET nvapi)
     find_package(NVAPI REQUIRED)
 
@@ -98,7 +88,6 @@ set(include_common
 set(src_common
     src/common/format-info.cpp
     src/common/misc.cpp
-    src/common/shader-blob.cpp
     src/common/state-tracking.cpp
     src/common/state-tracking.h
     src/common/utils.cpp)
