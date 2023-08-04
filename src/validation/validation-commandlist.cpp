@@ -585,12 +585,18 @@ namespace nvrhi::validation
 
             if (!vb.buffer)
             {
-                ss << "Vertex buffer in slot " << index << " is NULL." << std::endl;
+                ss << "Vertex buffer at index " << index << " is NULL." << std::endl;
                 anyErrors = true;
             }
             else if (!vb.buffer->getDesc().isVertexBuffer)
             {
                 ss << "Buffer '" << utils::DebugNameToString(vb.buffer->getDesc().debugName) << "' bound to vertex buffer slot " << index << " cannot be used as a vertex buffer because it does not have the isVertexBuffer flag set." << std::endl;
+                anyErrors = true;
+            }
+
+            if (vb.slot >= c_MaxVertexAttributes)
+            {
+                ss << "Vertex buffer binding at index " << index << " uses an invalid slot " << vb.slot << "." << std::endl;
                 anyErrors = true;
             }
         }

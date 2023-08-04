@@ -745,18 +745,24 @@ namespace nvrhi::vulkan
 
         if (!state.vertexBuffers.empty() && arraysAreDifferent(state.vertexBuffers, m_CurrentGraphicsState.vertexBuffers))
         {
-            static_vector<vk::Buffer, c_MaxVertexAttributes> vertexBuffers;
-            static_vector<vk::DeviceSize, c_MaxVertexAttributes> vertexBufferOffsets;
+            vk::Buffer vertexBuffers[c_MaxVertexAttributes];
+            vk::DeviceSize vertexBufferOffsets[c_MaxVertexAttributes];
+            uint32_t maxVbIndex = 0;
 
-            for (const auto& vb : state.vertexBuffers)
+            for (const auto& binding : state.vertexBuffers)
             {
-                vertexBuffers.push_back(checked_cast<Buffer*>(vb.buffer)->buffer);
-                vertexBufferOffsets.push_back(vk::DeviceSize(vb.offset));
+                // This is tested by the validation layer, skip invalid slots here if VL is not used.
+                if (binding.slot >= c_MaxVertexAttributes)
+                    continue;
 
-                m_CurrentCmdBuf->referencedResources.push_back(vb.buffer);
+                vertexBuffers[binding.slot] = checked_cast<Buffer*>(binding.buffer)->buffer;
+                vertexBufferOffsets[binding.slot] = vk::DeviceSize(binding.offset);
+                maxVbIndex = std::max(maxVbIndex, binding.slot);
+
+                m_CurrentCmdBuf->referencedResources.push_back(binding.buffer);
             }
 
-            m_CurrentCmdBuf->cmdBuf.bindVertexBuffers(0, uint32_t(vertexBuffers.size()), vertexBuffers.data(), vertexBufferOffsets.data());
+            m_CurrentCmdBuf->cmdBuf.bindVertexBuffers(0, maxVbIndex + 1, vertexBuffers, vertexBufferOffsets);
         }
 
         if (state.indirectParams)

@@ -361,14 +361,12 @@ namespace nvrhi::d3d12
 
         if (updateVertexBuffers)
         {
-            D3D12_VERTEX_BUFFER_VIEW VBVs[16] = {};
-
+            D3D12_VERTEX_BUFFER_VIEW VBVs[c_MaxVertexAttributes] = {};
+            uint32_t maxVbIndex = 0;
             InputLayout* inputLayout = checked_cast<InputLayout*>(pso->desc.inputLayout.Get());
 
-            for (size_t i = 0; i < state.vertexBuffers.size(); i++)
+            for (const VertexBufferBinding& binding : state.vertexBuffers)
             {
-                const VertexBufferBinding& binding = state.vertexBuffers[i];
-
                 Buffer* buffer = checked_cast<Buffer*>(binding.buffer);
 
                 if (m_EnableAutomaticBarriers)
@@ -376,21 +374,28 @@ namespace nvrhi::d3d12
                     requireBufferState(buffer, ResourceStates::VertexBuffer);
                 }
 
+                // This is tested by the validation layer, skip invalid slots here if VL is not used.
+                if (binding.slot >= c_MaxVertexAttributes)
+                    continue;
+
                 VBVs[binding.slot].StrideInBytes = inputLayout->elementStrides[binding.slot];
                 VBVs[binding.slot].SizeInBytes = (UINT)(std::min(buffer->desc.byteSize - binding.offset, (uint64_t)ULONG_MAX));
                 VBVs[binding.slot].BufferLocation = buffer->gpuVA + binding.offset;
+                maxVbIndex = std::max(maxVbIndex, binding.slot);
 
                 m_Instance->referencedResources.push_back(buffer);
             }
 
-            uint32_t numVertexBuffers = uint32_t(state.vertexBuffers.size());
             if (m_CurrentGraphicsStateValid)
-                numVertexBuffers = std::max(numVertexBuffers, uint32_t(m_CurrentGraphicsState.vertexBuffers.size()));
-
-            for (uint32_t i = 0; i < numVertexBuffers; i++)
             {
-                m_ActiveCommandList->commandList->IASetVertexBuffers(i, 1, VBVs[i].BufferLocation != 0 ? &VBVs[i] : nullptr);
+                for (const VertexBufferBinding& binding : m_CurrentGraphicsState.vertexBuffers)
+                {
+                    if (binding.slot < c_MaxVertexAttributes)
+                        maxVbIndex = std::max(maxVbIndex, binding.slot);
+                }
             }
+
+            m_ActiveCommandList->commandList->IASetVertexBuffers(0, maxVbIndex + 1, VBVs);
         }
 
         if (updateShadingRate || updateFramebuffer)

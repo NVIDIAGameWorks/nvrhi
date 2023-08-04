@@ -283,23 +283,35 @@ namespace nvrhi::d3d11
             ID3D11Buffer *pVertexBuffers[c_MaxVertexAttributes] = {};
             UINT pVertexBufferStrides[c_MaxVertexAttributes] = {};
             UINT pVertexBufferOffsets[c_MaxVertexAttributes] = {};
+            uint32_t maxVbIndex = 0;
 
             const auto *inputLayout = pipeline->inputLayout;
             for (size_t i = 0; i < state.vertexBuffers.size(); i++)
             {
                 const VertexBufferBinding& binding = state.vertexBuffers[i];
 
-                pVertexBuffers[i] = checked_cast<Buffer*>(binding.buffer)->resource;
-                pVertexBufferStrides[i] = inputLayout->elementStrides.at(binding.slot);
+                // This is tested by the validation layer, skip invalid slots here if VL is not used.
+                if (binding.slot >= c_MaxVertexAttributes)
+                    continue;
+                
                 assert(binding.offset <= UINT_MAX);
-                pVertexBufferOffsets[i] = UINT(binding.offset);
+
+                pVertexBuffers[binding.slot] = checked_cast<Buffer*>(binding.buffer)->resource;
+                pVertexBufferStrides[binding.slot] = inputLayout->elementStrides.at(binding.slot);
+                pVertexBufferOffsets[binding.slot] = UINT(binding.offset);
+                maxVbIndex = std::max(maxVbIndex, binding.slot);
             }
 
-            uint32_t numVertexBuffers = m_CurrentGraphicsStateValid
-                ? uint32_t(std::max(m_CurrentVertexBufferBindings.size(), state.vertexBuffers.size()))
-                : c_MaxVertexAttributes;
+            if (m_CurrentGraphicsStateValid)
+            {
+                for (const VertexBufferBinding& binding : m_CurrentVertexBufferBindings)
+                {
+                    if (binding.slot < c_MaxVertexAttributes)
+                        maxVbIndex = std::max(maxVbIndex, binding.slot);
+                }
+            }
 
-            m_Context.immediateContext->IASetVertexBuffers(0, numVertexBuffers,
+            m_Context.immediateContext->IASetVertexBuffers(0, maxVbIndex + 1,
                 pVertexBuffers,
                 pVertexBufferStrides,
                 pVertexBufferOffsets);
