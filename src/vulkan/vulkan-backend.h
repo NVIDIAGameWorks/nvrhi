@@ -384,6 +384,7 @@ namespace nvrhi::vulkan
         TextureDesc desc;
 
         vk::ImageCreateInfo imageInfo;
+        vk::ExternalMemoryImageCreateInfo externalMemoryImageInfo;
         vk::Image image;
 
         HeapHandle heap;

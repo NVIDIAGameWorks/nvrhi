@@ -255,9 +255,11 @@ namespace nvrhi::vulkan
         const auto handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd;
 #endif
 
-        vk::ExternalMemoryImageCreateInfo externalImage{ handleType };
+        texture->externalMemoryImageInfo = vk::ExternalMemoryImageCreateInfo()
+            .setHandleTypes(handleType);
+
         if (desc.sharedResourceFlags == SharedResourceFlags::Shared)
-            texture->imageInfo.setPNext(&externalImage);
+            texture->imageInfo.setPNext(&texture->externalMemoryImageInfo);
     }
 
     TextureSubresourceView& Texture::getSubresourceView(const TextureSubresourceSet& subresource, TextureDimension dimension, TextureSubresourceViewType viewtype)
