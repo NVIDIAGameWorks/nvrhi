@@ -299,9 +299,8 @@ if (NVRHI_WITH_VULKAN)
     endif()
     
     if(WIN32)
-        target_compile_definitions(${nvrhi_vulkan_target} PRIVATE 
-                VK_USE_PLATFORM_WIN32_KHR
-                NOMINMAX)
+        target_compile_definitions(${nvrhi_vulkan_target} PUBLIC VK_USE_PLATFORM_WIN32_KHR)
+        target_compile_definitions(${nvrhi_vulkan_target} PRIVATE NOMINMAX)
     endif()
 
     if (NVRHI_WITH_RTXMU)
