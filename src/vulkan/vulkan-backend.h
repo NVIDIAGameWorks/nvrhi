@@ -301,7 +301,9 @@ namespace nvrhi::vulkan
             vk::MemoryRequirements memRequirements,
             vk::MemoryPropertyFlags memPropertyFlags,
             bool enableDeviceAddress = false,
-            bool enableExportMemory = false) const;
+            bool enableExportMemory = false,
+            VkImage dedicatedImage = nullptr,
+            VkBuffer dedicatedBuffer = nullptr) const;
         void freeMemory(MemoryResource* res) const;
 
     private:
