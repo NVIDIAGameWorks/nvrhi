@@ -545,9 +545,9 @@ namespace nvrhi::vulkan
                 .setSrcSubresource(srcLayers)
                 .setDstSubresource(dstLayers)
                 .setExtent(vk::Extent3D(
-                    dest->desc.width >> dstLayers.mipLevel, 
-                    dest->desc.height >> dstLayers.mipLevel, 
-                    dest->desc.depth >> dstLayers.mipLevel)));
+                    std::max(dest->desc.width >> dstLayers.mipLevel, 1u), 
+                    std::max(dest->desc.height >> dstLayers.mipLevel, 1u),
+                    std::max(dest->desc.depth >> dstLayers.mipLevel, 1u))));
         }
 
         if (m_EnableAutomaticBarriers)

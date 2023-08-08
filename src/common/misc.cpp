@@ -38,15 +38,15 @@ namespace nvrhi
         assert(mipLevel < desc.mipLevels);
 
         if (width == uint32_t(-1))
-            ret.width = (desc.width >> mipLevel);
+            ret.width = std::max(desc.width >> mipLevel, 1u);
 
         if (height == uint32_t(-1))
-            ret.height = (desc.height >> mipLevel);
+            ret.height = std::max(desc.height >> mipLevel, 1u);
 
         if (depth == uint32_t(-1))
         {
             if (desc.dimension == TextureDimension::Texture3D)
-                ret.depth = (desc.depth >> mipLevel);
+                ret.depth = std::max(desc.depth >> mipLevel, 1u);
             else
                 ret.depth = 1;
         }
@@ -168,14 +168,14 @@ namespace nvrhi
         if (desc.depthAttachment.valid())
         {
             const TextureDesc& textureDesc = desc.depthAttachment.texture->getDesc();
-            width = textureDesc.width >> desc.depthAttachment.subresources.baseMipLevel;
-            height = textureDesc.height >> desc.depthAttachment.subresources.baseMipLevel;
+            width = std::max(textureDesc.width >> desc.depthAttachment.subresources.baseMipLevel, 1u);
+            height = std::max(textureDesc.height >> desc.depthAttachment.subresources.baseMipLevel, 1u);
         }
         else if (!desc.colorAttachments.empty() && desc.colorAttachments[0].valid())
         {
             const TextureDesc& textureDesc = desc.colorAttachments[0].texture->getDesc();
-            width = textureDesc.width >> desc.colorAttachments[0].subresources.baseMipLevel;
-            height = textureDesc.height >> desc.colorAttachments[0].subresources.baseMipLevel;
+            width = std::max(textureDesc.width >> desc.colorAttachments[0].subresources.baseMipLevel, 1u);
+            height = std::max(textureDesc.height >> desc.colorAttachments[0].subresources.baseMipLevel, 1u);
         }
     }
 

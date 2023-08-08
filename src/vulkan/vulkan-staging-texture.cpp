@@ -39,10 +39,10 @@ namespace nvrhi::vulkan
     {
         const FormatInfo& formatInfo = getFormatInfo(desc.format);
 
-        auto wInBlocks = (desc.width >> mipLevel) / formatInfo.blockSize;
-        auto hInBlocks = (desc.height >> mipLevel) / formatInfo.blockSize;
+        auto wInBlocks = std::max(((desc.width >> mipLevel) + formatInfo.blockSize - 1) / formatInfo.blockSize, 1u);
+        auto hInBlocks = std::max(((desc.height >> mipLevel) + formatInfo.blockSize - 1) / formatInfo.blockSize, 1u);
 
-        auto blockPitchBytes = (wInBlocks >> mipLevel) * formatInfo.bytesPerBlock;
+        auto blockPitchBytes = wInBlocks * formatInfo.bytesPerBlock;
         return blockPitchBytes * hInBlocks;
     }
 

@@ -77,8 +77,8 @@ namespace nvrhi::vulkan
             const auto& rt = desc.colorAttachments[i];
             Texture* t = checked_cast<Texture*>(rt.texture);
 
-            assert(fb->framebufferInfo.width == t->desc.width >> rt.subresources.baseMipLevel);
-            assert(fb->framebufferInfo.height == t->desc.height >> rt.subresources.baseMipLevel);
+            assert(fb->framebufferInfo.width == std::max(t->desc.width >> rt.subresources.baseMipLevel, 1u));
+            assert(fb->framebufferInfo.height == std::max(t->desc.height >> rt.subresources.baseMipLevel, 1u));
 
             const vk::Format attachmentFormat = (rt.format == Format::UNKNOWN ? t->imageInfo.format : convertFormat(rt.format));
 
@@ -116,8 +116,8 @@ namespace nvrhi::vulkan
 
             Texture* texture = checked_cast<Texture*>(att.texture);
 
-            assert(fb->framebufferInfo.width == texture->desc.width >> att.subresources.baseMipLevel);
-            assert(fb->framebufferInfo.height == texture->desc.height >> att.subresources.baseMipLevel);
+            assert(fb->framebufferInfo.width == std::max(texture->desc.width >> att.subresources.baseMipLevel, 1u));
+            assert(fb->framebufferInfo.height == std::max(texture->desc.height >> att.subresources.baseMipLevel, 1u));
 
             vk::ImageLayout depthLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
             if (desc.depthAttachment.isReadOnly)

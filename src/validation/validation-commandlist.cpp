@@ -388,7 +388,11 @@ namespace nvrhi::validation
             anyErrors = true;
         }
 
-        if (dstDesc.width >> dstSR.baseMipLevel != srcDesc.width >> srcSR.baseMipLevel || dstDesc.height >> dstSR.baseMipLevel != srcDesc.height >> srcSR.baseMipLevel)
+        const uint32_t srcMipWidth = std::max(srcDesc.width >> srcSR.baseMipLevel, 1u);
+        const uint32_t srcMipHeight = std::max(srcDesc.height >> srcSR.baseMipLevel, 1u);
+        const uint32_t dstMipWidth = std::max(dstDesc.width >> dstSR.baseMipLevel, 1u);
+        const uint32_t dstMipHeight = std::max(dstDesc.height >> dstSR.baseMipLevel, 1u);
+        if (srcMipWidth != dstMipWidth || srcMipHeight != dstMipHeight)
         {
             error("resolveTexture: referenced mip levels of source and destination textures must have the same dimensions");
             anyErrors = true;
