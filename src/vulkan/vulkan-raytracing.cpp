@@ -98,7 +98,7 @@ namespace nvrhi::vulkan
                 break;
             }
 
-            dstt.setVertexFormat(convertFormat(srct.vertexFormat));
+            dstt.setVertexFormat(vk::Format(convertFormat(srct.vertexFormat)));
             dstt.setVertexData(getBufferAddress(srct.vertexBuffer, srct.vertexOffset));
             dstt.setVertexStride(srct.vertexStride);
             dstt.setMaxVertex(std::max(srct.vertexCount, 1u) - 1u);

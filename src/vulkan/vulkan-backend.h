@@ -29,6 +29,9 @@
 #include <mutex>
 #include <list>
 
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#include <vulkan/vulkan.hpp>
+
 #ifdef NVRHI_WITH_RTXMU
 #include <rtxmu/VkAccelStructManager.h>
 #endif
@@ -1118,11 +1121,11 @@ namespace nvrhi::vulkan
         IMessageCallback* getMessageCallback() override { return m_Context.messageCallback; }
 
         // vulkan::IDevice implementation
-        vk::Semaphore getQueueSemaphore(CommandQueue queue) override;
-        void queueWaitForSemaphore(CommandQueue waitQueue, vk::Semaphore semaphore, uint64_t value) override;
-        void queueSignalSemaphore(CommandQueue executionQueue, vk::Semaphore semaphore, uint64_t value) override;
+        VkSemaphore getQueueSemaphore(CommandQueue queue) override;
+        void queueWaitForSemaphore(CommandQueue waitQueue, VkSemaphore semaphore, uint64_t value) override;
+        void queueSignalSemaphore(CommandQueue executionQueue, VkSemaphore semaphore, uint64_t value) override;
         uint64_t queueGetCompletedInstance(CommandQueue queue) override;
-        FramebufferHandle createHandleForNativeFramebuffer(vk::RenderPass renderPass, vk::Framebuffer framebuffer,
+        FramebufferHandle createHandleForNativeFramebuffer(VkRenderPass renderPass, VkFramebuffer framebuffer,
             const FramebufferDesc& desc, bool transferOwnership) override;
 
     private:

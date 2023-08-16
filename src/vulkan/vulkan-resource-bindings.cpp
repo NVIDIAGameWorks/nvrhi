@@ -467,7 +467,7 @@ namespace nvrhi::vulkan
                         .setBuffer(buffer->buffer)
                         .setOffset(range.byteOffset)
                         .setRange(range.byteSize)
-                        .setFormat(vkformat);
+                        .setFormat(vk::Format(vkformat));
 
                     res = m_Context.device.createBufferView(&bufferViewInfo, m_Context.allocationCallbacks, &bufferViewRef);
                     ASSERT_VK_OK(res);
@@ -786,7 +786,7 @@ namespace nvrhi::vulkan
                             .setBuffer(buffer->buffer)
                             .setOffset(range.byteOffset)
                             .setRange(range.byteSize)
-                            .setFormat(vkformat);
+                            .setFormat(vk::Format(vkformat));
 
                         res = m_Context.device.createBufferView(&bufferViewInfo, m_Context.allocationCallbacks, &bufferViewRef);
                         ASSERT_VK_OK(res);

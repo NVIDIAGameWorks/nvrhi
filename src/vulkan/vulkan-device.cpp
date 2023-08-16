@@ -48,7 +48,7 @@ namespace nvrhi::vulkan
     }
         
     Device::Device(const DeviceDesc& desc)
-        : m_Context(desc.instance, desc.physicalDevice, desc.device, desc.allocationCallbacks)
+        : m_Context(desc.instance, desc.physicalDevice, desc.device, reinterpret_cast<vk::AllocationCallbacks*>(desc.allocationCallbacks))
         , m_Allocator(m_Context)
         , m_TimerQueryAllocator(desc.maxTimerQueries, true)
     {
@@ -323,10 +323,10 @@ namespace nvrhi::vulkan
 
     FormatSupport Device::queryFormatSupport(Format format)
     {
-        vk::Format vulkanFormat = convertFormat(format);
+        VkFormat vulkanFormat = convertFormat(format);
         
         vk::FormatProperties props;
-        m_Context.physicalDevice.getFormatProperties(vulkanFormat, &props);
+        m_Context.physicalDevice.getFormatProperties(vk::Format(vulkanFormat), &props);
 
         FormatSupport result = FormatSupport::None;
 
@@ -450,7 +450,7 @@ namespace nvrhi::vulkan
         {
             std::stringstream ss;
             ss << "Failed to allocate memory for Heap " << utils::DebugNameToString(d.debugName)
-                << ", VkResult = " << resultToString(res);
+                << ", VkResult = " << resultToString(VkResult(res));
 
             m_Context.error(ss.str());
 

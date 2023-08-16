@@ -189,7 +189,7 @@ namespace nvrhi::vulkan
 
                 outAttrib.location = attributeLocation;
                 outAttrib.binding = in.bufferIndex;
-                outAttrib.format = vulkan::convertFormat(in.format);
+                outAttrib.format = vk::Format(vulkan::convertFormat(in.format));
                 outAttrib.offset = bufferOffset + in.offset;
                 bufferOffset += element_size_bytes;
 

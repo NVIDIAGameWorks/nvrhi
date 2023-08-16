@@ -80,7 +80,7 @@ namespace nvrhi::vulkan
             assert(fb->framebufferInfo.width == std::max(t->desc.width >> rt.subresources.baseMipLevel, 1u));
             assert(fb->framebufferInfo.height == std::max(t->desc.height >> rt.subresources.baseMipLevel, 1u));
 
-            const vk::Format attachmentFormat = (rt.format == Format::UNKNOWN ? t->imageInfo.format : convertFormat(rt.format));
+            const vk::Format attachmentFormat = (rt.format == Format::UNKNOWN ? t->imageInfo.format : vk::Format(convertFormat(rt.format)));
 
             attachmentDescs[i] = vk::AttachmentDescription2()
                                         .setFormat(attachmentFormat)
@@ -235,7 +235,7 @@ namespace nvrhi::vulkan
         return FramebufferHandle::Create(fb);
     }
 
-    FramebufferHandle Device::createHandleForNativeFramebuffer(vk::RenderPass renderPass, vk::Framebuffer framebuffer,
+    FramebufferHandle Device::createHandleForNativeFramebuffer(VkRenderPass renderPass, VkFramebuffer framebuffer,
         const FramebufferDesc& desc, bool transferOwnership)
     {
         Framebuffer* fb = new Framebuffer(m_Context);

@@ -280,7 +280,7 @@ namespace nvrhi::vulkan
 
         auto vkformat = nvrhi::vulkan::convertFormat(format);
 
-        vk::ImageAspectFlags aspectflags = guessSubresourceImageAspectFlags(vkformat, viewtype);
+        vk::ImageAspectFlags aspectflags = guessSubresourceImageAspectFlags(vk::Format(vkformat), viewtype);
         view.subresourceRange = vk::ImageSubresourceRange()
                                     .setAspectMask(aspectflags)
                                     .setBaseMipLevel(subresource.baseMipLevel)
@@ -293,7 +293,7 @@ namespace nvrhi::vulkan
         auto viewInfo = vk::ImageViewCreateInfo()
                             .setImage(image)
                             .setViewType(imageViewType)
-                            .setFormat(vkformat)
+                            .setFormat(vk::Format(vkformat))
                             .setSubresourceRange(view.subresourceRange);
 
         if (viewtype == TextureSubresourceViewType::StencilOnly)

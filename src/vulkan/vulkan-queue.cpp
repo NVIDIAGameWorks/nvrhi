@@ -234,21 +234,21 @@ namespace nvrhi::vulkan
         return nullptr;
     }
 
-    vk::Semaphore Device::getQueueSemaphore(CommandQueue queueID)
+    VkSemaphore Device::getQueueSemaphore(CommandQueue queueID)
     {
         Queue& queue = *m_Queues[uint32_t(queueID)];
 
         return queue.trackingSemaphore;
     }
 
-    void Device::queueWaitForSemaphore(CommandQueue waitQueueID, vk::Semaphore semaphore, uint64_t value)
+    void Device::queueWaitForSemaphore(CommandQueue waitQueueID, VkSemaphore semaphore, uint64_t value)
     {
         Queue& waitQueue = *m_Queues[uint32_t(waitQueueID)];
 
         waitQueue.addWaitSemaphore(semaphore, value);
     }
 
-    void Device::queueSignalSemaphore(CommandQueue executionQueueID, vk::Semaphore semaphore, uint64_t value)
+    void Device::queueSignalSemaphore(CommandQueue executionQueueID, VkSemaphore semaphore, uint64_t value)
     {
         Queue& executionQueue = *m_Queues[uint32_t(executionQueueID)];
 

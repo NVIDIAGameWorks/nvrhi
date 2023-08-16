@@ -23,10 +23,6 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include <vulkan/vulkan.hpp>
-
 #include <nvrhi/nvrhi.h>
 
 namespace nvrhi 
@@ -43,12 +39,12 @@ namespace nvrhi::vulkan
     {
     public:
         // Additional Vulkan-specific public methods
-        virtual vk::Semaphore getQueueSemaphore(CommandQueue queue) = 0;
-        virtual void queueWaitForSemaphore(CommandQueue waitQueue, vk::Semaphore semaphore, uint64_t value) = 0;
-        virtual void queueSignalSemaphore(CommandQueue executionQueue, vk::Semaphore semaphore, uint64_t value) = 0;
+        virtual VkSemaphore getQueueSemaphore(CommandQueue queue) = 0;
+        virtual void queueWaitForSemaphore(CommandQueue waitQueue, VkSemaphore semaphore, uint64_t value) = 0;
+        virtual void queueSignalSemaphore(CommandQueue executionQueue, VkSemaphore semaphore, uint64_t value) = 0;
         virtual uint64_t queueGetCompletedInstance(CommandQueue queue) = 0;
-        virtual FramebufferHandle createHandleForNativeFramebuffer(vk::RenderPass renderPass, 
-            vk::Framebuffer framebuffer, const FramebufferDesc& desc, bool transferOwnership) = 0;
+        virtual FramebufferHandle createHandleForNativeFramebuffer(VkRenderPass renderPass, 
+            VkFramebuffer framebuffer, const FramebufferDesc& desc, bool transferOwnership) = 0;
     };
 
     typedef RefCountPtr<IDevice> DeviceHandle;
@@ -57,19 +53,19 @@ namespace nvrhi::vulkan
     {
         IMessageCallback* errorCB = nullptr;
 
-        vk::Instance instance;
-        vk::PhysicalDevice physicalDevice;
-        vk::Device device;
+        VkInstance instance;
+        VkPhysicalDevice physicalDevice;
+        VkDevice device;
 
         // any of the queues can be null if this context doesn't intend to use them
-        vk::Queue graphicsQueue;
+        VkQueue graphicsQueue;
         int graphicsQueueIndex = -1;
-        vk::Queue transferQueue;
+        VkQueue transferQueue;
         int transferQueueIndex = -1;
-        vk::Queue computeQueue;
+        VkQueue computeQueue;
         int computeQueueIndex = -1;
 
-        vk::AllocationCallbacks *allocationCallbacks = nullptr;
+        VkAllocationCallbacks *allocationCallbacks = nullptr;
 
         const char **instanceExtensions = nullptr;
         size_t numInstanceExtensions = 0;
@@ -85,8 +81,7 @@ namespace nvrhi::vulkan
 
     NVRHI_API DeviceHandle createDevice(const DeviceDesc& desc);
    
-    NVRHI_API vk::Format convertFormat(nvrhi::Format format);
+    NVRHI_API VkFormat convertFormat(nvrhi::Format format);
 
     NVRHI_API const char* resultToString(VkResult result);
-    NVRHI_API const char* resultToString(vk::Result result);
 }
