@@ -201,28 +201,18 @@ namespace nvrhi::vulkan
         return flags;
     }
 
-    vk::ImageCreateFlagBits pickImageFlags(const TextureDesc& d)
+    vk::ImageCreateFlags pickImageFlags(const TextureDesc& d)
     {
-        switch (d.dimension)
-        {
-        case TextureDimension::TextureCube:
-        case TextureDimension::TextureCubeArray:
-            return vk::ImageCreateFlagBits::eCubeCompatible;
+        vk::ImageCreateFlags flags = vk::ImageCreateFlags(0);
 
-        case TextureDimension::Texture2DArray:
-        case TextureDimension::Texture2DMSArray:
-        case TextureDimension::Texture1DArray:
-        case TextureDimension::Texture1D:
-        case TextureDimension::Texture2D:
-        case TextureDimension::Texture3D:
-        case TextureDimension::Texture2DMS:
-            return (vk::ImageCreateFlagBits)0;
+        if (d.dimension == TextureDimension::TextureCube || 
+            d.dimension == TextureDimension::TextureCubeArray)
+            flags |= vk::ImageCreateFlagBits::eCubeCompatible;
 
-        case TextureDimension::Unknown:
-        default:
-            utils::InvalidEnum();
-            return (vk::ImageCreateFlagBits)0;
-        }
+        if (d.isTypeless)
+            flags |= vk::ImageCreateFlagBits::eMutableFormat;
+
+        return flags;
     }
 
     // fills out all info fields in Texture based on a TextureDesc
@@ -236,7 +226,7 @@ namespace nvrhi::vulkan
         vk::Format format = vk::Format(convertFormat(desc.format));
         vk::ImageUsageFlags usage = pickImageUsage(desc);
         vk::SampleCountFlagBits sampleCount = pickImageSampleCount(desc);
-        vk::ImageCreateFlagBits flags = pickImageFlags(desc);
+        vk::ImageCreateFlags flags = pickImageFlags(desc);
 
         texture->imageInfo = vk::ImageCreateInfo()
                                 .setImageType(type)
@@ -263,7 +253,8 @@ namespace nvrhi::vulkan
             texture->imageInfo.setPNext(&texture->externalMemoryImageInfo);
     }
 
-    TextureSubresourceView& Texture::getSubresourceView(const TextureSubresourceSet& subresource, TextureDimension dimension, TextureSubresourceViewType viewtype)
+    TextureSubresourceView& Texture::getSubresourceView(const TextureSubresourceSet& subresource, TextureDimension dimension,
+        Format format, TextureSubresourceViewType viewtype)
     {
         // This function is called from createBindingSet etc. and therefore free-threaded.
         // It modifies the subresourceViews map associated with the texture.
@@ -272,7 +263,10 @@ namespace nvrhi::vulkan
         if (dimension == TextureDimension::Unknown)
             dimension = desc.dimension;
 
-        auto cachekey = std::make_tuple(subresource,viewtype, dimension);
+        if (format == Format::UNKNOWN)
+            format = desc.format;
+
+        auto cachekey = std::make_tuple(subresource, viewtype, dimension, format);
         auto iter = subresourceViews.find(cachekey);
         if (iter != subresourceViews.end())
         {
@@ -284,7 +278,7 @@ namespace nvrhi::vulkan
 
         view.subresource = subresource;
 
-        auto vkformat = nvrhi::vulkan::convertFormat(desc.format);
+        auto vkformat = nvrhi::vulkan::convertFormat(format);
 
         vk::ImageAspectFlags aspectflags = guessSubresourceImageAspectFlags(vkformat, viewtype);
         view.subresourceRange = vk::ImageSubresourceRange()
@@ -401,14 +395,14 @@ namespace nvrhi::vulkan
             resolvedSrcSlice.arraySlice, 1
         );
 
-        const auto& srcSubresourceView = src->getSubresourceView(srcSubresource, TextureDimension::Unknown);
+        const auto& srcSubresourceView = src->getSubresourceView(srcSubresource, TextureDimension::Unknown, Format::UNKNOWN);
 
         TextureSubresourceSet dstSubresource = TextureSubresourceSet(
             resolvedDstSlice.mipLevel, 1,
             resolvedDstSlice.arraySlice, 1
         );
 
-        const auto& dstSubresourceView = dst->getSubresourceView(dstSubresource, TextureDimension::Unknown);
+        const auto& dstSubresourceView = dst->getSubresourceView(dstSubresource, TextureDimension::Unknown, Format::UNKNOWN);
 
         auto imageCopy = vk::ImageCopy()
                             .setSrcSubresource(vk::ImageSubresourceLayers()
@@ -683,7 +677,7 @@ namespace nvrhi::vulkan
             else if(!formatInfo.hasDepth && formatInfo.hasStencil)
                 viewType = TextureSubresourceViewType::StencilOnly;
 
-            return Object(getSubresourceView(subresources, dimension, viewType).view);
+            return Object(getSubresourceView(subresources, dimension, format, viewType).view);
         }
         default:
             return nullptr;
