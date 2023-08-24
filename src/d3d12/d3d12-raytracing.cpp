@@ -51,6 +51,9 @@ namespace
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
                 NVAPI_D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC ommTriangles;
 #endif
+#if NVRHI_WITH_NVAPI_DISPLACEMENT_MICROMAP
+                NVAPI_D3D12_RAYTRACING_GEOMETRY_DMM_TRIANGLES_DESC dmmTriangles;
+#endif
             };
         } m_data;
     public:
