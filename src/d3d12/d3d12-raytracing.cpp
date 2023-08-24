@@ -82,6 +82,8 @@ namespace
                 static_assert(sizeof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX::triangles) == sizeof(RaytracingGeometryDesc::triangles));
                 static_assert(offsetof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX, aabbs) == offsetof(RaytracingGeometryDesc, aabbs));
                 static_assert(sizeof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX::aabbs) == sizeof(RaytracingGeometryDesc::aabbs));
+#endif
+
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
                 static_assert(offsetof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX, ommTriangles) == offsetof(RaytracingGeometryDesc, ommTriangles));
                 static_assert(sizeof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX::ommTriangles) == sizeof(RaytracingGeometryDesc::ommTriangles));
@@ -90,6 +92,7 @@ namespace
                 static_assert(offsetof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX, dmmTriangles) == offsetof(RaytracingGeometryDesc, dmmTriangles));
                 static_assert(sizeof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX::dmmTriangles) == sizeof(RaytracingGeometryDesc::dmmTriangles));
 #endif
+
             }
 
         void SetFlags(D3D12_RAYTRACING_GEOMETRY_FLAGS flags) {
