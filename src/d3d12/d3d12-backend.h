@@ -41,6 +41,13 @@
 #define NVRHI_WITH_NVAPI_OPACITY_MICROMAP (0)
 #endif
 
+// ... same for DMM compatible versions (>=535) we look for one of the defines it adds
+#if NVRHI_D3D12_WITH_NVAPI && defined(NVAPI_GET_RAYTRACING_DISPLACEMENT_MICROMAP_ARRAY_PREBUILD_INFO_PARAMS_VER)
+#define NVRHI_WITH_NVAPI_DISPLACEMENT_MICROMAP (1)
+#else
+#define NVRHI_WITH_NVAPI_DISPLACEMENT_MICROMAP (0)
+#endif
+
 #include <bitset>
 #include <memory>
 #include <queue>
