@@ -72,8 +72,8 @@ namespace
                 static_assert(offsetof(D3D12_RAYTRACING_GEOMETRY_DESC, AABBs) == offsetof(RaytracingGeometryDesc, aabbs));
                 static_assert(sizeof(D3D12_RAYTRACING_GEOMETRY_DESC::AABBs) == sizeof(RaytracingGeometryDesc::aabbs));
             }
-#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_DISPLACEMENT_MICROMAP
             {
+#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_DISPLACEMENT_MICROMAP
                 static_assert(offsetof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX, type) == offsetof(RaytracingGeometryDesc, type));
                 static_assert(sizeof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX::type) == sizeof(RaytracingGeometryDesc::type));
                 static_assert(offsetof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX, flags) == offsetof(RaytracingGeometryDesc, flags));
@@ -92,8 +92,8 @@ namespace
                 static_assert(offsetof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX, dmmTriangles) == offsetof(RaytracingGeometryDesc, dmmTriangles));
                 static_assert(sizeof(NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX::dmmTriangles) == sizeof(RaytracingGeometryDesc::dmmTriangles));
 #endif
-
             }
+        }
 
         void SetFlags(D3D12_RAYTRACING_GEOMETRY_FLAGS flags) {
             m_data.flags = flags;
@@ -465,28 +465,28 @@ namespace nvrhi::d3d12
     }
 
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
-    static void fillOmmAttachmentDesc(NVAPI_D3D12_RAYTRACING_GEOMETRY_OMM_ATTACHMENT_DESC& oomAttachment, const rt::GeometryDesc& geometryDesc)
+    static void fillOmmAttachmentDesc(NVAPI_D3D12_RAYTRACING_GEOMETRY_OMM_ATTACHMENT_DESC& ommAttachment, const rt::GeometryDesc& geometryDesc)
     {
         const auto& triangles = geometryDesc.geometryData.triangles;
 
         // There's currently a bug that disables VMs if the input buffer is null.
         // just assign 128 in case it's null and index buffer is set.
-        oomAttachment.opacityMicromapArray = triangles.opacityMicromap == nullptr ? 128 : checked_cast<OpacityMicromap*>(triangles.opacityMicromap)->getDeviceAddress();
-        oomAttachment.opacityMicromapBaseLocation = 0;
-        oomAttachment.opacityMicromapIndexBuffer.StartAddress = triangles.ommIndexBuffer == nullptr ? 0 : checked_cast<Buffer*>(triangles.ommIndexBuffer)->gpuVA + triangles.ommIndexBufferOffset;
-        oomAttachment.opacityMicromapIndexBuffer.StrideInBytes = triangles.ommIndexFormat == Format::R32_UINT ? 4 : 2;
-        oomAttachment.opacityMicromapIndexFormat = getDxgiFormatMapping(triangles.ommIndexFormat).srvFormat;
+        ommAttachment.opacityMicromapArray = triangles.opacityMicromap == nullptr ? 128 : checked_cast<OpacityMicromap*>(triangles.opacityMicromap)->getDeviceAddress();
+        ommAttachment.opacityMicromapBaseLocation = 0;
+        ommAttachment.opacityMicromapIndexBuffer.StartAddress = triangles.ommIndexBuffer == nullptr ? 0 : checked_cast<Buffer*>(triangles.ommIndexBuffer)->gpuVA + triangles.ommIndexBufferOffset;
+        ommAttachment.opacityMicromapIndexBuffer.StrideInBytes = triangles.ommIndexFormat == Format::R32_UINT ? 4 : 2;
+        ommAttachment.opacityMicromapIndexFormat = getDxgiFormatMapping(triangles.ommIndexFormat).srvFormat;
 
         if (triangles.pOmmUsageCounts)
         {
 			assert(triangles.opacityMicromap);
-            oomAttachment.pOMMUsageCounts = CastToUsageCount(triangles.pOmmUsageCounts);
-            oomAttachment.numOMMUsageCounts = triangles.numOmmUsageCounts;
+            ommAttachment.pOMMUsageCounts = CastToUsageCount(triangles.pOmmUsageCounts);
+            ommAttachment.numOMMUsageCounts = triangles.numOmmUsageCounts;
         }
         else
         {
-            oomAttachment.pOMMUsageCounts = nullptr;
-            oomAttachment.numOMMUsageCounts = 0;
+            ommAttachment.pOMMUsageCounts = nullptr;
+            ommAttachment.numOMMUsageCounts = 0;
         }
     }
 #endif
@@ -500,10 +500,10 @@ namespace nvrhi::d3d12
             const auto& triangles = geometryDesc.geometryData.triangles;
             if (triangles.opacityMicromap != nullptr || triangles.ommIndexBuffer != nullptr) {
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
-                NVAPI_D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC oomTriangles = {};
-                fillD3dGeometryTrianglesDesc(oomTriangles.triangles, geometryDesc, transform4x4);
-                fillOmmAttachmentDesc(oomTriangles.ommAttachment, geometryDesc);
-                outD3dGeometryDesc.SetOMMTriangles(oomTriangles);
+                NVAPI_D3D12_RAYTRACING_GEOMETRY_OMM_TRIANGLES_DESC ommTriangles = {};
+                fillD3dGeometryTrianglesDesc(ommTriangles.triangles, geometryDesc, transform4x4);
+                fillOmmAttachmentDesc(ommTriangles.ommAttachment, geometryDesc);
+                outD3dGeometryDesc.SetOMMTriangles(ommTriangles);
 #else
                 utils::NotSupported();
 #endif
