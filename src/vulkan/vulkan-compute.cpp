@@ -43,6 +43,7 @@ namespace nvrhi::vulkan
 
         BindingVector<vk::DescriptorSetLayout> descriptorSetLayouts;
         uint32_t pushConstantSize = 0;
+        pso->pushConstantVisibility = vk::ShaderStageFlagBits();
         for (const BindingLayoutHandle& _layout : desc.bindingLayouts)
         {
             BindingLayout* layout = checked_cast<BindingLayout*>(_layout.Get());
@@ -55,6 +56,7 @@ namespace nvrhi::vulkan
                     if (item.type == ResourceType::PushConstants)
                     {
                         pushConstantSize = item.size;
+                        pso->pushConstantVisibility = convertShaderTypeToShaderStageFlagBits(layout->desc.visibility);
                         // assume there's only one push constant item in all layouts -- the validation layer makes sure of that
                         break;
                     }
@@ -65,12 +67,11 @@ namespace nvrhi::vulkan
         auto pushConstantRange = vk::PushConstantRange()
             .setOffset(0)
             .setSize(pushConstantSize)
-            .setStageFlags(vk::ShaderStageFlagBits::eCompute);
+            .setStageFlags(pso->pushConstantVisibility);
 
         auto pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
             .setSetLayoutCount(uint32_t(descriptorSetLayouts.size()))
             .setPSetLayouts(descriptorSetLayouts.data())
-            .setPushConstantRangeCount(0)
             .setPushConstantRangeCount(pushConstantSize ? 1 : 0)
             .setPPushConstantRanges(&pushConstantRange);
 
@@ -183,7 +184,7 @@ namespace nvrhi::vulkan
         }
 
         m_CurrentPipelineLayout = pso->pipelineLayout;
-        m_CurrentPipelineShaderStages = vk::ShaderStageFlagBits::eCompute;
+        m_CurrentPushConstantsVisibility = pso->pushConstantVisibility;
 
         if (state.indirectParams && state.indirectParams != m_CurrentComputeState.indirectParams)
         {

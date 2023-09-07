@@ -845,7 +845,7 @@ namespace nvrhi::vulkan
         {
             m_CurrentCmdBuf->cmdBuf.bindPipeline(vk::PipelineBindPoint::eRayTracingKHR, pso->pipeline);
             m_CurrentPipelineLayout = pso->pipelineLayout;
-            m_CurrentPipelineShaderStages = convertShaderTypeToShaderStageFlagBits(ShaderType::AllRayTracing);
+            m_CurrentPushConstantsVisibility = pso->pushConstantVisibility;
         }
 
         if (arraysAreDifferent(m_CurrentRayTracingState.bindings, state.bindings) || m_AnyVolatileBufferWrites)
@@ -1024,7 +1024,7 @@ namespace nvrhi::vulkan
 
         BindingVector<vk::DescriptorSetLayout> descriptorSetLayouts;
         uint32_t pushConstantSize = 0;
-        ShaderType pushConstantVisibility = ShaderType::None;
+        pso->pushConstantVisibility = vk::ShaderStageFlagBits();
         for (const BindingLayoutHandle& _layout : desc.globalBindingLayouts)
         {
             BindingLayout* layout = checked_cast<BindingLayout*>(_layout.Get());
@@ -1037,7 +1037,7 @@ namespace nvrhi::vulkan
                     if (item.type == ResourceType::PushConstants)
                     {
                         pushConstantSize = item.size;
-                        pushConstantVisibility = layout->desc.visibility;
+                        pso->pushConstantVisibility = convertShaderTypeToShaderStageFlagBits(layout->desc.visibility);
                         // assume there's only one push constant item in all layouts -- the validation layer makes sure of that
                         break;
                     }
@@ -1048,12 +1048,11 @@ namespace nvrhi::vulkan
         auto pushConstantRange = vk::PushConstantRange()
             .setOffset(0)
             .setSize(pushConstantSize)
-            .setStageFlags(convertShaderTypeToShaderStageFlagBits(pushConstantVisibility));
+            .setStageFlags(pso->pushConstantVisibility);
 
         auto pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
             .setSetLayoutCount(uint32_t(descriptorSetLayouts.size()))
             .setPSetLayouts(descriptorSetLayouts.data())
-            .setPushConstantRangeCount(0)
             .setPushConstantRangeCount(pushConstantSize ? 1 : 0)
             .setPPushConstantRanges(&pushConstantRange);
 

@@ -510,6 +510,7 @@ namespace nvrhi::d3d12
             D3D12_ROOT_PARAMETER1& param = rootParameters.emplace_back();
 
             param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+            param.ShaderVisibility = convertShaderStage(desc.visibility);
             param.Constants = rootConstants;
 
             rootParameterPushConstants = RootParameterIndex(rootParameters.size() - 1);

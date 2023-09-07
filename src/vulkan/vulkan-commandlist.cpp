@@ -86,7 +86,7 @@ namespace nvrhi::vulkan
         endRenderPass();
 
         m_CurrentPipelineLayout = vk::PipelineLayout();
-        m_CurrentPipelineShaderStages = vk::ShaderStageFlagBits();
+        m_CurrentPushConstantsVisibility = vk::ShaderStageFlagBits();
 
         m_CurrentGraphicsState = GraphicsState();
         m_CurrentComputeState = ComputeState();
@@ -103,7 +103,7 @@ namespace nvrhi::vulkan
     {
         assert(m_CurrentCmdBuf);
 
-        m_CurrentCmdBuf->cmdBuf.pushConstants(m_CurrentPipelineLayout, m_CurrentPipelineShaderStages, 0, uint32_t(byteSize), data);
+        m_CurrentCmdBuf->cmdBuf.pushConstants(m_CurrentPipelineLayout, m_CurrentPushConstantsVisibility, 0, uint32_t(byteSize), data);
     }
 
     void CommandList::executed(Queue& queue, const uint64_t submissionID)

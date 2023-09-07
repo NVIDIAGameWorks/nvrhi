@@ -816,6 +816,7 @@ namespace nvrhi::vulkan
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
+        vk::ShaderStageFlags pushConstantVisibility;
         bool usesBlendConstants = false;
 
         explicit GraphicsPipeline(const VulkanContext& context)
@@ -839,6 +840,7 @@ namespace nvrhi::vulkan
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
+        vk::ShaderStageFlags pushConstantVisibility;
 
         explicit ComputePipeline(const VulkanContext& context)
             : m_Context(context)
@@ -861,6 +863,7 @@ namespace nvrhi::vulkan
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
+        vk::ShaderStageFlags pushConstantVisibility;
         bool usesBlendConstants = false;
 
         explicit MeshletPipeline(const VulkanContext& context)
@@ -883,6 +886,7 @@ namespace nvrhi::vulkan
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
+        vk::ShaderStageFlags pushConstantVisibility;
 
         std::unordered_map<std::string, uint32_t> shaderGroups; // name -> index
         std::vector<uint8_t> shaderGroupHandles;
@@ -1246,7 +1250,7 @@ namespace nvrhi::vulkan
         TrackedCommandBufferPtr m_CurrentCmdBuf = nullptr;
 
         vk::PipelineLayout m_CurrentPipelineLayout;
-        vk::ShaderStageFlags m_CurrentPipelineShaderStages;
+        vk::ShaderStageFlags m_CurrentPushConstantsVisibility;
         GraphicsState m_CurrentGraphicsState{};
         ComputeState m_CurrentComputeState{};
         MeshletState m_CurrentMeshletState{};
