@@ -590,7 +590,7 @@ namespace nvrhi::d3d12
             om->dataBuffer = checked_cast<Buffer*>(buffer.Get());
             assert((om->dataBuffer->gpuVA % NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_ARRAY_BYTE_ALIGNMENT) == 0);
         }
-        return om;
+        return rt::OpacityMicromapHandle::Create(om);
 #else
         utils::NotSupported();
         return nullptr;
