@@ -81,8 +81,8 @@ namespace nvrhi::vulkan
         {
             assert(arraySlice == 0);
             assert(z == 0);
-            assert(sliceRegions.size() == 1);
-            return sliceRegions[0];
+            assert(sliceRegions.size() == desc.mipLevels);
+            return sliceRegions[mipLevel];
         }
     }
 
@@ -182,7 +182,7 @@ namespace nvrhi::vulkan
         srcMipSize.height = std::max(srcMipSize.height >> resolvedDstSlice.mipLevel, 1u);
 
         auto dstRegion = dst->getSliceRegion(resolvedDstSlice.mipLevel, resolvedDstSlice.arraySlice, resolvedDstSlice.z);
-        assert((dstRegion.offset % 0x3) == 0); // per Vulkan spec
+        assert((dstRegion.offset & 0x3) == 0); // per Vulkan spec
 
         TextureSubresourceSet srcSubresource = TextureSubresourceSet(
             resolvedSrcSlice.mipLevel, 1,
