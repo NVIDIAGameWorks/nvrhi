@@ -88,7 +88,7 @@ namespace nvrhi::d3d12
     {
         RenderTargetView,
         DepthStencilView,
-        ShaderResrouceView,
+        ShaderResourceView,
         Sampler
     };
 

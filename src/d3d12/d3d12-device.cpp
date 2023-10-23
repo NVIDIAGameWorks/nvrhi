@@ -522,7 +522,7 @@ namespace nvrhi::d3d12
             return &m_Resources.renderTargetViewHeap;
         case DescriptorHeapType::DepthStencilView:
             return &m_Resources.depthStencilViewHeap;
-        case DescriptorHeapType::ShaderResrouceView:
+        case DescriptorHeapType::ShaderResourceView:
             return &m_Resources.shaderResourceViewHeap;
         case DescriptorHeapType::Sampler:
             return &m_Resources.samplerHeap;
