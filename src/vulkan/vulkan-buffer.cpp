@@ -109,7 +109,7 @@ namespace nvrhi::vulkan
             // vulkan allows for <= 64kb buffer updates to be done inline via vkCmdUpdateBuffer,
             // but the data size must always be a multiple of 4
             // enlarge the buffer slightly to allow for this
-            size += size % 4;
+            size = (size + 3) & ~3ull;
         }
 
         auto bufferInfo = vk::BufferCreateInfo()
@@ -437,7 +437,7 @@ namespace nvrhi::vulkan
                 int64_t thisGulpSize = std::min(remaining, int64_t(commandBufferWriteLimit));
 
                 // we bloat the read size here past the incoming buffer since the transfer must be a multiple of 4; the extra garbage should never be used anywhere
-                thisGulpSize += thisGulpSize % 4;
+                thisGulpSize = (thisGulpSize + 3) & ~3ll;
                 m_CurrentCmdBuf->cmdBuf.updateBuffer(buffer->buffer, destOffsetBytes + dataSize - remaining, thisGulpSize, &base[dataSize - remaining]);
                 remaining -= thisGulpSize;
             }
