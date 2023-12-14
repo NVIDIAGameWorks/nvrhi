@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 12;
+    static constexpr uint32_t c_HeaderVersion = 13;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -1632,11 +1632,24 @@ namespace nvrhi
     {
         ShaderType visibility = ShaderType::None;
         uint32_t registerSpace = 0;
+
+        // This flag controls the validation behavior for pipelines that use multiple binding layouts.
+        // - When it's set to `false`, the `registerSpace` parameter only affects the DX12 implementation,
+        //   and the validation layer will report an error when non-zero `registerSpace` is used with other APIs.
+        // - When it's set to `true`, the `registerSpace` parameter is assumed to be the same as the descriptor set
+        //   index on Vulkan. Since binding layouts and binding sets map to Vulkan descriptor sets 1:1,
+        //   that means if a pipeline is using multiple binding layouts, layout 0 must have `registerSpace = 0`,
+        //   layout 1 must have `registerSpace = 1` and so on. NVRHI validation layer will verify that and
+        //   report errors on pipeline creation when register spaces don't match layout indices.
+        //   The motivation for such validation is that DXC maps register spaces to Vulkan descriptor sets by default.
+        bool registerSpaceIsDescriptorSet = false;
+
         BindingLayoutItemArray bindings;
         VulkanBindingOffsets bindingOffsets;
 
         BindingLayoutDesc& setVisibility(ShaderType value) { visibility = value; return *this; }
         BindingLayoutDesc& setRegisterSpace(uint32_t value) { registerSpace = value; return *this; }
+        BindingLayoutDesc& setRegisterSpaceIsDescriptorSet(bool value) { registerSpaceIsDescriptorSet = value; return *this; }
         BindingLayoutDesc& addItem(const BindingLayoutItem& value) { bindings.push_back(value); return *this; }
         BindingLayoutDesc& setBindingOffsets(const VulkanBindingOffsets& value) { bindingOffsets = value; return *this; }
     };
