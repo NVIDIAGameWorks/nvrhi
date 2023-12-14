@@ -1013,10 +1013,7 @@ namespace nvrhi::d3d12
 
         auto resolvedDstSlice = dstSlice.resolve(dst->desc);
         auto resolvedSrcSlice = srcSlice.resolve(src->desc);
-
-        assert(resolvedDstSlice.width == resolvedSrcSlice.width);
-        assert(resolvedDstSlice.height == resolvedSrcSlice.height);
-
+        
         UINT dstSubresource = calcSubresource(resolvedDstSlice.mipLevel, resolvedDstSlice.arraySlice, 0, dst->desc.mipLevels, dst->desc.arraySize);
         UINT srcSubresource = calcSubresource(resolvedSrcSlice.mipLevel, resolvedSrcSlice.arraySlice, 0, src->desc.mipLevels, src->desc.arraySize);
 
