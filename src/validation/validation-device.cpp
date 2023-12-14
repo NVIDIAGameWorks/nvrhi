@@ -753,7 +753,7 @@ namespace nvrhi::validation
         ShaderType::Pixel
     };
     
-    bool DeviceWrapper::validatePipelineBindingLayouts(const static_vector<BindingLayoutHandle, c_MaxBindingLayouts>& bindingLayouts, const std::vector<IShader*>& shaders, GraphicsAPI api) const
+    bool DeviceWrapper::validatePipelineBindingLayouts(const static_vector<BindingLayoutHandle, c_MaxBindingLayouts>& bindingLayouts, const std::vector<IShader*>& shaders) const
     {
         const int numBindingLayouts = int(bindingLayouts.size());
         bool anyErrors = false;
@@ -1049,7 +1049,7 @@ namespace nvrhi::validation
             }
         }
 
-        if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders, m_Device->getGraphicsAPI()))
+        if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders))
             return nullptr;
 
         if (!validateRenderState(pipelineDesc.renderState, fb))
@@ -1068,7 +1068,7 @@ namespace nvrhi::validation
 
         std::vector<IShader*> shaders = { pipelineDesc.CS };
         
-        if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders, m_Device->getGraphicsAPI()))
+        if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders))
             return nullptr;
 
         if (!validateShaderType(ShaderType::Compute, pipelineDesc.CS->getDesc(), "createComputePipeline"))
@@ -1093,7 +1093,7 @@ namespace nvrhi::validation
             }
         }
 
-        if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders, m_Device->getGraphicsAPI()))
+        if (!validatePipelineBindingLayouts(pipelineDesc.bindingLayouts, shaders))
             return nullptr;
 
         if (!validateRenderState(pipelineDesc.renderState, fb))

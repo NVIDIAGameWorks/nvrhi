@@ -236,7 +236,7 @@ namespace nvrhi::validation
         void warning(const std::string& messageText) const;
 
         bool validateBindingSetItem(const BindingSetItem& binding, bool isDescriptorTable, std::stringstream& errorStream);
-        bool validatePipelineBindingLayouts(const static_vector<BindingLayoutHandle, c_MaxBindingLayouts>& bindingLayouts, const std::vector<IShader*>& shaders, GraphicsAPI api) const;
+        bool validatePipelineBindingLayouts(const static_vector<BindingLayoutHandle, c_MaxBindingLayouts>& bindingLayouts, const std::vector<IShader*>& shaders) const;
         bool validateShaderType(ShaderType expected, const ShaderDesc& shaderDesc, const char* function) const;
         bool validateRenderState(const RenderState& renderState, IFramebuffer* fb) const;
 
