@@ -2536,6 +2536,7 @@ namespace nvrhi
         virtual void setPushConstants(const void* data, size_t byteSize) = 0;
 
         virtual void setGraphicsState(const GraphicsState& state) = 0;
+        virtual void setStencilRefValue(uint8_t value) = 0;
         virtual void draw(const DrawArguments& args) = 0;
         virtual void drawIndexed(const DrawArguments& args) = 0;
         virtual void drawIndirect(uint32_t offsetBytes, uint32_t drawCount = 1) = 0;
