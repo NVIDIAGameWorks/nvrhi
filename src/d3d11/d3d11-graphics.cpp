@@ -359,6 +359,12 @@ namespace nvrhi::d3d11
         }
     }
 
+    void CommandList::setStencilRefValue(uint8_t value)
+    {
+        GraphicsPipeline* pipeline = checked_cast<GraphicsPipeline*>(m_CurrentGraphicsPipeline.Get());
+        m_Context.immediateContext->OMSetDepthStencilState(pipeline->pDepthStencilState, value);
+    }
+
     void CommandList::draw(const DrawArguments& args)
     {
         m_Context.immediateContext->DrawInstanced(args.vertexCount, args.instanceCount, args.startVertexLocation, args.startInstanceLocation);

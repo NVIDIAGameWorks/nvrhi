@@ -477,6 +477,11 @@ namespace nvrhi::d3d12
         m_CurrentGraphicsState = state;
     }
 
+    void CommandList::setStencilRefValue(uint8_t value)
+    {
+        m_ActiveCommandList->commandList->OMSetStencilRef(value);
+    }
+
     void CommandList::unbindShadingRateState()
     {
         if (m_CurrentGraphicsStateValid && m_CurrentGraphicsState.shadingRateState.enabled)

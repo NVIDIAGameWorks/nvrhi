@@ -645,6 +645,39 @@ namespace nvrhi::validation
         m_CurrentGraphicsState = state;
     }
 
+    void CommandListWrapper::setStencilRefValue(uint8_t value)
+    {
+        if (!requireOpenState())
+            return;
+
+        if (!requireType(CommandQueue::Graphics, "draw"))
+            return;
+
+        if (!m_GraphicsStateSet)
+        {
+            error("Graphics state is not set before a draw call.\n"
+                  "Note that setting compute state invalidates the graphics state.");
+            return;
+        }
+
+        const auto& dsDesc = m_CurrentGraphicsState.pipeline->getDesc().renderState.depthStencilState;
+
+        if (!dsDesc.stencilEnable)
+        {
+            error("setStencilRefValue: stencil is not enabled");
+            return;
+        }
+
+        if (!dsDesc.stencilReadMask &&
+            !dsDesc.stencilWriteMask)
+        {
+            error("setStencilRefValue: stencil read and write masks are both 0");
+            return;
+        }
+
+        m_CommandList->setStencilRefValue(value);
+    }
+
     void CommandListWrapper::draw(const DrawArguments& args)
     {
         if (!requireOpenState())

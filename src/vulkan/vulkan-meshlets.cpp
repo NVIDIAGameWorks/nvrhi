@@ -185,14 +185,15 @@ namespace nvrhi::vulkan
 
         pso->usesBlendConstants = blendState.usesConstantColor(uint32_t(fb->desc.colorAttachments.size()));
         
-        vk::DynamicState dynamicStates[3] = {
+        vk::DynamicState dynamicStates[4] = {
             vk::DynamicState::eViewport,
             vk::DynamicState::eScissor,
+            vk::DynamicState::eStencilReference,
             vk::DynamicState::eBlendConstants
         };
 
         auto dynamicStateInfo = vk::PipelineDynamicStateCreateInfo()
-            .setDynamicStateCount(pso->usesBlendConstants ? 3 : 2)
+            .setDynamicStateCount(pso->usesBlendConstants ? 4 : 3)
             .setPDynamicStates(dynamicStates);
 
         auto pipelineInfo = vk::GraphicsPipelineCreateInfo()

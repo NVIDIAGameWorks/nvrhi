@@ -560,12 +560,12 @@ namespace nvrhi::vulkan
         vk::DynamicState dynamicStates[4] = {
             vk::DynamicState::eViewport,
             vk::DynamicState::eScissor,
+            vk::DynamicState::eStencilReference,
             vk::DynamicState::eBlendConstants,
-            vk::DynamicState::eFragmentShadingRateKHR
         };
 
         auto dynamicStateInfo = vk::PipelineDynamicStateCreateInfo()
-            .setDynamicStateCount(pso->usesBlendConstants ? 3 : 2)
+            .setDynamicStateCount(pso->usesBlendConstants ? 4 : 3)
             .setPDynamicStates(dynamicStates);
 
         auto pipelineInfo = vk::GraphicsPipelineCreateInfo()
@@ -784,6 +784,11 @@ namespace nvrhi::vulkan
         m_CurrentMeshletState = MeshletState();
         m_CurrentRayTracingState = rt::State();
         m_AnyVolatileBufferWrites = false;
+    }
+
+    void CommandList::setStencilRefValue(uint8_t value)
+    {
+        m_CurrentCmdBuf->cmdBuf.setStencilReference(vk::StencilFaceFlagBits::eFrontAndBack, value);
     }
 
     void CommandList::updateGraphicsVolatileBuffers()

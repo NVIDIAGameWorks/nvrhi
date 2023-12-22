@@ -1183,6 +1183,7 @@ namespace nvrhi::vulkan
         void setPushConstants(const void* data, size_t byteSize) override;
 
         void setGraphicsState(const GraphicsState& state) override;
+        void setStencilRefValue(uint8_t value) override;
         void draw(const DrawArguments& args) override;
         void drawIndexed(const DrawArguments& args) override;
         void drawIndirect(uint32_t offsetBytes, uint32_t drawCount) override;
