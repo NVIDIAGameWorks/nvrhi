@@ -404,6 +404,14 @@ namespace nvrhi::vulkan
 
         const auto& dstSubresourceView = dst->getSubresourceView(dstSubresource, TextureDimension::Unknown, Format::UNKNOWN);
 
+        // When copying between block-compressed and uint textures, the extents and offsets are scaled by the block size.
+        // To simplify the logic here, assume that one of (src, dst) is compressed, therefore its extents are smaller, and use that.
+        // See https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdCopyImage.html
+        const VkExtent3D extent = vk::Extent3D(
+            std::min(resolvedSrcSlice.width, resolvedDstSlice.width),
+            std::min(resolvedSrcSlice.height, resolvedDstSlice.height),
+            std::min(resolvedSrcSlice.depth, resolvedDstSlice.depth));
+
         auto imageCopy = vk::ImageCopy()
                             .setSrcSubresource(vk::ImageSubresourceLayers()
                                                 .setAspectMask(srcSubresourceView.subresourceRange.aspectMask)
@@ -417,9 +425,8 @@ namespace nvrhi::vulkan
                                                 .setBaseArrayLayer(dstSubresource.baseArraySlice)
                                                 .setLayerCount(dstSubresource.numArraySlices))
                             .setDstOffset(vk::Offset3D(resolvedDstSlice.x, resolvedDstSlice.y, resolvedDstSlice.z))
-                            .setExtent(vk::Extent3D(resolvedDstSlice.width, resolvedDstSlice.height, resolvedDstSlice.depth));
-
-
+                            .setExtent(extent);
+        
         if (m_EnableAutomaticBarriers)
         {
             requireTextureState(src, TextureSubresourceSet(resolvedSrcSlice.mipLevel, 1, resolvedSrcSlice.arraySlice, 1), ResourceStates::CopySource);
