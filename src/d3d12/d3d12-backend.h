@@ -106,6 +106,7 @@ namespace nvrhi::d3d12
         RefCountPtr<ID3D12Device> device;
         RefCountPtr<ID3D12Device2> device2;
         RefCountPtr<ID3D12Device5> device5;
+        RefCountPtr<ID3D12Device8> device8;
 #ifdef NVRHI_WITH_RTXMU
         std::unique_ptr<rtxmu::DxAccelStructManager> rtxMemUtil;
 #endif
@@ -1160,6 +1161,7 @@ namespace nvrhi::d3d12
         bool m_VariableRateShadingSupported = false;
         bool m_OpacityMicromapSupported = false;
         bool m_ShaderExecutionReorderingSupported = false;
+        bool m_SamplerFeedbackSupported = false;
         bool m_AftermathEnabled = false;
         AftermathCrashDumpHelper m_AftermathCrashDumpHelper;
 

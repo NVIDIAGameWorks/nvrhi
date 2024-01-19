@@ -128,6 +128,11 @@ namespace nvrhi::d3d12
             m_MeshletsSupported = m_Options7.MeshShaderTier >= D3D12_MESH_SHADER_TIER_1;
         }
 
+        if (SUCCEEDED(m_Context.device->QueryInterface(&m_Context.device8)) && hasOptions7)
+        {
+            m_SamplerFeedbackSupported = m_Options7.SamplerFeedbackTier >= D3D12_SAMPLER_FEEDBACK_TIER_0_9;
+        }
+
         if (hasOptions6)
         {
             m_VariableRateShadingSupported = m_Options6.VariableShadingRateTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
@@ -328,6 +333,8 @@ namespace nvrhi::d3d12
             return Object(m_Context.device);
         case ObjectTypes::Nvrhi_D3D12_Device:
             return Object(this);
+        case ObjectTypes::D3D12_CommandQueue:
+            return Object(getQueue(CommandQueue::Graphics)->queue.Get());
         default:
             return nullptr;
         }
