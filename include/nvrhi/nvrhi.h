@@ -1944,17 +1944,15 @@ namespace nvrhi
             return result;
         }
 
-        static BindingSetItem SamplerFeedbackTexture_UAV(uint32_t slot, ISamplerFeedbackTexture* texture, Format format = Format::UNKNOWN,
-            TextureSubresourceSet subresources = TextureSubresourceSet(0, 1, 0, TextureSubresourceSet::AllArraySlices),
-            TextureDimension dimension = TextureDimension::Unknown)
+        static BindingSetItem SamplerFeedbackTexture_UAV(uint32_t slot, ISamplerFeedbackTexture* texture)
         {
             BindingSetItem result;
             result.slot = slot;
             result.type = ResourceType::SamplerFeedbackTexture_UAV;
             result.resourceHandle = texture;
-            result.format = format;
-            result.dimension = dimension;
-            result.subresources = subresources;
+            result.format = Format::UNKNOWN;
+            result.dimension = TextureDimension::Unknown;
+            result.subresources = AllSubresources;
             result.unused = 0;
             return result;
         }

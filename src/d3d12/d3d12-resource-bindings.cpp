@@ -285,6 +285,19 @@ namespace nvrhi::d3d12
                             found = true;
                             break;
                         }
+                        else if (range.RangeType == D3D12_DESCRIPTOR_RANGE_TYPE_UAV && bindingType == ResourceType::SamplerFeedbackTexture_UAV)
+                        {
+                            SamplerFeedbackTexture* texture = checked_cast<SamplerFeedbackTexture*>(binding.resourceHandle);
+
+                            texture->createUAV(descriptorHandle.ptr);
+                            pResource = texture;
+
+                            // TODO: Automatic state transition into Unordered Access here
+
+                            hasUavBindings = true;
+                            found = true;
+                            break;
+                        }
                     }
 
                     if (pResource)
