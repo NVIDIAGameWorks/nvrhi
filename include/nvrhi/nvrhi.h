@@ -541,6 +541,30 @@ namespace nvrhi
     };
     typedef RefCountPtr<IStagingTexture> StagingTextureHandle;
 
+
+    enum SamplerFeedbackFormat : uint8_t
+    {
+        MinMipOpaque = 0x0,
+        MipRegionUsedOpaque = 0x1,
+    };
+
+    struct SamplerFeedbackTextureDesc
+    {
+        SamplerFeedbackFormat samplerFeedbackFormat = SamplerFeedbackFormat::MinMipOpaque;
+        uint32_t samplerFeedbackMipRegionX = 1;
+        uint32_t samplerFeedbackMipRegionY = 1;
+        uint32_t samplerFeedbackMipRegionZ = 1;
+        ResourceStates initialState = ResourceStates::Unknown;
+    };
+
+    class ISamplerFeedbackTexture : public IResource
+    {
+    public:
+        [[nodiscard]] virtual const SamplerFeedbackTextureDesc& getDesc() const = 0;
+        virtual TextureHandle getPairedTexture() = 0;
+    };
+    typedef RefCountPtr<ISamplerFeedbackTexture> SamplerFeedbackTextureHandle;
+
     //////////////////////////////////////////////////////////////////////////
     // Input Layout
     //////////////////////////////////////////////////////////////////////////
@@ -1560,6 +1584,7 @@ namespace nvrhi
         Sampler,
         RayTracingAccelStruct,
         PushConstants,
+        SamplerFeedbackTexture_UAV,
 
         Count
     };
@@ -1601,6 +1626,7 @@ namespace nvrhi
         NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(VolatileConstantBuffer)
         NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(Sampler)
         NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(RayTracingAccelStruct)
+        NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(SamplerFeedbackTexture_UAV)
 
         static BindingLayoutItem PushConstants(const uint32_t slot, const size_t size)
         {
@@ -1914,6 +1940,21 @@ namespace nvrhi
             result.dimension = TextureDimension::Unknown;
             result.range.byteOffset = 0;
             result.range.byteSize = byteSize;
+            result.unused = 0;
+            return result;
+        }
+
+        static BindingSetItem SamplerFeedbackTexture_UAV(uint32_t slot, ISamplerFeedbackTexture* texture, Format format = Format::UNKNOWN,
+            TextureSubresourceSet subresources = TextureSubresourceSet(0, 1, 0, TextureSubresourceSet::AllArraySlices),
+            TextureDimension dimension = TextureDimension::Unknown)
+        {
+            BindingSetItem result;
+            result.slot = slot;
+            result.type = ResourceType::SamplerFeedbackTexture_UAV;
+            result.resourceHandle = texture;
+            result.format = format;
+            result.dimension = dimension;
+            result.subresources = subresources;
             result.unused = 0;
             return result;
         }
@@ -2651,6 +2692,8 @@ namespace nvrhi
         virtual StagingTextureHandle createStagingTexture(const TextureDesc& d, CpuAccessMode cpuAccess) = 0;
         virtual void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) = 0;
         virtual void unmapStagingTexture(IStagingTexture* tex) = 0;
+
+        virtual SamplerFeedbackTextureHandle createSamplerFeedbackTexture(TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) = 0;
 
         virtual BufferHandle createBuffer(const BufferDesc& d) = 0;
         virtual void *mapBuffer(IBuffer* buffer, CpuAccessMode cpuAccess) = 0;

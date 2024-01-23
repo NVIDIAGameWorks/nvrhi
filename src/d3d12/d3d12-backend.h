@@ -357,6 +357,35 @@ namespace nvrhi::d3d12
         Object getNativeObject(ObjectType objectType) override;
     };
 
+    class SamplerFeedbackTexture : public RefCounter<ISamplerFeedbackTexture>
+    {
+    public:
+        const SamplerFeedbackTextureDesc desc;
+        const D3D12_RESOURCE_DESC1 resourceDesc;
+        RefCountPtr<ID3D12Resource> resource;
+        TextureHandle pairedTexture;
+
+        SamplerFeedbackTexture(const Context& context, DeviceResources& resources, SamplerFeedbackTextureDesc desc, const D3D12_RESOURCE_DESC1& resourceDesc, TextureHandle pairedTexture)
+            : desc(std::move(desc))
+            , resourceDesc(resourceDesc)
+            , m_Context(context)
+            , m_Resources(resources)
+            , pairedTexture(pairedTexture)
+        {
+        }
+
+        const SamplerFeedbackTextureDesc& getDesc() const override { return desc; }
+        TextureHandle getPairedTexture() override { return pairedTexture; }
+
+        void createUAV(size_t descriptor) const;
+
+        Object getNativeObject(ObjectType objectType) override;
+
+    private:
+        const Context& m_Context;
+        DeviceResources& m_Resources;
+    };
+
     class Sampler : public RefCounter<ISampler>
     {
     public:
@@ -1058,6 +1087,8 @@ namespace nvrhi::d3d12
         StagingTextureHandle createStagingTexture(const TextureDesc& d, CpuAccessMode cpuAccess) override;
         void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) override;
         void unmapStagingTexture(IStagingTexture* tex) override;
+
+        SamplerFeedbackTextureHandle createSamplerFeedbackTexture(TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) override;
 
         BufferHandle createBuffer(const BufferDesc& d) override;
         void *mapBuffer(IBuffer* b, CpuAccessMode mapFlags) override;

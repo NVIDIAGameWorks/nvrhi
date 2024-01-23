@@ -440,6 +440,7 @@ namespace nvrhi::d3d12
                     case ResourceType::TypedBuffer_UAV:
                     case ResourceType::StructuredBuffer_UAV:
                     case ResourceType::RawBuffer_UAV:
+                    case ResourceType::SamplerFeedbackTexture_UAV:
                         range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
                         break;
 
@@ -582,6 +583,7 @@ namespace nvrhi::d3d12
             case ResourceType::TypedBuffer_UAV:
             case ResourceType::StructuredBuffer_UAV:
             case ResourceType::RawBuffer_UAV:
+            case ResourceType::SamplerFeedbackTexture_UAV:
                 rangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
                 break;
 
@@ -768,6 +770,11 @@ namespace nvrhi::d3d12
         case ResourceType::Texture_UAV: {
             Texture* texture = checked_cast<Texture*>(binding.resourceHandle);
             texture->createUAV(descriptorHandle.ptr, binding.format, binding.dimension, binding.subresources);
+            break;
+        }
+        case ResourceType::SamplerFeedbackTexture_UAV: {
+            SamplerFeedbackTexture* texture = checked_cast<SamplerFeedbackTexture*>(binding.resourceHandle);
+            texture->createUAV(descriptorHandle.ptr);
             break;
         }
         case ResourceType::TypedBuffer_SRV:

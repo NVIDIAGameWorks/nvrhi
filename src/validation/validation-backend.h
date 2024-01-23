@@ -260,6 +260,8 @@ namespace nvrhi::validation
         void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) override;
         void unmapStagingTexture(IStagingTexture* tex) override;
 
+        SamplerFeedbackTextureHandle createSamplerFeedbackTexture(TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) override;
+
         BufferHandle createBuffer(const BufferDesc& d) override;
         void *mapBuffer(IBuffer* b, CpuAccessMode mapFlags) override;
         void unmapBuffer(IBuffer* b) override;
