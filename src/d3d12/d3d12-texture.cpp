@@ -1080,6 +1080,28 @@ namespace nvrhi::d3d12
         }
     }
 
+    void CommandList::clearSamplerFeedbackTexture(ISamplerFeedbackTexture* _t)
+    {
+        SamplerFeedbackTexture* t = checked_cast<SamplerFeedbackTexture*>(_t);
+        uint32_t clearColor = 0;
+        switch (t->getDesc().samplerFeedbackFormat)
+        {
+        case SamplerFeedbackFormat::MinMipOpaque:
+            clearColor = 0xFF;
+            break;
+        case SamplerFeedbackFormat::MipRegionUsedOpaque:
+            clearColor = 0;
+            break;
+        }
+        uint32_t clearValues[4] = { clearColor, clearColor, clearColor, clearColor };
+        DescriptorIndex index = t->getClearUAV();
+        commitDescriptorHeaps();
+        m_ActiveCommandList->commandList->ClearUnorderedAccessViewUint(
+            m_Resources.shaderResourceViewHeap.getGpuHandle(index),
+            m_Resources.shaderResourceViewHeap.getCpuHandle(index),
+            t->resource, clearValues, 0, nullptr);
+    }
+
     void CommandList::copyTexture(ITexture* _dst, const TextureSlice& dstSlice,
         ITexture* _src, const TextureSlice& srcSlice)
     {

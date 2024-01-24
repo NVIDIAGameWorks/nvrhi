@@ -153,6 +153,7 @@ namespace nvrhi::validation
         void clearTextureFloat(ITexture* t, TextureSubresourceSet subresources, const Color& clearColor) override;
         void clearDepthStencilTexture(ITexture* t, TextureSubresourceSet subresources, bool clearDepth, float depth, bool clearStencil, uint8_t stencil) override;
         void clearTextureUInt(ITexture* t, TextureSubresourceSet subresources, uint32_t clearColor) override;
+        void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* t) override;
 
         void copyTexture(ITexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;
         void copyTexture(IStagingTexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;

@@ -379,11 +379,24 @@ namespace nvrhi::d3d12
 
         void createUAV(size_t descriptor) const;
 
+        DescriptorIndex SamplerFeedbackTexture::getClearUAV()
+        {
+            if (m_ClearUAV != c_InvalidDescriptorIndex)
+                return m_ClearUAV;
+
+            m_ClearUAV = m_Resources.shaderResourceViewHeap.allocateDescriptor();
+            createUAV(m_Resources.shaderResourceViewHeap.getCpuHandle(m_ClearUAV).ptr);
+            m_Resources.shaderResourceViewHeap.copyToShaderVisibleHeap(m_ClearUAV);
+
+            return m_ClearUAV;
+        }
+
         Object getNativeObject(ObjectType objectType) override;
 
     private:
         const Context& m_Context;
         DeviceResources& m_Resources;
+        DescriptorIndex m_ClearUAV = c_InvalidDescriptorIndex;
     };
 
     class Sampler : public RefCounter<ISampler>
@@ -914,6 +927,7 @@ namespace nvrhi::d3d12
         void clearTextureFloat(ITexture* t, TextureSubresourceSet subresources, const Color& clearColor) override;
         void clearDepthStencilTexture(ITexture* t, TextureSubresourceSet subresources, bool clearDepth, float depth, bool clearStencil, uint8_t stencil) override;
         void clearTextureUInt(ITexture* t, TextureSubresourceSet subresources, uint32_t clearColor) override;
+        void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* t) override;
 
         void copyTexture(ITexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;
         void copyTexture(IStagingTexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;
