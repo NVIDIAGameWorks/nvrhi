@@ -262,6 +262,7 @@ namespace nvrhi::validation
         void unmapStagingTexture(IStagingTexture* tex) override;
 
         SamplerFeedbackTextureHandle createSamplerFeedbackTexture(TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) override;
+        SamplerFeedbackTextureHandle createSamplerFeedbackForNativeTexture(ObjectType objectType, Object texture, TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) override;
 
         BufferHandle createBuffer(const BufferDesc& d) override;
         void *mapBuffer(IBuffer* b, CpuAccessMode mapFlags) override;

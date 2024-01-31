@@ -2693,6 +2693,7 @@ namespace nvrhi
         virtual void unmapStagingTexture(IStagingTexture* tex) = 0;
 
         virtual SamplerFeedbackTextureHandle createSamplerFeedbackTexture(TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) = 0;
+        virtual SamplerFeedbackTextureHandle createSamplerFeedbackForNativeTexture(ObjectType objectType, Object texture, TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) = 0;
 
         virtual BufferHandle createBuffer(const BufferDesc& d) = 0;
         virtual void *mapBuffer(IBuffer* buffer, CpuAccessMode cpuAccess) = 0;

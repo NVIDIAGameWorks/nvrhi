@@ -247,6 +247,11 @@ namespace nvrhi::validation
         return m_Device->createSamplerFeedbackTexture(pairedTexture, desc);
     }
 
+    SamplerFeedbackTextureHandle DeviceWrapper::createSamplerFeedbackForNativeTexture(ObjectType objectType, Object texture, TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc)
+    {
+        return m_Device->createSamplerFeedbackForNativeTexture(objectType, texture, pairedTexture, desc);
+    }
+
     MemoryRequirements DeviceWrapper::getTextureMemoryRequirements(ITexture* texture)
     {
         if (texture == nullptr)

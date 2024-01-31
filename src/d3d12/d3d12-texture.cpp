@@ -915,6 +915,25 @@ namespace nvrhi::d3d12
         return SamplerFeedbackTextureHandle::Create(texture);
     }
 
+    SamplerFeedbackTextureHandle Device::createSamplerFeedbackForNativeTexture(ObjectType objectType, Object _texture, TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc)
+    {
+        if (_texture.pointer == nullptr)
+            return nullptr;
+
+        if (objectType != ObjectTypes::D3D12_Resource)
+            return nullptr;
+
+        ID3D12Resource2* pResource = static_cast<ID3D12Resource2*>(_texture.pointer);
+
+        Texture* texPair = checked_cast<Texture*>(pairedTexture.Get());
+        D3D12_RESOURCE_DESC1 rdFeedback = pResource->GetDesc1();
+        SamplerFeedbackTexture* texture = new SamplerFeedbackTexture(m_Context, m_Resources, desc, rdFeedback, pairedTexture);
+        texture->resource = pResource;
+
+        return SamplerFeedbackTextureHandle::Create(texture);
+    }
+
+
     void SamplerFeedbackTexture::createUAV(size_t descriptor) const
     {
         ID3D12Resource* pairedResource = checked_cast<Texture*>(pairedTexture.Get())->resource;
