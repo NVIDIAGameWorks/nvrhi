@@ -100,13 +100,14 @@ namespace nvrhi
         tracking->state = stateBits;
     }
 
-    void CommandListResourceStateTracker::endTrackingTextureState(TextureStateExtension* texture, TextureSubresourceSet subresources, ResourceStates stateBits, bool permanent)
+    void CommandListResourceStateTracker::setPermanentTextureState(TextureStateExtension* texture, TextureSubresourceSet subresources, ResourceStates stateBits)
     {
         const TextureDesc& desc = texture->descRef;
 
         subresources = subresources.resolve(desc, false);
 
-        if (permanent && !subresources.isEntireTexture(desc))
+        bool permanent = true;
+        if (!subresources.isEntireTexture(desc))
         {
             std::stringstream ss;
             ss << "Attempted to perform a permanent state transition on a subset of subresources of texture "
@@ -124,14 +125,11 @@ namespace nvrhi
         }
     }
 
-    void CommandListResourceStateTracker::endTrackingBufferState(BufferStateExtension* buffer, ResourceStates stateBits, bool permanent)
+    void CommandListResourceStateTracker::setPermanentBufferState(BufferStateExtension* buffer, ResourceStates stateBits)
     {
         requireBufferState(buffer, stateBits);
 
-        if (permanent)
-        {
-            m_PermanentBufferStates.push_back(std::make_pair(buffer, stateBits));
-        }
+        m_PermanentBufferStates.push_back(std::make_pair(buffer, stateBits));
     }
 
     ResourceStates CommandListResourceStateTracker::getTextureSubresourceState(TextureStateExtension* texture, ArraySlice arraySlice, MipLevel mipLevel)

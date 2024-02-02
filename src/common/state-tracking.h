@@ -98,8 +98,8 @@ namespace nvrhi
         void beginTrackingTextureState(TextureStateExtension* texture, TextureSubresourceSet subresources, ResourceStates stateBits);
         void beginTrackingBufferState(BufferStateExtension* buffer, ResourceStates stateBits);
 
-        void endTrackingTextureState(TextureStateExtension* texture, TextureSubresourceSet subresources, ResourceStates stateBits, bool permanent);
-        void endTrackingBufferState(BufferStateExtension* buffer, ResourceStates stateBits, bool permanent);
+        void setPermanentTextureState(TextureStateExtension* texture, TextureSubresourceSet subresources, ResourceStates stateBits);
+        void setPermanentBufferState(BufferStateExtension* buffer, ResourceStates stateBits);
 
         ResourceStates getTextureSubresourceState(TextureStateExtension* texture, ArraySlice arraySlice, MipLevel mipLevel);
         ResourceStates getBufferState(BufferStateExtension* buffer);
@@ -124,7 +124,7 @@ namespace nvrhi
         std::unordered_map<BufferStateExtension*, std::unique_ptr<BufferState>> m_BufferStates;
 
         // Deferred transitions of textures and buffers to permanent states.
-        // They are executed only when the command list is executed, not when the app calls endTrackingTextureState.
+        // They are executed only when the command list is executed, not when the app calls setPermanentTextureState or setPermanentBufferState.
         std::vector<std::pair<TextureStateExtension*, ResourceStates>> m_PermanentTextureStates;
         std::vector<std::pair<BufferStateExtension*, ResourceStates>> m_PermanentBufferStates;
 

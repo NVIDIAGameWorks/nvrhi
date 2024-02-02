@@ -229,14 +229,14 @@ namespace nvrhi::d3d12
     {
         Texture* texture = checked_cast<Texture*>(_texture);
 
-        m_StateTracker.endTrackingTextureState(texture, subresources, stateBits, false);
+        m_StateTracker.requireTextureState(texture, subresources, stateBits);
     }
 
     void CommandList::setBufferState(IBuffer* _buffer, ResourceStates stateBits)
     {
         Buffer* buffer = checked_cast<Buffer*>(_buffer);
 
-        m_StateTracker.endTrackingBufferState(buffer, stateBits, false);
+        m_StateTracker.requireBufferState(buffer, stateBits);
     }
 
     void CommandList::setAccelStructState(rt::IAccelStruct* _as, ResourceStates stateBits)
@@ -244,14 +244,14 @@ namespace nvrhi::d3d12
         AccelStruct* as = checked_cast<AccelStruct*>(_as);
 
         if (as->dataBuffer)
-            m_StateTracker.endTrackingBufferState(as->dataBuffer, stateBits, false);
+            m_StateTracker.requireBufferState(as->dataBuffer, stateBits);
     }
 
     void CommandList::setPermanentTextureState(ITexture* _texture, ResourceStates stateBits)
     {
         Texture* texture = checked_cast<Texture*>(_texture);
 
-        m_StateTracker.endTrackingTextureState(texture, AllSubresources, stateBits, true);
+        m_StateTracker.setPermanentTextureState(texture, AllSubresources, stateBits);
 
     }
 
@@ -259,7 +259,7 @@ namespace nvrhi::d3d12
     {
         Buffer* buffer = checked_cast<Buffer*>(_buffer);
 
-        m_StateTracker.endTrackingBufferState(buffer, stateBits, true);
+        m_StateTracker.setPermanentBufferState(buffer, stateBits);
     }
 
     ResourceStates CommandList::getTextureSubresourceState(ITexture* _texture, ArraySlice arraySlice, MipLevel mipLevel)
