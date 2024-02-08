@@ -450,6 +450,7 @@ namespace nvrhi
         constexpr TextureDesc& setUseClearValue(bool value) { useClearValue = value; return *this; }
         constexpr TextureDesc& setInitialState(ResourceStates value) { initialState = value; return *this; }
         constexpr TextureDesc& setKeepInitialState(bool value) { keepInitialState = value; return *this; }
+        constexpr TextureDesc& setSharedResourceFlags(SharedResourceFlags value) { sharedResourceFlags = value; return *this; }
     };
 
     // describes a 2D section of a single mip level + single slice of a texture
