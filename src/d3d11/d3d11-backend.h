@@ -209,7 +209,6 @@ namespace nvrhi::d3d11
 
         ID3D11BlendState *pBlendState = nullptr;
         ID3D11DepthStencilState *pDepthStencilState = nullptr;
-        UINT stencilRef = 0;
         bool requiresBlendFactor = false;
         bool pixelShaderHasUAVs = false;
 
@@ -387,6 +386,7 @@ namespace nvrhi::d3d11
         SinglePassStereoState m_CurrentSinglePassStereoState{};
         BufferHandle m_CurrentIndirectBuffer;
         Color m_CurrentBlendConstantColor{};
+        uint8_t m_CurrentStencilRefValue = 0;
         bool m_CurrentGraphicsStateValid = false;
         bool m_CurrentComputeStateValid = false;
 

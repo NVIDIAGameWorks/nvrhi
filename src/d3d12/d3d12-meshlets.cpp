@@ -206,11 +206,6 @@ namespace nvrhi::d3d12
         {
             commandList->RSSetScissorRects(pso->viewportState.numViewports, pso->viewportState.scissorRects);
         }
-
-        if (state.renderState.depthStencilState.stencilEnable)
-        {
-            commandList->OMSetStencilRef(state.renderState.depthStencilState.stencilRefValue);
-        }
     }
 
     void CommandList::setMeshletState(const MeshletState& state)
@@ -231,8 +226,13 @@ namespace nvrhi::d3d12
             arraysAreDifferent(m_CurrentMeshletState.viewport.viewports, state.viewport.viewports) ||
             arraysAreDifferent(m_CurrentMeshletState.viewport.scissorRects, state.viewport.scissorRects);
 
-        const bool updateBlendFactor = !m_CurrentGraphicsStateValid || m_CurrentGraphicsState.blendConstantColor != state.blendConstantColor;
+        const bool updateBlendFactor = !m_CurrentMeshletStateValid || m_CurrentMeshletState.blendConstantColor != state.blendConstantColor;
 
+        const uint8_t effectiveStencilRefValue = pso->desc.renderState.depthStencilState.dynamicStencilRef
+            ? state.dynamicStencilRefValue
+            : pso->desc.renderState.depthStencilState.stencilRefValue;
+        const bool updateStencilRef = !m_CurrentMeshletStateValid || m_CurrentMeshletState.dynamicStencilRefValue != effectiveStencilRefValue;
+        
         uint32_t bindingUpdateMask = 0;
         if (!m_CurrentMeshletStateValid || updateRootSignature)
             bindingUpdateMask = ~0u;
@@ -247,6 +247,11 @@ namespace nvrhi::d3d12
         {
             bindMeshletPipeline(pso, updateRootSignature);
             m_Instance->referencedResources.push_back(pso);
+        }
+
+        if (pso->desc.renderState.depthStencilState.stencilEnable && (updatePipeline || updateStencilRef))
+        {
+            m_ActiveCommandList->commandList->OMSetStencilRef(effectiveStencilRefValue);
         }
 
         if (pso->requiresBlendFactor && updateBlendFactor)
@@ -286,6 +291,7 @@ namespace nvrhi::d3d12
         m_CurrentMeshletStateValid = true;
         m_CurrentRayTracingStateValid = false;
         m_CurrentMeshletState = state;
+        m_CurrentMeshletState.dynamicStencilRefValue = effectiveStencilRefValue;
     }
 
     void CommandList::dispatchMesh(uint32_t groupsX, uint32_t groupsY /*= 1*/, uint32_t groupsZ /*= 1*/)

@@ -62,7 +62,7 @@ namespace nvrhi
 {
     // Version of the public API provided by NVRHI.
     // Increment this when any changes to the API are made.
-    static constexpr uint32_t c_HeaderVersion = 13;
+    static constexpr uint32_t c_HeaderVersion = 14;
 
     // Verifies that the version of the implementation matches the version of the header.
     // Returns true if they match. Use this when initializing apps using NVRHI as a shared library.
@@ -1054,6 +1054,7 @@ namespace nvrhi
         uint8_t         stencilReadMask = 0xff;
         uint8_t         stencilWriteMask = 0xff;
         uint8_t         stencilRefValue = 0;
+        bool            dynamicStencilRef = false;
         StencilOpDesc   frontFaceStencil;
         StencilOpDesc   backFaceStencil;
 
@@ -1072,6 +1073,8 @@ namespace nvrhi
         constexpr DepthStencilState& setStencilRefValue(uint8_t value) { stencilRefValue = value; return *this; }
         constexpr DepthStencilState& setFrontFaceStencil(const StencilOpDesc& value) { frontFaceStencil = value; return *this; }
         constexpr DepthStencilState& setBackFaceStencil(const StencilOpDesc& value) { backFaceStencil = value; return *this; }
+        constexpr DepthStencilState& setDynamicStencilRef(bool value) { dynamicStencilRef = value; return *this; }
+        
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -2215,8 +2218,9 @@ namespace nvrhi
         IGraphicsPipeline* pipeline = nullptr;
         IFramebuffer* framebuffer = nullptr;
         ViewportState viewport;
-        Color blendConstantColor{};
         VariableRateShadingState shadingRateState;
+        Color blendConstantColor{};
+        uint8_t dynamicStencilRefValue = 0;
 
         BindingSetVector bindings;
 
@@ -2228,7 +2232,9 @@ namespace nvrhi
         GraphicsState& setPipeline(IGraphicsPipeline* value) { pipeline = value; return *this; }
         GraphicsState& setFramebuffer(IFramebuffer* value) { framebuffer = value; return *this; }
         GraphicsState& setViewport(const ViewportState& value) { viewport = value; return *this; }
+        GraphicsState& setShadingRateState(const VariableRateShadingState& value) { shadingRateState = value; return *this; }
         GraphicsState& setBlendColor(const Color& value) { blendConstantColor = value; return *this; }
+        GraphicsState& setDynamicStencilRefValue(uint8_t value) { dynamicStencilRefValue = value; return *this; }
         GraphicsState& addBindingSet(IBindingSet* value) { bindings.push_back(value); return *this; }
         GraphicsState& addVertexBuffer(const VertexBufferBinding& value) { vertexBuffers.push_back(value); return *this; }
         GraphicsState& setIndexBuffer(const IndexBufferBinding& value) { indexBuffer = value; return *this; }
@@ -2297,6 +2303,7 @@ namespace nvrhi
         IFramebuffer* framebuffer = nullptr;
         ViewportState viewport;
         Color blendConstantColor{};
+        uint8_t dynamicStencilRefValue = 0;
 
         BindingSetVector bindings;
 
@@ -2308,6 +2315,7 @@ namespace nvrhi
         MeshletState& setBlendColor(const Color& value) { blendConstantColor = value; return *this; }
         MeshletState& addBindingSet(IBindingSet* value) { bindings.push_back(value); return *this; }
         MeshletState& setIndirectParams(IBuffer* value) { indirectParams = value; return *this; }
+        MeshletState& setDynamicStencilRefValue(uint8_t value) { dynamicStencilRefValue = value; return *this; }
     };
 
     //////////////////////////////////////////////////////////////////////////

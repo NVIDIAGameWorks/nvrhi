@@ -72,7 +72,6 @@ namespace nvrhi::d3d11
         pso->pDepthStencilState = getDepthStencilState(renderState.depthStencilState);
         pso->requiresBlendFactor = renderState.blendState.usesConstantColor(uint32_t(pso->framebufferInfo.colorFormats.size()));
         
-        pso->stencilRef = renderState.depthStencilState.stencilRefValue;
         pso->shaderMask = ShaderType::None;
 
         if (desc.VS) { pso->pVS = checked_cast<Shader*>(desc.VS.Get())->VS; pso->shaderMask = pso->shaderMask | ShaderType::Vertex; }
@@ -117,8 +116,6 @@ namespace nvrhi::d3d11
         m_Context.immediateContext->DSSetShader(pso->pDS, nullptr, 0);
         m_Context.immediateContext->GSSetShader(pso->pGS, nullptr, 0);
         m_Context.immediateContext->PSSetShader(pso->pPS, nullptr, 0);
-
-        m_Context.immediateContext->OMSetDepthStencilState(pso->pDepthStencilState, pso->stencilRef);
     }
 
     static DX11_ViewportState convertViewportState(const ViewportState& vpState)
@@ -172,6 +169,8 @@ namespace nvrhi::d3d11
 
         const bool updateBlendState = !m_CurrentGraphicsStateValid || 
             pipeline->requiresBlendFactor && state.blendConstantColor != m_CurrentBlendConstantColor;
+        const bool updateStencilRef = !m_CurrentGraphicsStateValid ||
+            pipeline->desc.renderState.depthStencilState.dynamicStencilRef && state.dynamicStencilRefValue != m_CurrentStencilRefValue;
             
         const bool updateIndexBuffer = !m_CurrentGraphicsStateValid || m_CurrentIndexBufferBinding != state.indexBuffer;
         const bool updateVertexBuffers = !m_CurrentGraphicsStateValid || arraysAreDifferent(m_CurrentVertexBufferBindings, state.vertexBuffers);
@@ -208,6 +207,14 @@ namespace nvrhi::d3d11
         if (updatePipeline)
         {
             bindGraphicsPipeline(pipeline);
+        }
+
+        if (updatePipeline || updateStencilRef)
+        {
+            m_CurrentStencilRefValue = pipeline->desc.renderState.depthStencilState.dynamicStencilRef
+                ? state.dynamicStencilRefValue
+                : pipeline->desc.renderState.depthStencilState.stencilRefValue;
+            m_Context.immediateContext->OMSetDepthStencilState(pipeline->pDepthStencilState, m_CurrentStencilRefValue);
         }
 
         if (updatePipeline || updateBlendState)
@@ -535,7 +542,6 @@ namespace nvrhi::d3d11
         hash_combine(hash, depthState.stencilEnable);
         hash_combine(hash, depthState.stencilReadMask);
         hash_combine(hash, depthState.stencilWriteMask);
-        hash_combine(hash, depthState.stencilRefValue);
         hash_combine(hash, depthState.frontFaceStencil.failOp);
         hash_combine(hash, depthState.frontFaceStencil.depthFailOp);
         hash_combine(hash, depthState.frontFaceStencil.passOp);

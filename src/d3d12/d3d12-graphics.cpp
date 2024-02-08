@@ -302,6 +302,11 @@ namespace nvrhi::d3d12
 
         const bool updateBlendFactor = !m_CurrentGraphicsStateValid || m_CurrentGraphicsState.blendConstantColor != state.blendConstantColor;
         
+        const uint8_t effectiveStencilRefValue = pso->desc.renderState.depthStencilState.dynamicStencilRef
+            ? state.dynamicStencilRefValue
+            : pso->desc.renderState.depthStencilState.stencilRefValue;
+        const bool updateStencilRef = !m_CurrentGraphicsStateValid || m_CurrentGraphicsState.dynamicStencilRefValue != effectiveStencilRefValue;
+        
         const bool updateIndexBuffer = !m_CurrentGraphicsStateValid || m_CurrentGraphicsState.indexBuffer != state.indexBuffer;
         const bool updateVertexBuffers = !m_CurrentGraphicsStateValid || arraysAreDifferent(m_CurrentGraphicsState.vertexBuffers, state.vertexBuffers);
 
@@ -321,6 +326,11 @@ namespace nvrhi::d3d12
         {
             bindGraphicsPipeline(pso, updateRootSignature);
             m_Instance->referencedResources.push_back(pso);
+        }
+
+        if (pso->desc.renderState.depthStencilState.stencilEnable && (updatePipeline || updateStencilRef))
+        {
+            m_ActiveCommandList->commandList->OMSetStencilRef(effectiveStencilRefValue);
         }
 
         if (pso->requiresBlendFactor && updateBlendFactor)
@@ -475,6 +485,7 @@ namespace nvrhi::d3d12
         m_CurrentMeshletStateValid = false;
         m_CurrentRayTracingStateValid = false;
         m_CurrentGraphicsState = state;
+        m_CurrentGraphicsState.dynamicStencilRefValue = effectiveStencilRefValue;
     }
 
     void CommandList::unbindShadingRateState()
@@ -522,11 +533,6 @@ namespace nvrhi::d3d12
         m_ActiveCommandList->commandList->SetPipelineState(pso->pipelineState);
 
         m_ActiveCommandList->commandList->IASetPrimitiveTopology(convertPrimitiveType(pipelineDesc.primType, pipelineDesc.patchControlPoints));
-
-        if (pipelineDesc.renderState.depthStencilState.stencilEnable)
-        {
-            m_ActiveCommandList->commandList->OMSetStencilRef(pipelineDesc.renderState.depthStencilState.stencilRefValue);
-        }
     }
 
     void CommandList::draw(const DrawArguments& args)

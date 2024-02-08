@@ -185,15 +185,18 @@ namespace nvrhi::vulkan
 
         pso->usesBlendConstants = blendState.usesConstantColor(uint32_t(fb->desc.colorAttachments.size()));
         
-        vk::DynamicState dynamicStates[3] = {
+        static_vector<vk::DynamicState, 4> dynamicStates = {
             vk::DynamicState::eViewport,
-            vk::DynamicState::eScissor,
-            vk::DynamicState::eBlendConstants
+            vk::DynamicState::eScissor
         };
+        if (pso->usesBlendConstants)
+            dynamicStates.push_back(vk::DynamicState::eBlendConstants);
+        if (pso->desc.renderState.depthStencilState.dynamicStencilRef)
+            dynamicStates.push_back(vk::DynamicState::eStencilReference);
 
         auto dynamicStateInfo = vk::PipelineDynamicStateCreateInfo()
-            .setDynamicStateCount(pso->usesBlendConstants ? 3 : 2)
-            .setPDynamicStates(dynamicStates);
+            .setDynamicStateCount(uint32_t(dynamicStates.size()))
+            .setPDynamicStates(dynamicStates.data());
 
         auto pipelineInfo = vk::GraphicsPipelineCreateInfo()
             .setStageCount(uint32_t(shaderStages.size()))
@@ -331,6 +334,11 @@ namespace nvrhi::vulkan
             m_CurrentCmdBuf->cmdBuf.setScissor(0, uint32_t(scissors.size()), scissors.data());
         }
         
+        if (pso->desc.renderState.depthStencilState.dynamicStencilRef && (updatePipeline || m_CurrentMeshletState.dynamicStencilRefValue != state.dynamicStencilRefValue))
+        {
+            m_CurrentCmdBuf->cmdBuf.setStencilReference(vk::StencilFaceFlagBits::eFrontAndBack, state.dynamicStencilRefValue);
+        }
+
         if (pso->usesBlendConstants && (updatePipeline || m_CurrentMeshletState.blendConstantColor != state.blendConstantColor))
         {
             m_CurrentCmdBuf->cmdBuf.setBlendConstants(&state.blendConstantColor.r);
