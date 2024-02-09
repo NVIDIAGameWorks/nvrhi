@@ -452,7 +452,7 @@ namespace nvrhi::vulkan
                 auto vkformat = nvrhi::vulkan::convertFormat(format);
                 const auto range = binding.range.resolve(buffer->desc);
 
-                uint64_t viewInfoHash = 0;
+                size_t viewInfoHash = 0;
                 nvrhi::hash_combine(viewInfoHash, range.byteOffset);
                 nvrhi::hash_combine(viewInfoHash, range.byteSize);
                 nvrhi::hash_combine(viewInfoHash, (uint64_t)vkformat);
@@ -771,7 +771,7 @@ namespace nvrhi::vulkan
                     auto vkformat = nvrhi::vulkan::convertFormat(binding.format);
 
                     const auto range = binding.range.resolve(buffer->desc);
-                    uint64_t viewInfoHash = 0;
+                    size_t viewInfoHash = 0;
                     nvrhi::hash_combine(viewInfoHash, range.byteOffset);
                     nvrhi::hash_combine(viewInfoHash, range.byteSize);
                     nvrhi::hash_combine(viewInfoHash, (uint64_t)vkformat);
