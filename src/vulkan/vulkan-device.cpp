@@ -38,9 +38,7 @@ namespace nvrhi::vulkan
         const vk::DynamicLoader dl;
         const PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =   // NOLINT(misc-misplaced-const)
             dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(desc.instance);
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(desc.device);
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(desc.instance, vkGetInstanceProcAddr, desc.device);
 #endif
 
         Device* device = new Device(desc);
