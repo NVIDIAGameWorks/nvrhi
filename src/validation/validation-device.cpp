@@ -1179,7 +1179,7 @@ namespace nvrhi::validation
         }
 
         const GraphicsAPI graphicsApi = m_Device->getGraphicsAPI();
-        if (!(graphicsApi == GraphicsAPI::D3D12 || graphicsApi == GraphicsAPI::VULKAN && desc.registerSpaceIsDescriptorSet))
+        if (!(graphicsApi == GraphicsAPI::D3D12 || (graphicsApi == GraphicsAPI::VULKAN && desc.registerSpaceIsDescriptorSet)))
         {
             if (desc.registerSpace != 0)
             {
