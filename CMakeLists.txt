@@ -53,7 +53,7 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-if (NVRHI_WITH_VULKAN)
+if (NVRHI_WITH_VULKAN AND NOT TARGET Vulkan-Headers)
     add_subdirectory(thirdparty/Vulkan-Headers)
 endif()
 
@@ -226,10 +226,10 @@ if (NVRHI_WITH_DX11)
         target_include_directories(${nvrhi_d3d11_target} PRIVATE include)
     endif()
 
-    target_link_libraries(${nvrhi_d3d11_target} d3d11 dxguid)
+    target_link_libraries(${nvrhi_d3d11_target} PUBLIC d3d11 dxguid)
 
     if (NVRHI_WITH_NVAPI)
-        target_link_libraries(${nvrhi_d3d11_target} nvapi)
+        target_link_libraries(${nvrhi_d3d11_target} PUBLIC nvapi)
         target_compile_definitions(${nvrhi_d3d11_target} PRIVATE NVRHI_D3D11_WITH_NVAPI=1)
     else()
         target_compile_definitions(${nvrhi_d3d11_target} PRIVATE NVRHI_D3D11_WITH_NVAPI=0)
@@ -256,13 +256,13 @@ if (NVRHI_WITH_DX12)
 
     if (NVRHI_WITH_RTXMU)
         target_compile_definitions(${nvrhi_d3d12_target} PUBLIC NVRHI_WITH_RTXMU=1)
-        target_link_libraries(${nvrhi_d3d12_target} rtxmu)
+        target_link_libraries(${nvrhi_d3d12_target} PUBLIC rtxmu)
     endif()
 
-    target_link_libraries(${nvrhi_d3d12_target} d3d12 dxguid)
+    target_link_libraries(${nvrhi_d3d12_target} PUBLIC d3d12 dxguid)
 
     if (NVRHI_WITH_NVAPI)
-        target_link_libraries(${nvrhi_d3d12_target} nvapi)
+        target_link_libraries(${nvrhi_d3d12_target} PUBLIC nvapi)
         target_compile_definitions(${nvrhi_d3d12_target} PRIVATE NVRHI_D3D12_WITH_NVAPI=1)
     else()
         target_compile_definitions(${nvrhi_d3d12_target} PRIVATE NVRHI_D3D12_WITH_NVAPI=0)
@@ -294,10 +294,10 @@ if (NVRHI_WITH_VULKAN)
 
     if (NVRHI_WITH_RTXMU)
         target_compile_definitions(${nvrhi_vulkan_target} PUBLIC NVRHI_WITH_RTXMU=1)
-        target_link_libraries(${nvrhi_vulkan_target} rtxmu)
+        target_link_libraries(${nvrhi_vulkan_target} PUBLIC rtxmu)
     endif()
 
-    target_link_libraries(${nvrhi_vulkan_target} Vulkan-Headers)
+    target_link_libraries(${nvrhi_vulkan_target} PRIVATE Vulkan-Headers)
 
 endif()
 
