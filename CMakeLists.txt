@@ -53,13 +53,15 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-if (NVRHI_WITH_VULKAN AND NOT TARGET Vulkan-Headers)
+if (NVRHI_WITH_VULKAN AND NOT TARGET Vulkan-Headers AND NOT TARGET Vulkan::Headers)
     add_subdirectory(thirdparty/Vulkan-Headers)
 endif()
 
 if (NVRHI_WITH_RTXMU)
     if (TARGET Vulkan-Headers)
         get_target_property(RTXMU_VULKAN_INCLUDE_DIR Vulkan-Headers INTERFACE_INCLUDE_DIRECTORIES)
+    elseif (TARGET Vulkan::Headers)
+        get_target_property(RTXMU_VULKAN_INCLUDE_DIR Vulkan::Headers INTERFACE_INCLUDE_DIRECTORIES)
     endif()
 
     option(RTXMU_WITH_VULKAN "" ${NVRHI_WITH_VULKAN})
@@ -297,7 +299,11 @@ if (NVRHI_WITH_VULKAN)
         target_link_libraries(${nvrhi_vulkan_target} PUBLIC rtxmu)
     endif()
 
-    target_link_libraries(${nvrhi_vulkan_target} PRIVATE Vulkan-Headers)
+    if (TARGET Vulkan-Headers)
+        target_link_libraries(${nvrhi_vulkan_target} PRIVATE Vulkan-Headers)
+    elseif (TARGET Vulkan::Headers)
+        target_link_libraries(${nvrhi_vulkan_target} PRIVATE Vulkan::Headers)
+    endif()
 
 endif()
 
