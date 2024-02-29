@@ -416,7 +416,7 @@ void CommandList::bindComputeResourceSets(
             if (setsToBind[i])
                 for (uint32_t j = 0; j < uint32_t(setsToUnbind.size()); j++)
                 {
-                    BindingSet* setToBind = checked_cast<BindingSet*>(setsToBind[j]);
+                    BindingSet* setToBind = checked_cast<BindingSet*>(setsToBind[i]);
                     BindingSet* setToUnbind = checked_cast<BindingSet*>(setsToUnbind[j]);
 
                     if (setToUnbind && setToBind->isSupersetOf(*setToUnbind) && setToUnbind->maxUAVSlot < setToUnbind->minUAVSlot)
