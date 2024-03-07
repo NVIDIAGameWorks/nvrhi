@@ -395,14 +395,17 @@ namespace nvrhi::vulkan
             resolvedSrcSlice.arraySlice, 1
         );
 
-        const auto& srcSubresourceView = src->getSubresourceView(srcSubresource, TextureDimension::Unknown, Format::UNKNOWN);
+        auto srcFormat = nvrhi::vulkan::convertFormat(src->desc.format);
+        vk::ImageAspectFlags srcAspectFlags = guessSubresourceImageAspectFlags(vk::Format(srcFormat), nvrhi::vulkan::Texture::TextureSubresourceViewType::AllAspects);
 
         TextureSubresourceSet dstSubresource = TextureSubresourceSet(
             resolvedDstSlice.mipLevel, 1,
             resolvedDstSlice.arraySlice, 1
         );
 
-        const auto& dstSubresourceView = dst->getSubresourceView(dstSubresource, TextureDimension::Unknown, Format::UNKNOWN);
+        auto dstFormat = nvrhi::vulkan::convertFormat(dst->desc.format);
+        vk::ImageAspectFlags dstAspectFlags = guessSubresourceImageAspectFlags(vk::Format(dstFormat), nvrhi::vulkan::Texture::TextureSubresourceViewType::AllAspects);
+
 
         // When copying between block-compressed and uint textures, the extents and offsets are scaled by the block size.
         // To simplify the logic here, assume that one of (src, dst) is compressed, therefore its extents are smaller, and use that.
@@ -414,13 +417,13 @@ namespace nvrhi::vulkan
 
         auto imageCopy = vk::ImageCopy()
                             .setSrcSubresource(vk::ImageSubresourceLayers()
-                                                .setAspectMask(srcSubresourceView.subresourceRange.aspectMask)
+                                                .setAspectMask(srcAspectFlags)
                                                 .setMipLevel(srcSubresource.baseMipLevel)
                                                 .setBaseArrayLayer(srcSubresource.baseArraySlice)
                                                 .setLayerCount(srcSubresource.numArraySlices))
                             .setSrcOffset(vk::Offset3D(resolvedSrcSlice.x, resolvedSrcSlice.y, resolvedSrcSlice.z))
                             .setDstSubresource(vk::ImageSubresourceLayers()
-                                                .setAspectMask(dstSubresourceView.subresourceRange.aspectMask)
+                                                .setAspectMask(dstAspectFlags)
                                                 .setMipLevel(dstSubresource.baseMipLevel)
                                                 .setBaseArrayLayer(dstSubresource.baseArraySlice)
                                                 .setLayerCount(dstSubresource.numArraySlices))
