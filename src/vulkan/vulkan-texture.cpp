@@ -210,7 +210,7 @@ namespace nvrhi::vulkan
             flags |= vk::ImageCreateFlagBits::eCubeCompatible;
 
         if (d.isTypeless)
-            flags |= vk::ImageCreateFlagBits::eMutableFormat;
+            flags |= vk::ImageCreateFlagBits::eMutableFormat | vk::ImageCreateFlagBits::eExtendedUsage;
 
         return flags;
     }
