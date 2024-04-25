@@ -254,7 +254,7 @@ namespace nvrhi::vulkan
     }
 
     TextureSubresourceView& Texture::getSubresourceView(const TextureSubresourceSet& subresource, TextureDimension dimension,
-        Format format, TextureSubresourceViewType viewtype)
+        Format format, vk::ImageUsageFlags usage, TextureSubresourceViewType viewtype)
     {
         // This function is called from createBindingSet etc. and therefore free-threaded.
         // It modifies the subresourceViews map associated with the texture.
@@ -266,7 +266,12 @@ namespace nvrhi::vulkan
         if (format == Format::UNKNOWN)
             format = desc.format;
 
-        auto cachekey = std::make_tuple(subresource, viewtype, dimension, format);
+        // Only use VkImageViewUsageCreateInfo when the image is typeless, i.e. it was created
+        // with the MUTABLE_FORMAT and EXTENDED_USAGE bits.
+        if (!desc.isTypeless)
+            usage = vk::ImageUsageFlags(0);
+
+        auto cachekey = std::make_tuple(subresource, viewtype, dimension, format, usage);
         auto iter = subresourceViews.find(cachekey);
         if (iter != subresourceViews.end())
         {
@@ -291,10 +296,16 @@ namespace nvrhi::vulkan
         vk::ImageViewType imageViewType = textureDimensionToImageViewType(dimension);
 
         auto viewInfo = vk::ImageViewCreateInfo()
-                            .setImage(image)
-                            .setViewType(imageViewType)
-                            .setFormat(vk::Format(vkformat))
-                            .setSubresourceRange(view.subresourceRange);
+                        .setImage(image)
+                        .setViewType(imageViewType)
+                        .setFormat(vk::Format(vkformat))
+                        .setSubresourceRange(view.subresourceRange);
+
+        auto usageInfo = vk::ImageViewUsageCreateInfo()
+                        .setUsage(usage);
+
+        if (uint32_t(usage) != 0)
+            viewInfo.setPNext(&usageInfo);
 
         if (viewtype == TextureSubresourceViewType::StencilOnly)
         {
@@ -687,7 +698,8 @@ namespace nvrhi::vulkan
             else if(!formatInfo.hasDepth && formatInfo.hasStencil)
                 viewType = TextureSubresourceViewType::StencilOnly;
 
-            return Object(getSubresourceView(subresources, dimension, format, viewType).view);
+            // Note: we don't have the intended usage information here, so VkImageViewUsageCreateInfo won't be added to the view.
+            return Object(getSubresourceView(subresources, dimension, format, vk::ImageUsageFlags(0), viewType).view);
         }
         default:
             return nullptr;

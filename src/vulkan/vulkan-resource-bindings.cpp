@@ -384,7 +384,7 @@ namespace nvrhi::vulkan
 
                 const auto subresource = binding.subresources.resolve(texture->desc, false);
                 const auto textureViewType = getTextureViewType(binding.format, texture->desc.format);
-                auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, textureViewType);
+                auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, vk::ImageUsageFlagBits::eSampled, textureViewType);
 
                 auto& imageInfo = descriptorImageInfo.emplace_back();
                 imageInfo = vk::DescriptorImageInfo()
@@ -411,7 +411,7 @@ namespace nvrhi::vulkan
 
                 const auto subresource = binding.subresources.resolve(texture->desc, true);
                 const auto textureViewType = getTextureViewType(binding.format, texture->desc.format);
-                auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, textureViewType);
+                auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, vk::ImageUsageFlagBits::eStorage, textureViewType);
 
                 auto& imageInfo = descriptorImageInfo.emplace_back();
                 imageInfo = vk::DescriptorImageInfo()
@@ -729,7 +729,7 @@ namespace nvrhi::vulkan
 
                     const auto subresource = binding.subresources.resolve(texture->desc, false);
                     const auto textureViewType = getTextureViewType(binding.format, texture->desc.format);
-                    auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, textureViewType);
+                    auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, vk::ImageUsageFlagBits::eSampled, textureViewType);
 
                     auto& imageInfo = descriptorImageInfo.emplace_back();
                     imageInfo = vk::DescriptorImageInfo()
@@ -749,7 +749,7 @@ namespace nvrhi::vulkan
 
                     const auto subresource = binding.subresources.resolve(texture->desc, true);
                     const auto textureViewType = getTextureViewType(binding.format, texture->desc.format);
-                    auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, textureViewType);
+                    auto& view = texture->getSubresourceView(subresource, binding.dimension, binding.format, vk::ImageUsageFlagBits::eStorage, textureViewType);
 
                     auto& imageInfo = descriptorImageInfo.emplace_back();
                     imageInfo = vk::DescriptorImageInfo()

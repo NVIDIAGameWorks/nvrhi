@@ -366,11 +366,13 @@ namespace nvrhi::vulkan
             StencilOnly
         };
 
+        typedef std::tuple<TextureSubresourceSet, TextureSubresourceViewType, TextureDimension, Format, vk::ImageUsageFlags> SubresourceViewKey;
+
         struct Hash
         {
-            std::size_t operator()(std::tuple<TextureSubresourceSet, TextureSubresourceViewType, TextureDimension, Format> const& s) const noexcept
+            std::size_t operator()(SubresourceViewKey const& s) const noexcept
             {
-                const auto& [subresources, viewType, dimension, format] = s;
+                const auto& [subresources, viewType, dimension, format, usage] = s;
 
                 size_t hash = 0;
 
@@ -381,6 +383,7 @@ namespace nvrhi::vulkan
                 hash_combine(hash, viewType);
                 hash_combine(hash, dimension);
                 hash_combine(hash, format);
+                hash_combine(hash, uint32_t(usage));
 
                 return hash;
             }
@@ -396,10 +399,10 @@ namespace nvrhi::vulkan
         HeapHandle heap;
 
         void* sharedHandle = nullptr;
-        
+
         // contains subresource views for this texture
         // note that we only create the views that the app uses, and that multiple views may map to the same subresources
-        std::unordered_map<std::tuple<TextureSubresourceSet, TextureSubresourceViewType, TextureDimension, Format>, TextureSubresourceView, Texture::Hash> subresourceViews;
+        std::unordered_map<SubresourceViewKey, TextureSubresourceView, Texture::Hash> subresourceViews;
 
         Texture(const VulkanContext& context, VulkanAllocator& allocator)
             : TextureStateExtension(desc)
@@ -411,7 +414,7 @@ namespace nvrhi::vulkan
         // 'viewtype' only matters when asking for a depthstencil view; in situations where only depth or stencil can be bound
         // (such as an SRV with ImageLayout::eShaderReadOnlyOptimal), but not both, then this specifies which of the two aspect bits is to be set.
         TextureSubresourceView& getSubresourceView(const TextureSubresourceSet& subresources, TextureDimension dimension,
-            Format format, TextureSubresourceViewType viewtype = TextureSubresourceViewType::AllAspects);
+            Format format, vk::ImageUsageFlags usage, TextureSubresourceViewType viewtype = TextureSubresourceViewType::AllAspects);
         
         uint32_t getNumSubresources() const;
         uint32_t getSubresourceIndex(uint32_t mipLevel, uint32_t arrayLayer) const;

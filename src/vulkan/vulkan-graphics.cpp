@@ -98,7 +98,7 @@ namespace nvrhi::vulkan
 
             TextureDimension dimension = getDimensionForFramebuffer(t->desc.dimension, subresources.numArraySlices > 1);
 
-            const auto& view = t->getSubresourceView(subresources, dimension, rt.format);
+            const auto& view = t->getSubresourceView(subresources, dimension, rt.format, vk::ImageUsageFlagBits::eColorAttachment);
             attachmentViews[i] = view.view;
 
             fb->resources.push_back(rt.texture);
@@ -141,7 +141,7 @@ namespace nvrhi::vulkan
 
             TextureDimension dimension = getDimensionForFramebuffer(texture->desc.dimension, subresources.numArraySlices > 1);
 
-            const auto& view = texture->getSubresourceView(subresources, dimension, att.format);
+            const auto& view = texture->getSubresourceView(subresources, dimension, att.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
             attachmentViews.push_back(view.view);
 
             fb->resources.push_back(att.texture);
@@ -182,7 +182,7 @@ namespace nvrhi::vulkan
             TextureSubresourceSet subresources = vrsAttachment.subresources.resolve(vrsTexture->desc, true);
             TextureDimension dimension = getDimensionForFramebuffer(vrsTexture->desc.dimension, subresources.numArraySlices > 1);
 
-            const auto& view = vrsTexture->getSubresourceView(subresources, dimension, vrsAttachment.format);
+            const auto& view = vrsTexture->getSubresourceView(subresources, dimension, vrsAttachment.format, vk::ImageUsageFlagBits::eFragmentShadingRateAttachmentKHR);
             attachmentViews.push_back(view.view);
 
             fb->resources.push_back(vrsAttachment.texture);
