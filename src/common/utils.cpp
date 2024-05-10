@@ -126,7 +126,7 @@ namespace nvrhi::utils
         {
             const FormatInfo& formatInfo = getFormatInfo(att.texture->getDesc().format);
             commandList->clearDepthStencilTexture(att.texture, att.subresources, formatInfo.hasDepth, depth,
-                formatInfo.hasStencil, stencil);
+                formatInfo.hasStencil, uint8_t(stencil));
         }
     }
 
