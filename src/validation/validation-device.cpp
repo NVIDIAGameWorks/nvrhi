@@ -1015,14 +1015,6 @@ namespace nvrhi::validation
                 return false;
             }
         }
-        else if (renderState.depthStencilState.depthTestEnable ||renderState.depthStencilState.stencilEnable)
-        {
-            if (!fbDesc.depthAttachment.isReadOnly)
-            {
-                warning("The depth-stencil state indicates read-only depth and stencil, "
-                    "but the framebuffer has a read-write depth attachment, which is suboptimal.");
-            }
-        }
 
         if (renderState.rasterState.conservativeRasterEnable && !m_Device->queryFeatureSupport(Feature::ConservativeRasterization))
         {
