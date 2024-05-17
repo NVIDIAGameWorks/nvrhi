@@ -70,7 +70,7 @@ namespace nvrhi::d3d12
             &heapProps,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
-            m_IsScratchBuffer ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS : D3D12_RESOURCE_STATE_GENERIC_READ,
+            m_IsScratchBuffer ? D3D12_RESOURCE_STATE_COMMON: D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(&chunk->buffer));
 
