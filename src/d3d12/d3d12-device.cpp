@@ -273,7 +273,9 @@ namespace nvrhi::d3d12
         
         m_d3d12desc.MipLODBias = m_Desc.mipBias;
         m_d3d12desc.MaxAnisotropy = std::max((UINT)m_Desc.maxAnisotropy, 1U);
-        m_d3d12desc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS;
+        m_d3d12desc.ComparisonFunc = desc.reductionType == SamplerReductionType::Comparison
+            ? D3D12_COMPARISON_FUNC_LESS
+            : D3D12_COMPARISON_FUNC_NEVER;
         m_d3d12desc.BorderColor[0] = m_Desc.borderColor.r;
         m_d3d12desc.BorderColor[1] = m_Desc.borderColor.g;
         m_d3d12desc.BorderColor[2] = m_Desc.borderColor.b;
