@@ -188,10 +188,10 @@ namespace nvrhi::d3d12
                             uint64_t bestInstance = VersionGetInstance(bestChunk->version);
 
                             // Compare chunks: submitted is better than current, old is better than new, large is better than small
-                            if (candidateSubmitted && !bestSubmitted ||
-                                candidateSubmitted == bestSubmitted && candidateInstance < bestInstance ||
-                                candidateSubmitted == bestSubmitted && candidateInstance == bestInstance
-                                    && candidateChunk->bufferSize > bestChunk->bufferSize)
+                            if ((candidateSubmitted && !bestSubmitted) ||
+                                (candidateSubmitted == bestSubmitted && candidateInstance < bestInstance) ||
+                                (candidateSubmitted == bestSubmitted && candidateInstance == bestInstance
+                                    && candidateChunk->bufferSize > bestChunk->bufferSize))
                             {
                                 bestChunk = candidateChunk;
                             }

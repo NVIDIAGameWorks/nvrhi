@@ -435,7 +435,7 @@ namespace nvrhi::vulkan
             return nullptr;
         }
 
-        Heap* heap = new Heap(m_Context, m_Allocator);
+        Heap* heap = new Heap(m_Allocator);
         heap->desc = d;
         heap->managed = true;
 

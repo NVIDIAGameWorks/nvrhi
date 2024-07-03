@@ -95,6 +95,9 @@ namespace nvrhi::d3d12
             break;
         case PrimitiveType::TriangleList:
         case PrimitiveType::TriangleStrip:
+        case PrimitiveType::TriangleFan:
+        case PrimitiveType::TriangleListWithAdjacency:
+        case PrimitiveType::TriangleStripWithAdjacency:
             desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
             break;
         case PrimitiveType::PatchList:

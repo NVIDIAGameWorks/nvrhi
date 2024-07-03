@@ -74,9 +74,10 @@ namespace nvrhi::d3d12
     struct Context;
 
     typedef uint32_t RootParameterIndex;
+    typedef uint32_t OptionalResourceState; // D3D12_RESOURCE_STATES + unknown value
 
     constexpr DescriptorIndex c_InvalidDescriptorIndex = ~0u;
-    constexpr D3D12_RESOURCE_STATES c_ResourceStateUnknown = D3D12_RESOURCE_STATES(~0u);
+    constexpr OptionalResourceState c_ResourceStateUnknown = ~0u;
     
     D3D12_SHADER_VISIBILITY convertShaderStage(ShaderType s);
     D3D12_BLEND convertBlendValue(BlendFactor value);
@@ -90,7 +91,6 @@ namespace nvrhi::d3d12
     D3D12_SHADING_RATE_COMBINER convertShadingRateCombiner(ShadingRateCombiner combiner);
 
     void WaitForFence(ID3D12Fence* fence, uint64_t value, HANDLE event);
-    bool IsBlendFactorRequired(BlendFactor value);
     uint32_t calcSubresource(uint32_t MipSlice, uint32_t ArraySlice, uint32_t PlaneSlice, uint32_t MipLevels, uint32_t ArraySize);
     void TranslateBlendState(const BlendState& inState, D3D12_BLEND_DESC& outState);
     void TranslateDepthStencilState(const DepthStencilState& inState, D3D12_DEPTH_STENCIL_DESC& outState);
@@ -608,7 +608,7 @@ namespace nvrhi::d3d12
     class TextureState
     {
     public:
-        std::vector<D3D12_RESOURCE_STATES> subresourceStates;
+        std::vector<OptionalResourceState> subresourceStates;
         bool enableUavBarriers = true;
         bool firstUavBarrierPlaced = false;
         bool permanentTransition = false;
@@ -622,7 +622,7 @@ namespace nvrhi::d3d12
     class BufferState
     {
     public:
-        D3D12_RESOURCE_STATES state = c_ResourceStateUnknown;
+        OptionalResourceState state = c_ResourceStateUnknown;
         bool enableUavBarriers = true;
         bool firstUavBarrierPlaced = false;
         D3D12_GPU_VIRTUAL_ADDRESS volatileData = 0;
@@ -679,8 +679,7 @@ namespace nvrhi::d3d12
         bool allowUpdate = false;
         bool compacted = false;
 
-        OpacityMicromap(const Context& context)
-            : m_Context(context)
+        OpacityMicromap()
         { }
 
         Object getNativeObject(ObjectType objectType) override;
@@ -688,9 +687,6 @@ namespace nvrhi::d3d12
         const rt::OpacityMicromapDesc& getDesc() const override { return desc; }
         bool isCompacted() const override { return compacted; }
         uint64_t getDeviceAddress() const override;
-
-    private:
-        const Context& m_Context;
     };
 
     class AccelStruct : public RefCounter<rt::IAccelStruct>

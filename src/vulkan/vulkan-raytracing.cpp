@@ -177,7 +177,7 @@ namespace nvrhi::vulkan
 
         m_Context.device.getMicromapBuildSizesEXT(vk::AccelerationStructureBuildTypeKHR::eDevice, &buildInfo, &buildSize);
 
-        OpacityMicromap* om = new OpacityMicromap(m_Context);
+        OpacityMicromap* om = new OpacityMicromap();
         om->desc = desc;
         om->compacted = false;
         

@@ -333,9 +333,13 @@ void CommandList::bindGraphicsResourceSets(
         if ((stagesToBind & ShaderType::Vertex) != 0)
         {
             if (m_Context.immediateContext1)
+            {
                 D3D11_SET_ARRAY1(VSSetConstantBuffers1, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers, set->constantBufferOffsets, set->constantBufferCounts);
+            }
             else
+            {
                 D3D11_SET_ARRAY(VSSetConstantBuffers, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers);
+            }
             D3D11_SET_ARRAY(VSSetShaderResources, set->minSRVSlot, set->maxSRVSlot, set->SRVs);
             D3D11_SET_ARRAY(VSSetSamplers, set->minSamplerSlot, set->maxSamplerSlot, set->samplers);
         }
@@ -343,9 +347,13 @@ void CommandList::bindGraphicsResourceSets(
         if ((stagesToBind & ShaderType::Hull) != 0)
         {
             if (m_Context.immediateContext1)
+            {
                 D3D11_SET_ARRAY1(HSSetConstantBuffers1, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers, set->constantBufferOffsets, set->constantBufferCounts);
+            }
             else
+            {
                 D3D11_SET_ARRAY(HSSetConstantBuffers, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers);
+            }
             D3D11_SET_ARRAY(HSSetShaderResources, set->minSRVSlot, set->maxSRVSlot, set->SRVs);
             D3D11_SET_ARRAY(HSSetSamplers, set->minSamplerSlot, set->maxSamplerSlot, set->samplers);
         }
@@ -353,9 +361,13 @@ void CommandList::bindGraphicsResourceSets(
         if ((stagesToBind & ShaderType::Domain) != 0)
         {
             if (m_Context.immediateContext1)
+            {
                 D3D11_SET_ARRAY1(DSSetConstantBuffers1, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers, set->constantBufferOffsets, set->constantBufferCounts);
+            }
             else
+            {
                 D3D11_SET_ARRAY(DSSetConstantBuffers, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers);
+            }
             D3D11_SET_ARRAY(DSSetShaderResources, set->minSRVSlot, set->maxSRVSlot, set->SRVs);
             D3D11_SET_ARRAY(DSSetSamplers, set->minSamplerSlot, set->maxSamplerSlot, set->samplers);
         }
@@ -363,9 +375,13 @@ void CommandList::bindGraphicsResourceSets(
         if ((stagesToBind & ShaderType::Geometry) != 0)
         {
             if (m_Context.immediateContext1)
+            {
                 D3D11_SET_ARRAY1(GSSetConstantBuffers1, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers, set->constantBufferOffsets, set->constantBufferCounts);
+            }
             else
+            {
                 D3D11_SET_ARRAY(GSSetConstantBuffers, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers);
+            }
             D3D11_SET_ARRAY(GSSetShaderResources, set->minSRVSlot, set->maxSRVSlot, set->SRVs);
             D3D11_SET_ARRAY(GSSetSamplers, set->minSamplerSlot, set->maxSamplerSlot, set->samplers);
         }
@@ -373,9 +389,13 @@ void CommandList::bindGraphicsResourceSets(
         if ((stagesToBind & ShaderType::Pixel) != 0)
         {
             if (m_Context.immediateContext1)
+            {
                 D3D11_SET_ARRAY1(PSSetConstantBuffers1, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers, set->constantBufferOffsets, set->constantBufferCounts);
+            }
             else
+            {
                 D3D11_SET_ARRAY(PSSetConstantBuffers, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers);
+            }
             D3D11_SET_ARRAY(PSSetShaderResources, set->minSRVSlot, set->maxSRVSlot, set->SRVs);
             D3D11_SET_ARRAY(PSSetSamplers, set->minSamplerSlot, set->maxSamplerSlot, set->samplers);
         }
@@ -458,9 +478,13 @@ void CommandList::bindComputeResourceSets(
             continue;
 
         if (m_Context.immediateContext1)
+        {
             D3D11_SET_ARRAY1(CSSetConstantBuffers1, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers, set->constantBufferOffsets, set->constantBufferCounts);
+        }
         else
+        {
             D3D11_SET_ARRAY(CSSetConstantBuffers, set->minConstantBufferSlot, set->maxConstantBufferSlot, set->constantBuffers);
+        }
         D3D11_SET_ARRAY(CSSetShaderResources, set->minSRVSlot, set->maxSRVSlot, set->SRVs);
         D3D11_SET_ARRAY(CSSetSamplers, set->minSamplerSlot, set->maxSamplerSlot, set->samplers);
 

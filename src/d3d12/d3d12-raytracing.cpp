@@ -573,7 +573,7 @@ namespace nvrhi::d3d12
         if (status != S_OK)
             return nullptr;
 
-        OpacityMicromap* om = new OpacityMicromap(m_Context);
+        OpacityMicromap* om = new OpacityMicromap();
         om->desc = desc;
         om->compacted = false;
 

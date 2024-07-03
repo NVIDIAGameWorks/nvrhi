@@ -316,9 +316,8 @@ namespace nvrhi::vulkan
     class Heap : public MemoryResource, public RefCounter<IHeap>
     {
     public:
-        explicit Heap(const VulkanContext& context, VulkanAllocator& allocator)
-            : m_Context(context)
-            , m_Allocator(allocator)
+        explicit Heap(VulkanAllocator& allocator)
+            : m_Allocator(allocator)
         { }
 
         ~Heap() override;
@@ -328,7 +327,6 @@ namespace nvrhi::vulkan
         const HeapDesc& getDesc() override { return desc; }
 
     private:
-        const VulkanContext& m_Context;
         VulkanAllocator& m_Allocator;
     };
 
@@ -1017,8 +1015,7 @@ namespace nvrhi::vulkan
         bool allowUpdate = false;
         bool compacted = false;
 
-        explicit OpacityMicromap(const VulkanContext& context)
-            : m_Context(context)
+        explicit OpacityMicromap()
         { }
 
         ~OpacityMicromap() override;
@@ -1027,9 +1024,6 @@ namespace nvrhi::vulkan
         const rt::OpacityMicromapDesc& getDesc() const override { return desc; }
         bool isCompacted() const override { return compacted; }
         uint64_t getDeviceAddress() const override;
-
-    private:
-        const VulkanContext& m_Context;
     };
 
     class Device : public RefCounter<nvrhi::vulkan::IDevice>
