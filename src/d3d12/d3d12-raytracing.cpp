@@ -727,8 +727,6 @@ namespace nvrhi::d3d12
 #endif
         return false;
     }
-
-#define NEW_ON_STACK(T) (T*)alloca(sizeof(T))
     
     rt::PipelineHandle Device::createRayTracingPipeline(const rt::PipelineDesc& desc)
     {
@@ -952,8 +950,12 @@ namespace nvrhi::d3d12
 
         // Subobjects: local root signatures
 
-        // Make sure that adding local root signatures does not resize the array,
+        // Make sure that adding local root signatures does not resize the arrays,
         // because we need to store pointers to array elements there.
+        std::vector<D3D12_LOCAL_ROOT_SIGNATURE> d3dLocalRootSignatures;
+        std::vector<D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION> d3dAssociations;
+        d3dLocalRootSignatures.reserve(pso->localRootSignatures.size());
+        d3dAssociations.reserve(pso->localRootSignatures.size());
         d3dSubobjects.reserve(d3dSubobjects.size() + pso->localRootSignatures.size() * 2);
 
         // Same - pre-allocate the arrays to avoid resizing them
@@ -965,14 +967,14 @@ namespace nvrhi::d3d12
 
         for (const auto& it : pso->localRootSignatures)
         {
-            auto d3dLocalRootSignature = NEW_ON_STACK(D3D12_LOCAL_ROOT_SIGNATURE);
+            D3D12_LOCAL_ROOT_SIGNATURE* d3dLocalRootSignature = &d3dLocalRootSignatures.emplace_back();
             d3dLocalRootSignature->pLocalRootSignature = it.second->getNativeObject(ObjectTypes::D3D12_RootSignature);
 
             d3dSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
             d3dSubobject.pDesc = d3dLocalRootSignature;
             d3dSubobjects.push_back(d3dSubobject);
 
-            auto d3dAssociation = NEW_ON_STACK(D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION);
+            D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* d3dAssociation = &d3dAssociations.emplace_back();
             d3dAssociation->pSubobjectToAssociate = &d3dSubobjects[d3dSubobjects.size() - 1];
             d3dAssociation->NumExports = 0;
             size_t firstExportIndex = d3dAssociationExportsCStr.size();
