@@ -1178,7 +1178,7 @@ namespace nvrhi::d3d12
         {
             for (uint32_t row = 0; row < numRows; row++)
             {
-                void* destAddress = (char*)cpuVA + footprint.Footprint.RowPitch * (row + depthSlice * numRows);
+                void* destAddress = (char*)cpuVA + uint64_t(footprint.Footprint.RowPitch) * uint64_t(row + depthSlice * numRows);
                 const void* srcAddress = (const char*)data + rowPitch * row + depthPitch * depthSlice;
                 memcpy(destAddress, srcAddress, std::min(rowPitch, rowSizeInBytes));
             }

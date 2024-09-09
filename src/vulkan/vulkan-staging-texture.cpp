@@ -39,10 +39,10 @@ namespace nvrhi::vulkan
     {
         const FormatInfo& formatInfo = getFormatInfo(desc.format);
 
-        auto wInBlocks = std::max(((desc.width >> mipLevel) + formatInfo.blockSize - 1) / formatInfo.blockSize, 1u);
-        auto hInBlocks = std::max(((desc.height >> mipLevel) + formatInfo.blockSize - 1) / formatInfo.blockSize, 1u);
+        uint32_t wInBlocks = std::max(((desc.width >> mipLevel) + formatInfo.blockSize - 1) / formatInfo.blockSize, 1u);
+        uint32_t hInBlocks = std::max(((desc.height >> mipLevel) + formatInfo.blockSize - 1) / formatInfo.blockSize, 1u);
 
-        auto blockPitchBytes = wInBlocks * formatInfo.bytesPerBlock;
+        size_t blockPitchBytes = wInBlocks * formatInfo.bytesPerBlock;
         return blockPitchBytes * hInBlocks;
     }
 
@@ -118,7 +118,7 @@ namespace nvrhi::vulkan
         tex->populateSliceRegions();
 
         BufferDesc bufDesc;
-        bufDesc.byteSize = uint32_t(tex->getBufferSize());
+        bufDesc.byteSize = tex->getBufferSize();
         assert(bufDesc.byteSize > 0);
         bufDesc.debugName = desc.debugName;
         bufDesc.cpuAccess = cpuAccess;
