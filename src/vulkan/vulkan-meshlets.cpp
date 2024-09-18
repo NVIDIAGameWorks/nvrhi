@@ -41,12 +41,6 @@ namespace nvrhi::vulkan
         MeshletPipeline *pso = new MeshletPipeline(m_Context);
         pso->desc = desc;
         pso->framebufferInfo = fb->framebufferInfo;
-        
-        for (const BindingLayoutHandle& _layout : desc.bindingLayouts)
-        {
-            BindingLayout* layout = checked_cast<BindingLayout*>(_layout.Get());
-            pso->pipelineBindingLayouts.push_back(layout);
-        }
 
         Shader* AS = checked_cast<Shader*>(desc.AS.Get());
         Shader* MS = checked_cast<Shader*>(desc.MS.Get());
@@ -133,43 +127,13 @@ namespace nvrhi::vulkan
                                 .setFront(convertStencilState(depthStencilState, depthStencilState.frontFaceStencil))
                                 .setBack(convertStencilState(depthStencilState, depthStencilState.backFaceStencil));
 
-        BindingVector<vk::DescriptorSetLayout> descriptorSetLayouts;
-        uint32_t pushConstantSize = 0;
-        pso->pushConstantVisibility = vk::ShaderStageFlagBits();
-        for (const BindingLayoutHandle& _layout : desc.bindingLayouts)
-        {
-            BindingLayout* layout = checked_cast<BindingLayout*>(_layout.Get());
-            descriptorSetLayouts.push_back(layout->descriptorSetLayout);
-
-            if (!layout->isBindless)
-            {
-                for (const BindingLayoutItem& item : layout->desc.bindings)
-                {
-                    if (item.type == ResourceType::PushConstants)
-                    {
-                        pushConstantSize = item.size;
-                        pso->pushConstantVisibility = convertShaderTypeToShaderStageFlagBits(layout->desc.visibility);
-                        // assume there's only one push constant item in all layouts -- the validation layer makes sure of that
-                        break;
-                    }
-                }
-            }
-        }
-
-        auto pushConstantRange = vk::PushConstantRange()
-            .setOffset(0)
-            .setSize(pushConstantSize)
-            .setStageFlags(pso->pushConstantVisibility);
-
-        auto pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
-                                    .setSetLayoutCount(uint32_t(descriptorSetLayouts.size()))
-                                    .setPSetLayouts(descriptorSetLayouts.data())
-                                    .setPushConstantRangeCount(pushConstantSize ? 1 : 0)
-                                    .setPPushConstantRanges(&pushConstantRange);
-
-        res = m_Context.device.createPipelineLayout(&pipelineLayoutInfo,
-                                                  m_Context.allocationCallbacks,
-                                                  &pso->pipelineLayout);
+        res = createPipelineLayout(
+            pso->pipelineLayout,
+            pso->pipelineBindingLayouts,
+            pso->pushConstantVisibility,
+            pso->descriptorSetIdxToBindingIdx,
+            m_Context,
+            desc.bindingLayouts);
         CHECK_VK_FAIL(res)
 
         attachment_vector<vk::PipelineColorBlendAttachmentState> colorBlendAttachments(fb->desc.colorAttachments.size());
@@ -308,7 +272,7 @@ namespace nvrhi::vulkan
 
         if (arraysAreDifferent(m_CurrentComputeState.bindings, state.bindings) || m_AnyVolatileBufferWrites)
         {
-            bindBindingSets(vk::PipelineBindPoint::eGraphics, pso->pipelineLayout, state.bindings);
+            bindBindingSets(vk::PipelineBindPoint::eGraphics, pso->pipelineLayout, state.bindings, pso->descriptorSetIdxToBindingIdx);
         }
 
         if (!state.viewport.viewports.empty() && arraysAreDifferent(state.viewport.viewports, m_CurrentMeshletState.viewport.viewports))
@@ -362,7 +326,7 @@ namespace nvrhi::vulkan
         {
             MeshletPipeline* pso = checked_cast<MeshletPipeline*>(m_CurrentMeshletState.pipeline);
 
-            bindBindingSets(vk::PipelineBindPoint::eGraphics, pso->pipelineLayout, m_CurrentMeshletState.bindings);
+            bindBindingSets(vk::PipelineBindPoint::eGraphics, pso->pipelineLayout, m_CurrentMeshletState.bindings, pso->descriptorSetIdxToBindingIdx);
 
             m_AnyVolatileBufferWrites = false;
         }

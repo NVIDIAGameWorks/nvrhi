@@ -28,6 +28,8 @@ namespace nvrhi::vulkan
     
     void CommandList::setResourceStatesForBindingSet(IBindingSet* _bindingSet)
     {
+        if (_bindingSet == nullptr)
+            return;
         if (_bindingSet->getDesc() == nullptr)
             return; // is bindless
 

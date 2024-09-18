@@ -25,7 +25,6 @@
 
 namespace nvrhi::vulkan
 {
-
     ComputePipelineHandle Device::createComputePipeline(const ComputePipelineDesc& desc)
     {
         vk::Result res;
@@ -35,50 +34,13 @@ namespace nvrhi::vulkan
         ComputePipeline *pso = new ComputePipeline(m_Context);
         pso->desc = desc;
 
-        for (const BindingLayoutHandle& _layout : desc.bindingLayouts)
-        {
-            BindingLayout* layout = checked_cast<BindingLayout*>(_layout.Get());
-            pso->pipelineBindingLayouts.push_back(layout);
-        }
-
-        BindingVector<vk::DescriptorSetLayout> descriptorSetLayouts;
-        uint32_t pushConstantSize = 0;
-        pso->pushConstantVisibility = vk::ShaderStageFlagBits();
-        for (const BindingLayoutHandle& _layout : desc.bindingLayouts)
-        {
-            BindingLayout* layout = checked_cast<BindingLayout*>(_layout.Get());
-            descriptorSetLayouts.push_back(layout->descriptorSetLayout);
-
-            if (!layout->isBindless)
-            {
-                for (const BindingLayoutItem& item : layout->desc.bindings)
-                {
-                    if (item.type == ResourceType::PushConstants)
-                    {
-                        pushConstantSize = item.size;
-                        pso->pushConstantVisibility = convertShaderTypeToShaderStageFlagBits(layout->desc.visibility);
-                        // assume there's only one push constant item in all layouts -- the validation layer makes sure of that
-                        break;
-                    }
-                }
-            }
-        }
-
-        auto pushConstantRange = vk::PushConstantRange()
-            .setOffset(0)
-            .setSize(pushConstantSize)
-            .setStageFlags(pso->pushConstantVisibility);
-
-        auto pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
-            .setSetLayoutCount(uint32_t(descriptorSetLayouts.size()))
-            .setPSetLayouts(descriptorSetLayouts.data())
-            .setPushConstantRangeCount(pushConstantSize ? 1 : 0)
-            .setPPushConstantRanges(&pushConstantRange);
-
-        res = m_Context.device.createPipelineLayout(&pipelineLayoutInfo,
-                                                  m_Context.allocationCallbacks,
-                                                  &pso->pipelineLayout);
-
+        res = createPipelineLayout(
+            pso->pipelineLayout,
+            pso->pipelineBindingLayouts,
+            pso->pushConstantVisibility,
+            pso->descriptorSetIdxToBindingIdx,
+            m_Context,
+            desc.bindingLayouts);
         CHECK_VK_FAIL(res)
 
         Shader* CS = checked_cast<Shader*>(desc.CS.Get());
@@ -159,7 +121,7 @@ namespace nvrhi::vulkan
         {
             for (size_t i = 0; i < state.bindings.size() && i < pso->desc.bindingLayouts.size(); i++)
             {
-                BindingLayout* layout = pso->pipelineBindingLayouts[i].Get();
+                BindingLayout* layout = checked_cast<BindingLayout*>(pso->desc.bindingLayouts[i].Get());
 
                 if ((layout->desc.visibility & ShaderType::Compute) == 0)
                     continue;
@@ -180,7 +142,7 @@ namespace nvrhi::vulkan
 
         if (arraysAreDifferent(m_CurrentComputeState.bindings, state.bindings) || m_AnyVolatileBufferWrites)
         {
-            bindBindingSets(vk::PipelineBindPoint::eCompute, pso->pipelineLayout, state.bindings);
+            bindBindingSets(vk::PipelineBindPoint::eCompute, pso->pipelineLayout, state.bindings, pso->descriptorSetIdxToBindingIdx);
         }
 
         m_CurrentPipelineLayout = pso->pipelineLayout;
@@ -213,7 +175,7 @@ namespace nvrhi::vulkan
         {
             ComputePipeline* pso = checked_cast<ComputePipeline*>(m_CurrentComputeState.pipeline);
 
-            bindBindingSets(vk::PipelineBindPoint::eCompute, pso->pipelineLayout, m_CurrentComputeState.bindings);
+            bindBindingSets(vk::PipelineBindPoint::eCompute, pso->pipelineLayout, m_CurrentComputeState.bindings, pso->descriptorSetIdxToBindingIdx);
 
             m_AnyVolatileBufferWrites = false;
         }

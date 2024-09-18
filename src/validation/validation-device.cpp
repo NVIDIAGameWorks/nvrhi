@@ -922,6 +922,15 @@ namespace nvrhi::validation
 
         int pushConstantCount = 0;
         uint32_t pushConstantSize = 0;
+        enum class RegisterSpaceIsDescriptorSet
+        {
+            False,
+            True,
+            Undetermined,
+            Mixed
+        } registerSpaceIsDescriptorSet = RegisterSpaceIsDescriptorSet::Undetermined;
+        static_vector<int, c_MaxBindingLayouts> registerSpaceToLayoutIdx(c_MaxBindingLayouts);
+        registerSpaceToLayoutIdx.fill(-1);
 
         for (int layoutIndex = 0; layoutIndex < numBindingLayouts; layoutIndex++)
         {
@@ -939,16 +948,49 @@ namespace nvrhi::validation
 
                 if (layoutDesc->registerSpaceIsDescriptorSet)
                 {
-                    if (uint32_t(layoutIndex) != layoutDesc->registerSpace)
+                    if (layoutDesc->registerSpace >= c_MaxBindingLayouts)
                     {
                         std::stringstream errorStream;
-                        errorStream << "Binding layout at index " << layoutIndex << " has registerSpace = " << layoutDesc->registerSpace 
-                            << ". When BindingLayoutDesc.registerSpaceIsDescriptorSet = true, the layout index in the pipeline must match its registerSpace.";
+                        errorStream << "Binding layout at index " << layoutIndex << " has registerSpace = " << layoutDesc->registerSpace
+                            << ". Largest supported registerSpace index is " << (c_MaxBindingLayouts-1);
                         error(errorStream.str());
                         anyErrors = true;
                     }
+                    else if (registerSpaceToLayoutIdx[layoutDesc->registerSpace] != -1)
+                    {
+                        std::stringstream errorStream;
+                        errorStream << "Binding layout at index " << layoutIndex << " has registerSpace = " << layoutDesc->registerSpace
+                            << ". That register space has already been used in layout index " << registerSpaceToLayoutIdx[layoutDesc->registerSpace];
+                        error(errorStream.str());
+                        anyErrors = true;
+                    }
+                    registerSpaceToLayoutIdx[layoutDesc->registerSpace] = layoutIndex;
+                    if (registerSpaceIsDescriptorSet == RegisterSpaceIsDescriptorSet::Undetermined)
+                    {
+                        registerSpaceIsDescriptorSet = RegisterSpaceIsDescriptorSet::True;
+                    }
+                    else if (registerSpaceIsDescriptorSet == RegisterSpaceIsDescriptorSet::False)
+                    {
+                        registerSpaceIsDescriptorSet = RegisterSpaceIsDescriptorSet::Mixed;
+                    }
+                }
+                else
+                {
+                    if (registerSpaceIsDescriptorSet == RegisterSpaceIsDescriptorSet::Undetermined)
+                    {
+                        registerSpaceIsDescriptorSet = RegisterSpaceIsDescriptorSet::False;
+                    }
+                    else if (registerSpaceIsDescriptorSet == RegisterSpaceIsDescriptorSet::True)
+                    {
+                        registerSpaceIsDescriptorSet = RegisterSpaceIsDescriptorSet::Mixed;
+                    }
                 }
             }
+        }
+        if (registerSpaceIsDescriptorSet == RegisterSpaceIsDescriptorSet::Mixed)
+        {
+            error("Pipeline contains Binding layouts with differing values of `registerSpaceIsDescriptorSet`");
+            anyErrors = true;
         }
 
         if (pushConstantCount > 1)

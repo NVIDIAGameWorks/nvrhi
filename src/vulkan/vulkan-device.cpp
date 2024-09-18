@@ -207,6 +207,19 @@ namespace nvrhi::vulkan
         {
             m_Context.error("Failed to create the pipeline cache");
         }
+
+        // Create an empty Vk::DescriptorSetLayout
+        auto descriptorSetLayoutInfo = vk::DescriptorSetLayoutCreateInfo()
+            .setBindingCount(0)
+            .setPBindings(nullptr);
+        res = m_Context.device.createDescriptorSetLayout(&descriptorSetLayoutInfo,
+            m_Context.allocationCallbacks,
+            &m_Context.emptyDescriptorSetLayout);
+
+        if (res != vk::Result::eSuccess)
+        {
+            m_Context.error("Failed to create an empty descriptor set layout");
+        }
     }
 
     Device::~Device()

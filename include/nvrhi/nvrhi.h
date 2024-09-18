@@ -1635,17 +1635,23 @@ namespace nvrhi
     struct BindingLayoutDesc
     {
         ShaderType visibility = ShaderType::None;
+
+        // In DX12, this controls the register space of the bindings
+        // In Vulkan, DXC maps register spaces to descriptor sets by default, so this can be used to
+        // determine the descriptor set index for the binding layout.
+        // In order to use this behaviour, you must set `registerSpaceIsDescriptorSet` to true.  See below.
         uint32_t registerSpace = 0;
 
-        // This flag controls the validation behavior for pipelines that use multiple binding layouts.
+        // This flag controls the behavior for pipelines that use multiple binding layouts.
+        // It must be set to the same value for _all_ of the binding layouts in a pipeline.
         // - When it's set to `false`, the `registerSpace` parameter only affects the DX12 implementation,
         //   and the validation layer will report an error when non-zero `registerSpace` is used with other APIs.
-        // - When it's set to `true`, the `registerSpace` parameter is assumed to be the same as the descriptor set
-        //   index on Vulkan. Since binding layouts and binding sets map to Vulkan descriptor sets 1:1,
-        //   that means if a pipeline is using multiple binding layouts, layout 0 must have `registerSpace = 0`,
-        //   layout 1 must have `registerSpace = 1` and so on. NVRHI validation layer will verify that and
-        //   report errors on pipeline creation when register spaces don't match layout indices.
-        //   The motivation for such validation is that DXC maps register spaces to Vulkan descriptor sets by default.
+        // - When it's set to `true` the parameter also affects the Vulkan implementation, allowing any
+        //   layout to occupy any register space or descriptor set, regardless of their order in the pipeline.
+        //   However, a consequence of DXC mapping the descriptor set index to register space is that you may
+        //   not have more than one `BindingLayout` using the same `registerSpace` value in the same pipeline.
+        // - When it's set to different values for the layouts in a pipeline, the validation layer will report
+        //   an error.
         bool registerSpaceIsDescriptorSet = false;
 
         BindingLayoutItemArray bindings;

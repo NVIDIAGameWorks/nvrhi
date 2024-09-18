@@ -860,57 +860,213 @@ namespace nvrhi::vulkan
         return true;
     }
 
-    void CommandList::bindBindingSets(vk::PipelineBindPoint bindPoint, vk::PipelineLayout pipelineLayout, const BindingSetVector& bindings)
+    void CommandList::bindBindingSets(vk::PipelineBindPoint bindPoint, vk::PipelineLayout pipelineLayout, const BindingSetVector& bindings, BindingVector<uint32_t> const& descriptorSetIdxToBindingIdx)
     {
+        const uint32_t numBindings = (uint32_t)bindings.size();
+        const uint32_t numDescriptorSets = descriptorSetIdxToBindingIdx.empty() ? numBindings : (uint32_t)descriptorSetIdxToBindingIdx.size();
+
         BindingVector<vk::DescriptorSet> descriptorSets;
+        uint32_t nextDescriptorSetToBind = 0;
         static_vector<uint32_t, c_MaxVolatileConstantBuffers> dynamicOffsets;
-
-        for (const auto& bindingSetHandle : bindings)
+        for (uint32_t i = 0; i < numDescriptorSets; ++i)
         {
-            const BindingSetDesc* desc = bindingSetHandle->getDesc();
-            if (desc)
+            IBindingSet* bindingSetHandle = nullptr;
+            if (descriptorSetIdxToBindingIdx.empty())
             {
-                BindingSet* bindingSet = checked_cast<BindingSet*>(bindingSetHandle);
-                descriptorSets.push_back(bindingSet->descriptorSet);
+                bindingSetHandle = bindings[i];
+            }
+            else if(descriptorSetIdxToBindingIdx[i] != 0xffffffff)
+            {
+                bindingSetHandle = bindings[descriptorSetIdxToBindingIdx[i]];
+            }
 
-                for (Buffer* constnatBuffer : bindingSet->volatileConstantBuffers)
+            if (bindingSetHandle == nullptr)
+            {
+                // This is a hole in the descriptor sets, so bind the contiguous descriptor sets we've got so far
+                if (!descriptorSets.empty())
                 {
-                    auto found = m_VolatileBufferStates.find(constnatBuffer);
-                    if (found == m_VolatileBufferStates.end())
-                    {
-                        std::stringstream ss;
-                        ss << "Binding volatile constant buffer " << utils::DebugNameToString(constnatBuffer->desc.debugName)
-                           << " before writing into it is invalid.";
-                        m_Context.error(ss.str());
+                    m_CurrentCmdBuf->cmdBuf.bindDescriptorSets(bindPoint, pipelineLayout,
+                        /* firstSet = */ nextDescriptorSetToBind, uint32_t(descriptorSets.size()), descriptorSets.data(),
+                        uint32_t(dynamicOffsets.size()), dynamicOffsets.data());
 
-                        dynamicOffsets.push_back(0); // use zero offset just to use something
-                    }
-                    else
-                    {
-                        uint32_t version = found->second.latestVersion;
-                        uint64_t offset = version * constnatBuffer->desc.byteSize;
-                        assert(offset < std::numeric_limits<uint32_t>::max());
-                        dynamicOffsets.push_back(uint32_t(offset));
-                    }
+                    descriptorSets.resize(0);
+                    dynamicOffsets.resize(0);
                 }
-
-                if (desc->trackLiveness)
-                    m_CurrentCmdBuf->referencedResources.push_back(bindingSetHandle);
+                nextDescriptorSetToBind = i + 1;
             }
             else
             {
-                DescriptorTable* table = checked_cast<DescriptorTable*>(bindingSetHandle);
-                descriptorSets.push_back(table->descriptorSet);
+                const BindingSetDesc* desc = bindingSetHandle->getDesc();
+                if (desc)
+                {
+                    BindingSet* bindingSet = checked_cast<BindingSet*>(bindingSetHandle);
+                    descriptorSets.push_back(bindingSet->descriptorSet);
+
+                    for (Buffer* constantBuffer : bindingSet->volatileConstantBuffers)
+                    {
+                        auto found = m_VolatileBufferStates.find(constantBuffer);
+                        if (found == m_VolatileBufferStates.end())
+                        {
+                            std::stringstream ss;
+                            ss << "Binding volatile constant buffer " << utils::DebugNameToString(constantBuffer->desc.debugName)
+                                << " before writing into it is invalid.";
+                            m_Context.error(ss.str());
+
+                            dynamicOffsets.push_back(0); // use zero offset just to use something
+                        }
+                        else
+                        {
+                            uint32_t version = found->second.latestVersion;
+                            uint64_t offset = version * constantBuffer->desc.byteSize;
+                            assert(offset < std::numeric_limits<uint32_t>::max());
+                            dynamicOffsets.push_back(uint32_t(offset));
+                        }
+                    }
+
+                    if (desc->trackLiveness)
+                        m_CurrentCmdBuf->referencedResources.push_back(bindingSetHandle);
+                }
+                else
+                {
+                    DescriptorTable* table = checked_cast<DescriptorTable*>(bindingSetHandle);
+                    descriptorSets.push_back(table->descriptorSet);
+                }
             }
         }
-
         if (!descriptorSets.empty())
         {
+            // Bind the remaining sets
             m_CurrentCmdBuf->cmdBuf.bindDescriptorSets(bindPoint, pipelineLayout,
-                /* firstSet = */ 0, uint32_t(descriptorSets.size()), descriptorSets.data(),
+                /* firstSet = */ nextDescriptorSetToBind, uint32_t(descriptorSets.size()), descriptorSets.data(),
                 uint32_t(dynamicOffsets.size()), dynamicOffsets.data());
         }
     }
 
+    vk::Result createPipelineLayout(
+        vk::PipelineLayout& outPipelineLayout,
+        BindingVector<RefCountPtr<BindingLayout>>& outBindingLayouts,
+        vk::ShaderStageFlags& outPushConstantVisibility,
+        BindingVector<uint32_t>& outDescriptorSetIdxToBindingIdx,
+        VulkanContext const& context,
+        BindingLayoutVector const& inBindingLayouts)
+    {
+        // Establish if we're going to use outDescriptorSetIdxToBindingIdx
+        // We do this if the layout descs specify registerSpaceIsDescriptorSet
+        // (Validation ensures all the binding layouts have it set to the same value)
+        bool createDescriptorSetIdxToBindingIdx = false;
+        for (BindingLayoutHandle const& _layout : inBindingLayouts)
+        {
+            BindingLayout const* layout = checked_cast<BindingLayout const*>(_layout.Get());
+            if (!layout->isBindless)
+            {
+                createDescriptorSetIdxToBindingIdx = layout->getDesc()->registerSpaceIsDescriptorSet;
+                break;
+            }
+        }
+
+        if (createDescriptorSetIdxToBindingIdx)
+        {
+            // Figure out how many descriptor sets we'll need in outBindingLayouts.
+            // There's not necessarily a one-to-one relationship because there could potentially be
+            // holes in binding layout.  E.g. if a binding layout uses register spaces 0 and 2
+            // then we'll need to use 3 descriptor sets, with a hole at index 1 because Vulkan
+            // descriptor set indices map to register spaces.
+            // Bindless layouts are assumed to not need binding to specific descriptor set
+            // indices, so we put those last
+            uint32_t numRegularDescriptorSets = 0;
+            for (BindingLayoutHandle const& _layout : inBindingLayouts)
+            {
+                BindingLayout const* layout = checked_cast<BindingLayout const*>(_layout.Get());
+                if (!layout->isBindless)
+                {
+                    numRegularDescriptorSets = std::max(numRegularDescriptorSets, layout->getDesc()->registerSpace + 1);
+                }
+            }
+
+            // Now create the layout
+            outBindingLayouts.resize(numRegularDescriptorSets);
+            outDescriptorSetIdxToBindingIdx.resize(numRegularDescriptorSets);
+            for (uint32_t i = 0; i < numRegularDescriptorSets; ++i)
+            {
+                outDescriptorSetIdxToBindingIdx[i] = 0xffffffff;
+            }
+            for (uint32_t i = 0; i < (uint32_t)inBindingLayouts.size(); ++i)
+            {
+                BindingLayout* layout = checked_cast<BindingLayout*>(inBindingLayouts[i].Get());
+                if (layout->isBindless)
+                {
+                    outBindingLayouts.push_back(layout);
+                    // Let's always put the bindless ones at the end.
+                    outDescriptorSetIdxToBindingIdx.push_back(i);
+                }
+                else
+                {
+                    uint32_t const descriptorSetIdx = layout->getDesc()->registerSpace;
+                    // Can't have multiple binding sets with the same registerSpace
+                    // Should not have passed validation in validatePipelineBindingLayouts
+                    assert(outBindingLayouts[descriptorSetIdx] == nullptr);
+                    outBindingLayouts[descriptorSetIdx] = layout;
+                    outDescriptorSetIdxToBindingIdx[descriptorSetIdx] = i;
+                }
+            }
+        }
+        else
+        {
+            // Legacy behaviour mode, where we don't fill in outDescriptorSetIdxToBindingIdx
+            // In this mode, there can be no holes in the binding layout
+            for (const BindingLayoutHandle& _layout : inBindingLayouts)
+            {
+                BindingLayout* layout = checked_cast<BindingLayout*>(_layout.Get());
+                outBindingLayouts.push_back(layout);
+            }
+        }
+
+        BindingVector<vk::DescriptorSetLayout> descriptorSetLayouts;
+        uint32_t pushConstantSize = 0;
+        outPushConstantVisibility = vk::ShaderStageFlagBits();
+        for (BindingLayout const* layout : outBindingLayouts)
+        {
+            if (layout)
+            {
+                descriptorSetLayouts.push_back(layout->descriptorSetLayout);
+
+                if (!layout->isBindless)
+                {
+                    for (const BindingLayoutItem& item : layout->desc.bindings)
+                    {
+                        if (item.type == ResourceType::PushConstants)
+                        {
+                            pushConstantSize = item.size;
+                            outPushConstantVisibility = convertShaderTypeToShaderStageFlagBits(layout->desc.visibility);
+                            // assume there's only one push constant item in all layouts -- the validation layer makes sure of that
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Empty descriptor set
+                descriptorSetLayouts.push_back(context.emptyDescriptorSetLayout);
+            }
+        }
+
+        auto pushConstantRange = vk::PushConstantRange()
+            .setOffset(0)
+            .setSize(pushConstantSize)
+            .setStageFlags(outPushConstantVisibility);
+
+        auto pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
+            .setSetLayoutCount(uint32_t(descriptorSetLayouts.size()))
+            .setPSetLayouts(descriptorSetLayouts.data())
+            .setPushConstantRangeCount(pushConstantSize ? 1 : 0)
+            .setPPushConstantRanges(&pushConstantRange);
+
+        vk::Result res = context.device.createPipelineLayout(&pipelineLayoutInfo,
+            context.allocationCallbacks,
+            &outPipelineLayout);
+
+        return res;
+    }
 
 } // namespace nvrhi::vulkan

@@ -186,6 +186,7 @@ namespace nvrhi::vulkan
         std::unique_ptr<rtxmu::VkAccelStructManager> rtxMemUtil;
         std::unique_ptr<RtxMuResources> rtxMuResources;
 #endif
+        vk::DescriptorSetLayout emptyDescriptorSetLayout;
 
         void nameVKObject(const void* handle, vk::DebugReportObjectTypeEXT objtype, const char* name) const;
         void error(const std::string& message) const;
@@ -808,6 +809,15 @@ namespace nvrhi::vulkan
     template <typename T>
     using BindingVector = static_vector<T, c_MaxBindingLayouts>;
 
+    // common code when creating shader pipelines to build binding set layouts
+    vk::Result createPipelineLayout(
+        vk::PipelineLayout& outPipelineLayout,
+        BindingVector<RefCountPtr<BindingLayout>>& outBindingLayouts,
+        vk::ShaderStageFlags& outPushConstantVisibility,
+        BindingVector<uint32_t>& outStateBindingIdxToPipelineBindingIdx,
+        VulkanContext const& context,
+        BindingLayoutVector const& inBindingLayouts);
+
     class GraphicsPipeline : public RefCounter<IGraphicsPipeline>
     {
     public:
@@ -815,6 +825,7 @@ namespace nvrhi::vulkan
         FramebufferInfo framebufferInfo;
         ShaderType shaderMask = ShaderType::None;
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
+        BindingVector<uint32_t> descriptorSetIdxToBindingIdx;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
         vk::ShaderStageFlags pushConstantVisibility;
@@ -839,6 +850,7 @@ namespace nvrhi::vulkan
         ComputePipelineDesc desc;
 
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
+        BindingVector<uint32_t> descriptorSetIdxToBindingIdx;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
         vk::ShaderStageFlags pushConstantVisibility;
@@ -862,6 +874,7 @@ namespace nvrhi::vulkan
         FramebufferInfo framebufferInfo;
         ShaderType shaderMask = ShaderType::None;
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
+        BindingVector<uint32_t> descriptorSetIdxToBindingIdx;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
         vk::ShaderStageFlags pushConstantVisibility;
@@ -885,6 +898,7 @@ namespace nvrhi::vulkan
     public:
         rt::PipelineDesc desc;
         BindingVector<RefCountPtr<BindingLayout>> pipelineBindingLayouts;
+        BindingVector<uint32_t> descriptorSetIdxToBindingIdx;
         vk::PipelineLayout pipelineLayout;
         vk::Pipeline pipeline;
         vk::ShaderStageFlags pushConstantVisibility;
@@ -1270,7 +1284,7 @@ namespace nvrhi::vulkan
         
         void clearTexture(ITexture* texture, TextureSubresourceSet subresources, const vk::ClearColorValue& clearValue);
 
-        void bindBindingSets(vk::PipelineBindPoint bindPoint, vk::PipelineLayout pipelineLayout, const BindingSetVector& bindings);
+        void bindBindingSets(vk::PipelineBindPoint bindPoint, vk::PipelineLayout pipelineLayout, const BindingSetVector& bindings, BindingVector<uint32_t> const& descriptorSetIdxToBindingIdx);
 
         void endRenderPass();
 
