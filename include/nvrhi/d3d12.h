@@ -117,6 +117,7 @@ namespace nvrhi::d3d12
         uint32_t shaderResourceViewHeapSize = 16384;
         uint32_t samplerHeapSize = 1024;
         uint32_t maxTimerQueries = 256;
+        bool aftermathEnabled = false;
     };
 
     NVRHI_API DeviceHandle createDevice(const DeviceDesc& desc);

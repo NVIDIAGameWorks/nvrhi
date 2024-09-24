@@ -167,7 +167,13 @@ namespace nvrhi::vulkan
             .setSignalSemaphoreCount(uint32_t(m_SignalSemaphores.size()))
             .setPSignalSemaphores(m_SignalSemaphores.data());
 
-        m_Queue.submit(submitInfo);
+        try {
+            m_Queue.submit(submitInfo);
+        }
+        catch (vk::DeviceLostError e)
+        {
+            m_Context.messageCallback->message(MessageSeverity::Error, "Device Removed!");
+        }
 
         m_WaitSemaphores.clear();
         m_WaitSemaphoreValues.clear();

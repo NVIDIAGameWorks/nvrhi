@@ -84,6 +84,11 @@ namespace nvrhi::vulkan
             { VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, &m_Context.extensions.KHR_fragment_shading_rate },
             { VK_EXT_OPACITY_MICROMAP_EXTENSION_NAME, &m_Context.extensions.EXT_opacity_micromap },
             { VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME, &m_Context.extensions.NV_ray_tracing_invocation_reorder },
+#if NVRHI_WITH_AFTERMATH
+            { VK_EXT_DEBUG_UTILS_EXTENSION_NAME, &m_Context.extensions.EXT_debug_utils },
+            { VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME, &m_Context.extensions.NV_device_diagnostic_checkpoints },
+            { VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME, &m_Context.extensions.NV_device_diagnostics_config }
+#endif
         };
 
         // parse the extension/layer lists and figure out which extensions are enabled
@@ -220,6 +225,10 @@ namespace nvrhi::vulkan
         {
             m_Context.error("Failed to create an empty descriptor set layout");
         }
+
+#if NVRHI_WITH_AFTERMATH
+        m_AftermathEnabled = desc.aftermathEnabled;
+#endif
     }
 
     Device::~Device()
@@ -259,9 +268,16 @@ namespace nvrhi::vulkan
         return GraphicsAPI::VULKAN;
     }
 
-    void Device::waitForIdle()
+    bool Device::waitForIdle()
     {
-        m_Context.device.waitIdle();
+        try {
+            m_Context.device.waitIdle();
+        }
+        catch (vk::DeviceLostError e)
+        {
+            return false;
+        }
+        return true;
     }
 
     void Device::runGarbageCollection()
@@ -498,6 +514,16 @@ namespace nvrhi::vulkan
 
             (void)device.debugMarkerSetObjectNameEXT(&info);
         }
+#if NVRHI_WITH_AFTERMATH
+        if (extensions.EXT_debug_utils && name && *name)
+        {
+            auto info = vk::DebugUtilsObjectNameInfoEXT()
+                .setObjectType(vk::ObjectType::eUnknown)
+                .setObjectHandle(reinterpret_cast<uint64_t>(handle))
+                .setPObjectName(name);
+            device.setDebugUtilsObjectNameEXT(info);
+        }
+#endif
     }
 
     void VulkanContext::error(const std::string& message) const

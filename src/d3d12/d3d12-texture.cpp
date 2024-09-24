@@ -444,6 +444,11 @@ namespace nvrhi::d3d12
         {
             std::wstring wname(desc.debugName.begin(), desc.debugName.end());
             resource->SetName(wname.c_str());
+#if NVRHI_WITH_AFTERMATH
+            // the driver will track the resource internally so don't need to keep the handle around
+            GFSDK_Aftermath_ResourceHandle resourceHandle = {};
+            GFSDK_Aftermath_DX12_RegisterResource(resource, &resourceHandle);
+#endif
         }
 
         if (desc.isUAV)

@@ -2635,6 +2635,8 @@ namespace nvrhi
     // IDevice
     //////////////////////////////////////////////////////////////////////////
 
+    class AftermathCrashDumpHelper;
+
     class IDevice : public IResource
     {
     public:
@@ -2711,7 +2713,8 @@ namespace nvrhi
         virtual CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) = 0;
         virtual uint64_t executeCommandLists(ICommandList* const* pCommandLists, size_t numCommandLists, CommandQueue executionQueue = CommandQueue::Graphics) = 0;
         virtual void queueWaitForCommandList(CommandQueue waitQueue, CommandQueue executionQueue, uint64_t instance) = 0;
-        virtual void waitForIdle() = 0;
+        // returns true if the wait completes successfully, false if detecting a problem (e.g. device removal)
+        virtual bool waitForIdle() = 0;
 
         // Releases the resources that were referenced in the command lists that have finished executing.
         // IMPORTANT: Call this method at least once per frame.
@@ -2724,6 +2727,9 @@ namespace nvrhi
         virtual Object getNativeQueue(ObjectType objectType, CommandQueue queue) = 0;
 
         virtual IMessageCallback* getMessageCallback() = 0;
+
+        virtual bool isAftermathEnabled() = 0;
+        virtual AftermathCrashDumpHelper& getAftermathCrashDumpHelper() = 0;
 
         // Front-end for executeCommandLists(..., 1) for compatibility and convenience
         uint64_t executeCommandList(ICommandList* commandList, CommandQueue executionQueue = CommandQueue::Graphics)

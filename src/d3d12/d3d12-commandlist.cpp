@@ -38,6 +38,18 @@ namespace nvrhi::d3d12
         , m_StateTracker(context.messageCallback)
         , m_Desc(params)
     {
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_Device->getAftermathCrashDumpHelper().registerAftermathMarkerTracker(&m_AftermathTracker);
+#endif
+    }
+
+    CommandList::~CommandList()
+    {
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_Device->getAftermathCrashDumpHelper().unRegisterAftermathMarkerTracker(&m_AftermathTracker);
+#endif
     }
     
     Object CommandList::getNativeObject(ObjectType objectType)
@@ -92,6 +104,11 @@ namespace nvrhi::d3d12
 
         commandList->commandList->QueryInterface(IID_PPV_ARGS(&commandList->commandList4));
         commandList->commandList->QueryInterface(IID_PPV_ARGS(&commandList->commandList6));
+
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            GFSDK_Aftermath_DX12_CreateContextHandle(commandList->commandList, &commandList->aftermathContext);
+#endif
 
         return commandList;
     }
@@ -153,11 +170,22 @@ namespace nvrhi::d3d12
     void CommandList::beginMarker(const char* name)
     {
         PIXBeginEvent(m_ActiveCommandList->commandList, 0, name);
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+        {
+            const size_t aftermathMarker = m_AftermathTracker.pushEvent(name);
+            GFSDK_Aftermath_SetEventMarker(m_ActiveCommandList->aftermathContext, (const void*)aftermathMarker, 0);
+        }
+#endif
     }
 
     void CommandList::endMarker()
     {
         PIXEndEvent(m_ActiveCommandList->commandList);
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_AftermathTracker.popEvent();
+#endif
     }
 
     void CommandList::setPushConstants(const void* data, size_t byteSize)

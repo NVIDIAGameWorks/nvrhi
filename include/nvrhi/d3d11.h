@@ -41,6 +41,7 @@ namespace nvrhi::d3d11
     {
         IMessageCallback* messageCallback = nullptr;
         ID3D11DeviceContext* context = nullptr;
+        bool aftermathEnabled = false;
     };
 
     NVRHI_API DeviceHandle createDevice(const DeviceDesc& desc);

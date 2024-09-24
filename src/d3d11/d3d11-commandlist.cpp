@@ -31,6 +31,18 @@ namespace nvrhi::d3d11
         , m_Desc(params)
     {
         m_Context.immediateContext->QueryInterface(IID_PPV_ARGS(&m_UserDefinedAnnotation));
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_Device->getAftermathCrashDumpHelper().registerAftermathMarkerTracker(&m_AftermathTracker);
+#endif
+    }
+
+    CommandList::~CommandList()
+    {
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_Device->getAftermathCrashDumpHelper().unRegisterAftermathMarkerTracker(&m_AftermathTracker);
+#endif
     }
 
     Object CommandList::getNativeObject(ObjectType objectType)
@@ -131,6 +143,13 @@ namespace nvrhi::d3d11
 
             m_UserDefinedAnnotation->BeginEvent(bufW);
         }
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+        {
+            const size_t aftermathMarker = m_AftermathTracker.pushEvent(name);
+            GFSDK_Aftermath_SetEventMarker(m_Context.aftermathContext, (const void*)aftermathMarker, 0);
+        }
+#endif
     }
 
     void CommandList::endMarker()
@@ -139,6 +158,10 @@ namespace nvrhi::d3d11
         {
             m_UserDefinedAnnotation->EndEvent();
         }
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_AftermathTracker.popEvent();
+#endif
     }
     
     static char g_PushConstantPaddingBuffer[c_MaxPushConstantSize] = {};

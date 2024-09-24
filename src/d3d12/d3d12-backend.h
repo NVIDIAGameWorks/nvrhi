@@ -33,6 +33,11 @@
 #include <nvapi.h>
 #endif
 
+#include <nvrhi/common/aftermath.h>
+#if NVRHI_WITH_AFTERMATH
+#include <GFSDK_Aftermath.h>
+#endif
+
 // There's no version check available in the nvapi header,
 // instead to check if the NvAPI linked is OMM compatible version (>520) we look for one of the defines it adds...
 #if NVRHI_D3D12_WITH_NVAPI && defined(NVAPI_GET_RAYTRACING_OPACITY_MICROMAP_ARRAY_PREBUILD_INFO_PARAMS_VER)
@@ -829,6 +834,9 @@ namespace nvrhi::d3d12
         RefCountPtr<ID3D12GraphicsCommandList4> commandList4;
         RefCountPtr<ID3D12GraphicsCommandList6> commandList6;
         uint64_t lastSubmittedInstance = 0;
+#if NVRHI_WITH_AFTERMATH
+        GFSDK_Aftermath_ContextHandle aftermathContext;
+#endif
     };
 
     class CommandListInstance
@@ -857,6 +865,7 @@ namespace nvrhi::d3d12
         // Internal interface functions
 
         CommandList(class Device* device, const Context& context, DeviceResources& resources, const CommandListParameters& params);
+        ~CommandList() override;
         std::shared_ptr<CommandListInstance> executed(Queue* pQueue);
         void requireTextureState(ITexture* texture, TextureSubresourceSet subresources, ResourceStates state);
         void requireBufferState(IBuffer* buffer, ResourceStates state);
@@ -977,6 +986,9 @@ namespace nvrhi::d3d12
         std::list<std::shared_ptr<InternalCommandList>> m_CommandListPool;
         std::shared_ptr<CommandListInstance> m_Instance;
         uint64_t m_RecordingVersion = 0;
+#if NVRHI_WITH_AFTERMATH
+        AftermathMarkerTracker m_AftermathTracker;
+#endif
 
         // Cache for user-provided state
 
@@ -1102,12 +1114,14 @@ namespace nvrhi::d3d12
         nvrhi::CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) override;
         uint64_t executeCommandLists(nvrhi::ICommandList* const* pCommandLists, size_t numCommandLists, CommandQueue executionQueue = CommandQueue::Graphics) override;
         void queueWaitForCommandList(CommandQueue waitQueue, CommandQueue executionQueue, uint64_t instance) override;
-        void waitForIdle() override;
+        bool waitForIdle() override;
         void runGarbageCollection() override;
         bool queryFeatureSupport(Feature feature, void* pInfo = nullptr, size_t infoSize = 0) override;
         FormatSupport queryFormatSupport(Format format) override;
         Object getNativeQueue(ObjectType objectType, CommandQueue queue) override;
         IMessageCallback* getMessageCallback() override { return m_Context.messageCallback; }
+        bool isAftermathEnabled() override { return m_AftermathEnabled; }
+        AftermathCrashDumpHelper& getAftermathCrashDumpHelper() override { return m_AftermathCrashDumpHelper; }
 
         // d3d12::IDevice implementation
 
@@ -1146,6 +1160,8 @@ namespace nvrhi::d3d12
         bool m_VariableRateShadingSupported = false;
         bool m_OpacityMicromapSupported = false;
         bool m_ShaderExecutionReorderingSupported = false;
+        bool m_AftermathEnabled = false;
+        AftermathCrashDumpHelper m_AftermathCrashDumpHelper;
 
         D3D12_FEATURE_DATA_D3D12_OPTIONS  m_Options = {};
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 m_Options5 = {};
@@ -1156,6 +1172,7 @@ namespace nvrhi::d3d12
         RefCountPtr<ID3D12PipelineState> createPipelineState(const GraphicsPipelineDesc& desc, RootSignature* pRS, const FramebufferInfo& fbinfo) const;
         RefCountPtr<ID3D12PipelineState> createPipelineState(const ComputePipelineDesc& desc, RootSignature* pRS) const;
         RefCountPtr<ID3D12PipelineState> createPipelineState(const MeshletPipelineDesc& desc, RootSignature* pRS, const FramebufferInfo& fbinfo) const;
+    
     };
 
 } // namespace nvrhi::d3d12

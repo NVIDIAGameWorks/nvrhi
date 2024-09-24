@@ -39,6 +39,11 @@
 #include <nvShaderExtnEnums.h>
 #endif
 
+#include <nvrhi/common/aftermath.h>
+#if NVRHI_WITH_AFTERMATH
+#include <GFSDK_Aftermath.h>
+#endif
+
 namespace nvrhi::d3d11
 {
     void SetDebugName(ID3D11DeviceChild* pObject, const char* name);
@@ -59,6 +64,9 @@ namespace nvrhi::d3d11
         RefCountPtr<ID3D11Buffer> pushConstantBuffer;
         IMessageCallback* messageCallback = nullptr;
         bool nvapiAvailable = false;
+#if NVRHI_WITH_AFTERMATH
+        GFSDK_Aftermath_ContextHandle aftermathContext = nullptr;
+#endif
 
         void error(const std::string& message) const;
     };
@@ -277,6 +285,7 @@ namespace nvrhi::d3d11
     {
     public:
         explicit CommandList(const Context& context, IDevice* device, const CommandListParameters& params);
+        ~CommandList() override;
 
         // IResource implementation
 
@@ -364,6 +373,9 @@ namespace nvrhi::d3d11
         CommandListParameters m_Desc;
 
         RefCountPtr<ID3DUserDefinedAnnotation> m_UserDefinedAnnotation;
+#if NVRHI_WITH_AFTERMATH
+        AftermathMarkerTracker m_AftermathTracker;
+#endif
 
         int m_NumUAVOverlapCommands = 0;
         void enterUAVOverlapSection();
@@ -410,11 +422,12 @@ namespace nvrhi::d3d11
     {
     public:
         explicit Device(const DeviceDesc& desc);
-        
+        ~Device() override;
+
         // IResource implementation
 
         Object getNativeObject(ObjectType objectType) override;
-        
+
         // IDevice implementation
 
         HeapHandle createHeap(const HeapDesc& d) override;
@@ -483,16 +496,18 @@ namespace nvrhi::d3d11
         rt::AccelStructHandle createAccelStruct(const rt::AccelStructDesc& desc) override;
         MemoryRequirements getAccelStructMemoryRequirements(rt::IAccelStruct* as) override;
         bool bindAccelStructMemory(rt::IAccelStruct* as, IHeap* heap, uint64_t offset) override;
-        
+
         CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) override;
         uint64_t executeCommandLists(ICommandList* const* pCommandLists, size_t numCommandLists, CommandQueue executionQueue = CommandQueue::Graphics) override { (void)pCommandLists; (void)numCommandLists; (void)executionQueue; return 0; }
         void queueWaitForCommandList(CommandQueue waitQueue, CommandQueue executionQueue, uint64_t instance) override { (void)waitQueue; (void)executionQueue; (void)instance; }
-        void waitForIdle() override;
+        bool waitForIdle() override;
         void runGarbageCollection() override { }
         bool queryFeatureSupport(Feature feature, void* pInfo = nullptr, size_t infoSize = 0) override;
         FormatSupport queryFormatSupport(Format format) override;
         Object getNativeQueue(ObjectType objectType, CommandQueue queue) override { (void)objectType; (void)queue;  return nullptr; }
         IMessageCallback* getMessageCallback() override { return m_Context.messageCallback; }
+        bool isAftermathEnabled() override { return m_AftermathEnabled; }
+        AftermathCrashDumpHelper& getAftermathCrashDumpHelper() override { return m_AftermathCrashDumpHelper; }
 
     private:
         Context m_Context;
@@ -514,6 +529,9 @@ namespace nvrhi::d3d11
         ID3D11BlendState* getBlendState(const BlendState& blendState);
         ID3D11DepthStencilState* getDepthStencilState(const DepthStencilState& depthStencilState);
         ID3D11RasterizerState* getRasterizerState(const RasterState& rasterState);
+
+        bool m_AftermathEnabled = false;
+        AftermathCrashDumpHelper m_AftermathCrashDumpHelper;
     };
 
 } // namespace nvrhi::d3d11

@@ -33,6 +33,18 @@ namespace nvrhi::vulkan
         , m_UploadManager(std::make_unique<UploadManager>(device, parameters.uploadChunkSize, 0, false))
         , m_ScratchManager(std::make_unique<UploadManager>(device, parameters.scratchChunkSize, parameters.scratchMaxMemory, true))
     {
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_Device->getAftermathCrashDumpHelper().registerAftermathMarkerTracker(&m_AftermathTracker);
+#endif
+    }
+
+    CommandList::~CommandList()
+    {
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+            m_Device->getAftermathCrashDumpHelper().unRegisterAftermathMarkerTracker(&m_AftermathTracker);
+#endif
     }
 
     nvrhi::Object CommandList::getNativeObject(ObjectType objectType)

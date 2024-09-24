@@ -36,6 +36,7 @@ cmake_dependent_option(NVRHI_INSTALL_EXPORTS "Install CMake exports" OFF "NVRHI_
 option(NVRHI_WITH_VALIDATION "Build NVRHI the validation layer" ON)
 option(NVRHI_WITH_VULKAN "Build the NVRHI Vulkan backend" ON)
 option(NVRHI_WITH_RTXMU "Use RTXMU for acceleration structure management" OFF)
+option(NVRHI_WITH_AFTERMATH "Include Aftermath support (requires NSight Aftermath SDK)" OFF)
 
 cmake_dependent_option(NVRHI_WITH_NVAPI "Include NVAPI support (requires NVAPI SDK)" OFF "WIN32" OFF)
 cmake_dependent_option(NVRHI_WITH_DX11 "Build the NVRHI D3D11 backend" ON "WIN32" OFF)
@@ -80,19 +81,36 @@ if (NVRHI_WITH_NVAPI AND NOT TARGET nvapi)
     endif()
 endif()
 
+if (NVRHI_WITH_AFTERMATH AND NOT TARGET aftermath)
+    find_package(Aftermath REQUIRED)
+
+    if (AFTERMATH_FOUND)
+        add_library(aftermath SHARED IMPORTED GLOBAL)
+        target_include_directories(aftermath INTERFACE "${AFTERMATH_INCLUDE_DIR}")
+        if (WIN32)
+            set_property(TARGET aftermath PROPERTY IMPORTED_IMPLIB "${AFTERMATH_LIBRARY}")
+        endif()
+        set_property(TARGET aftermath PROPERTY IMPORTED_LOCATION "${AFTERMATH_RUNTIME_LIBRARY}")
+        file(COPY ${AFTERMATH_RUNTIME_LIBRARY} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    else()
+        message(FATAL_ERROR "NVRHI_WITH_AFTERMATH is enabled but cmake cannot find the Aftermath SDK in AFTERMATH_SEARCH_PATHS")
+    endif()
+endif()
 
 set(include_common
     include/nvrhi/nvrhi.h
     include/nvrhi/utils.h
     include/nvrhi/common/containers.h
     include/nvrhi/common/misc.h
-    include/nvrhi/common/resource.h)
+    include/nvrhi/common/resource.h
+    include/nvrhi/common/aftermath.h)
 set(src_common
     src/common/format-info.cpp
     src/common/misc.cpp
     src/common/state-tracking.cpp
     src/common/state-tracking.h
-    src/common/utils.cpp)
+    src/common/utils.cpp
+    src/common/aftermath.cpp)
 
 if(MSVC)
     set(misc_common 
@@ -208,6 +226,8 @@ target_include_directories(nvrhi PUBLIC
 
 set_target_properties(nvrhi PROPERTIES FOLDER "NVRHI")
 
+target_compile_definitions(nvrhi PRIVATE NVRHI_WITH_AFTERMATH=$<BOOL:${NVRHI_WITH_AFTERMATH}>)
+
 # implementations
 
 if (NVRHI_WITH_DX11)
@@ -232,10 +252,13 @@ if (NVRHI_WITH_DX11)
 
     if (NVRHI_WITH_NVAPI)
         target_link_libraries(${nvrhi_d3d11_target} PUBLIC nvapi)
-        target_compile_definitions(${nvrhi_d3d11_target} PRIVATE NVRHI_D3D11_WITH_NVAPI=1)
-    else()
-        target_compile_definitions(${nvrhi_d3d11_target} PRIVATE NVRHI_D3D11_WITH_NVAPI=0)
     endif()
+    target_compile_definitions(${nvrhi_d3d11_target} PRIVATE NVRHI_D3D11_WITH_NVAPI=$<BOOL:${NVRHI_WITH_NVAPI}>)
+
+    if (NVRHI_WITH_AFTERMATH)
+        target_link_libraries(${nvrhi_d3d11_target} PUBLIC aftermath)
+    endif()
+    target_compile_definitions(${nvrhi_d3d11_target} PRIVATE NVRHI_WITH_AFTERMATH=$<BOOL:${NVRHI_WITH_AFTERMATH}>)
 endif()
 
 if (NVRHI_WITH_DX12)
@@ -265,10 +288,13 @@ if (NVRHI_WITH_DX12)
 
     if (NVRHI_WITH_NVAPI)
         target_link_libraries(${nvrhi_d3d12_target} PUBLIC nvapi)
-        target_compile_definitions(${nvrhi_d3d12_target} PRIVATE NVRHI_D3D12_WITH_NVAPI=1)
-    else()
-        target_compile_definitions(${nvrhi_d3d12_target} PRIVATE NVRHI_D3D12_WITH_NVAPI=0)
     endif()
+    target_compile_definitions(${nvrhi_d3d12_target} PRIVATE NVRHI_D3D12_WITH_NVAPI=$<BOOL:${NVRHI_WITH_NVAPI}>)
+
+    if (NVRHI_WITH_AFTERMATH)
+        target_link_libraries(${nvrhi_d3d12_target} PUBLIC aftermath)
+    endif()
+    target_compile_definitions(${nvrhi_d3d12_target} PRIVATE NVRHI_WITH_AFTERMATH=$<BOOL:${NVRHI_WITH_AFTERMATH}>)
 endif()
 
 if (NVRHI_WITH_VULKAN)
@@ -305,6 +331,10 @@ if (NVRHI_WITH_VULKAN)
         target_link_libraries(${nvrhi_vulkan_target} PRIVATE Vulkan::Headers)
     endif()
 
+    if (NVRHI_WITH_AFTERMATH)
+        target_link_libraries(${nvrhi_vulkan_target} PUBLIC aftermath)
+    endif()
+    target_compile_definitions(${nvrhi_vulkan_target} PRIVATE NVRHI_WITH_AFTERMATH=$<BOOL:${NVRHI_WITH_AFTERMATH}>)
 endif()
 
 

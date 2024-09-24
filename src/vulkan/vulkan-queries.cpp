@@ -217,6 +217,13 @@ namespace nvrhi::vulkan
                                 .setPMarkerName(name);
             m_CurrentCmdBuf->cmdBuf.debugMarkerBeginEXT(&markerInfo);
         }
+#if NVRHI_WITH_AFTERMATH
+        if (m_Device->isAftermathEnabled())
+        {
+            const size_t aftermathMarker = m_AftermathTracker.pushEvent(name);
+            m_CurrentCmdBuf->cmdBuf.setCheckpointNV((const void*)aftermathMarker);
+        }
+#endif
     }
 
     void CommandList::endMarker()
@@ -227,6 +234,9 @@ namespace nvrhi::vulkan
 
             m_CurrentCmdBuf->cmdBuf.debugMarkerEndEXT();
         }
+#if NVRHI_WITH_AFTERMATH
+        m_AftermathTracker.popEvent();
+#endif
     }
 
 } // namespace nvrhi::vulkan

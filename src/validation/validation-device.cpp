@@ -1906,9 +1906,9 @@ namespace nvrhi::validation
         m_Device->queueWaitForCommandList(waitQueue, executionQueue, instance);
     }
 
-    void DeviceWrapper::waitForIdle()
+    bool DeviceWrapper::waitForIdle()
     {
-        m_Device->waitForIdle();
+        return m_Device->waitForIdle();
     }
 
     void DeviceWrapper::runGarbageCollection()
@@ -1934,6 +1934,16 @@ namespace nvrhi::validation
     IMessageCallback* DeviceWrapper::getMessageCallback()
     {
         return m_MessageCallback;
+    }
+
+    bool DeviceWrapper::isAftermathEnabled()
+    {
+        return m_Device->isAftermathEnabled();
+    }
+
+    AftermathCrashDumpHelper& DeviceWrapper::getAftermathCrashDumpHelper()
+    {
+        return m_Device->getAftermathCrashDumpHelper();
     }
 
     void Range::add(uint32_t item)

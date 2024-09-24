@@ -74,6 +74,29 @@ namespace nvrhi::d3d11
         }
 #endif
 
+#if NVRHI_WITH_AFTERMATH
+        if (desc.aftermathEnabled)
+        {
+            auto CheckAftermathResult = [this](GFSDK_Aftermath_Result result)
+            {
+                if (!GFSDK_Aftermath_SUCCEED(result))
+                {
+                    std::stringstream ss;
+                    ss << "Aftermath initialize call failed, result = 0x" << std::hex << std::setw(8) << result;
+                    m_Context.error(ss.str());
+                    return false;
+                }
+                return true;
+            };
+            const uint32_t aftermathFlags = GFSDK_Aftermath_FeatureFlags_EnableMarkers | GFSDK_Aftermath_FeatureFlags_EnableResourceTracking | GFSDK_Aftermath_FeatureFlags_GenerateShaderDebugInfo | GFSDK_Aftermath_FeatureFlags_EnableShaderErrorReporting;
+            bool success = CheckAftermathResult(GFSDK_Aftermath_DX11_Initialize(GFSDK_Aftermath_Version_API, aftermathFlags, m_Context.device));
+            if (success)
+                success = CheckAftermathResult(GFSDK_Aftermath_DX11_CreateContextHandle(m_Context.immediateContext, &m_Context.aftermathContext));
+            if (success)
+                m_AftermathEnabled = true;
+        }
+#endif
+
         D3D11_BUFFER_DESC bufferDesc = {};
         bufferDesc.ByteWidth = c_MaxPushConstantSize;
         bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -89,6 +112,21 @@ namespace nvrhi::d3d11
         }
 
         m_ImmediateCommandList = CommandListHandle::Create(new CommandList(m_Context, this, CommandListParameters()));   
+    }
+
+    Device::~Device()
+    {
+        // Release the command list so that it unregisters the Aftermath marker tracker before the device is destroyed
+        m_ImmediateCommandList = nullptr;
+
+#if NVRHI_WITH_AFTERMATH
+        if (m_Context.aftermathContext)
+        {
+            GFSDK_Aftermath_ReleaseContextHandle(m_Context.aftermathContext);
+            m_Context.aftermathContext = nullptr;
+        }
+        m_AftermathEnabled = false;
+#endif
     }
 
     GraphicsAPI Device::getGraphicsAPI()
@@ -243,7 +281,7 @@ namespace nvrhi::d3d11
         return nullptr;
     }
 
-    void Device::waitForIdle()
+    bool Device::waitForIdle()
     {
         if (!m_WaitForIdleQuery)
         {
@@ -251,11 +289,12 @@ namespace nvrhi::d3d11
         }
 
         if (!m_WaitForIdleQuery)
-            return;
+            return false;
 
         setEventQuery(m_WaitForIdleQuery, CommandQueue::Graphics);
         waitEventQuery(m_WaitForIdleQuery);
         resetEventQuery(m_WaitForIdleQuery);
+        return true;
     }
 
     SamplerHandle Device::createSampler(const SamplerDesc& d)

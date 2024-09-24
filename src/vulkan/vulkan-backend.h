@@ -24,6 +24,7 @@
 
 #include <nvrhi/vulkan.h>
 #include <nvrhi/utils.h>
+#include <nvrhi/common/aftermath.h>
 #include "../common/state-tracking.h"
 #include "../common/versioning.h"
 #include <mutex>
@@ -171,6 +172,11 @@ namespace nvrhi::vulkan
             bool EXT_conservative_rasterization = false;
             bool EXT_opacity_micromap = false;
             bool NV_ray_tracing_invocation_reorder = false;
+#if NVRHI_WITH_AFTERMATH
+            bool EXT_debug_utils = false;
+            bool NV_device_diagnostic_checkpoints = false;
+            bool NV_device_diagnostics_config= false;
+#endif
         } extensions;
 
         vk::PhysicalDeviceProperties physicalDeviceProperties;
@@ -1128,12 +1134,14 @@ namespace nvrhi::vulkan
         CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) override;
         uint64_t executeCommandLists(ICommandList* const* pCommandLists, size_t numCommandLists, CommandQueue executionQueue = CommandQueue::Graphics) override;
         void queueWaitForCommandList(CommandQueue waitQueue, CommandQueue executionQueue, uint64_t instance) override;
-        void waitForIdle() override;
+        bool waitForIdle() override;
         void runGarbageCollection() override;
         bool queryFeatureSupport(Feature feature, void* pInfo = nullptr, size_t infoSize = 0) override;
         FormatSupport queryFormatSupport(Format format) override;
         Object getNativeQueue(ObjectType objectType, CommandQueue queue) override;
         IMessageCallback* getMessageCallback() override { return m_Context.messageCallback; }
+        bool isAftermathEnabled() override { return m_AftermathEnabled; }
+        AftermathCrashDumpHelper& getAftermathCrashDumpHelper() override { return m_AftermathCrashDumpHelper; }
 
         // vulkan::IDevice implementation
         VkSemaphore getQueueSemaphore(CommandQueue queue) override;
@@ -1156,6 +1164,8 @@ namespace nvrhi::vulkan
         std::array<std::unique_ptr<Queue>, uint32_t(CommandQueue::Count)> m_Queues;
         
         void *mapBuffer(IBuffer* b, CpuAccessMode flags, uint64_t offset, size_t size) const;
+        bool m_AftermathEnabled = false;
+        AftermathCrashDumpHelper m_AftermathCrashDumpHelper;
     };
 
     class CommandList : public RefCounter<ICommandList>
@@ -1164,6 +1174,7 @@ namespace nvrhi::vulkan
         // Internal backend methods
 
         CommandList(Device* device, const VulkanContext& context, const CommandListParameters& parameters);
+        ~CommandList() override;
 
         void executed(Queue& queue, uint64_t submissionID);
 
@@ -1259,6 +1270,10 @@ namespace nvrhi::vulkan
 
         // current internal command buffer
         TrackedCommandBufferPtr m_CurrentCmdBuf = nullptr;
+
+#if NVRHI_WITH_AFTERMATH
+        AftermathMarkerTracker m_AftermathTracker;
+#endif
 
         vk::PipelineLayout m_CurrentPipelineLayout;
         vk::ShaderStageFlags m_CurrentPushConstantsVisibility;
