@@ -244,6 +244,12 @@ namespace nvrhi::vulkan
             m_Context.device.destroyPipelineCache(m_Context.pipelineCache);
             m_Context.pipelineCache = vk::PipelineCache();
         }
+
+        if (m_Context.emptyDescriptorSetLayout)
+        {
+            m_Context.device.destroyDescriptorSetLayout(m_Context.emptyDescriptorSetLayout);
+            m_Context.emptyDescriptorSetLayout = vk::DescriptorSetLayout();
+        }
     }
 
     Object Device::getNativeObject(ObjectType objectType)
