@@ -241,15 +241,14 @@ namespace nvrhi::validation
         return m_Device->createTexture(patchedDesc);
     }
 
-
-    SamplerFeedbackTextureHandle DeviceWrapper::createSamplerFeedbackTexture(TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc)
+    void DeviceWrapper::getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings)
     {
-        return m_Device->createSamplerFeedbackTexture(pairedTexture, desc);
+        m_Device->getTextureTiling(texture, numTiles, desc, tileShape, subresourceTilingsNum, subresourceTilings);
     }
 
-    SamplerFeedbackTextureHandle DeviceWrapper::createSamplerFeedbackForNativeTexture(ObjectType objectType, Object texture, TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc)
+    void DeviceWrapper::updateTextureTilesMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
     {
-        return m_Device->createSamplerFeedbackForNativeTexture(objectType, texture, pairedTexture, desc);
+        m_Device->updateTextureTilesMappings(texture, tileMappings, numTileMappings, executionQueue);
     }
 
     MemoryRequirements DeviceWrapper::getTextureMemoryRequirements(ITexture* texture)

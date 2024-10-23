@@ -314,11 +314,6 @@ namespace nvrhi::validation
         m_CommandList->clearTextureUInt(t, subresources, clearColor);
     }
 
-    void CommandListWrapper::clearSamplerFeedbackTexture(ISamplerFeedbackTexture* _t)
-    {
-        m_CommandList->clearSamplerFeedbackTexture(_t);
-    }
-
     void CommandListWrapper::copyTexture(ITexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice)
     {
         if (!requireOpenState())

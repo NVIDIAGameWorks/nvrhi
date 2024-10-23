@@ -447,6 +447,88 @@ namespace nvrhi::vulkan
         return submissionID;
     }
 
+    void Device::getTextureTiling(ITexture* _texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings)
+    {
+        Texture* texture = checked_cast<Texture*>(_texture);
+        uint32_t numStandardMips = 0;
+        uint32_t tileWidth = 1;
+        uint32_t tileHeight = 1;
+        uint32_t tileDepth = 1;
+
+        {
+            auto memoryRequirements = m_Context.device.getImageSparseMemoryRequirements(texture->image);
+            if (!memoryRequirements.empty())
+            {
+                numStandardMips = memoryRequirements[0].imageMipTailFirstLod;
+            }
+
+            if (desc)
+            {
+                desc->numStandardMips = numStandardMips;
+                desc->numPackedMips = texture->imageInfo.mipLevels - memoryRequirements[0].imageMipTailFirstLod;
+                desc->startTileIndexInOverallResource = (uint32_t)(memoryRequirements[0].imageMipTailOffset / texture->tileByteSize);
+                desc->numTilesForPackedMips = (uint32_t)(memoryRequirements[0].imageMipTailSize / texture->tileByteSize);
+            }
+        }
+
+        {
+            auto formatProperties = m_Context.physicalDevice.getSparseImageFormatProperties(texture->imageInfo.format, texture->imageInfo.imageType, texture->imageInfo.samples, texture->imageInfo.usage, texture->imageInfo.tiling);
+            if (!formatProperties.empty())
+            {   
+                tileWidth = formatProperties[0].imageGranularity.width;
+                tileHeight = formatProperties[0].imageGranularity.height;
+                tileDepth = formatProperties[0].imageGranularity.depth;
+            }
+
+            if (tileShape)
+            {
+                tileShape->widthInTexels = tileWidth;
+                tileShape->heightInTexels = tileHeight;
+                tileShape->depthInTexels = tileDepth;
+            }
+        }
+
+        if (subresourceTilingsNum)
+        {
+            *subresourceTilingsNum = std::min(*subresourceTilingsNum, texture->desc.mipLevels);
+            uint32_t startTileIndexInOverallResource = 0;
+
+            uint32_t width = texture->desc.width;
+            uint32_t height = texture->desc.height;
+            uint32_t depth = texture->desc.depth;
+
+            for (uint32_t i = 0; i < *subresourceTilingsNum; ++i)
+            {
+                if (i < numStandardMips)
+                {
+                    subresourceTilings[i].widthInTiles = (width + tileWidth - 1) / tileWidth;
+                    subresourceTilings[i].heightInTiles = (height + tileHeight - 1) / tileHeight;
+                    subresourceTilings[i].depthInTiles = (depth + tileDepth - 1) / tileDepth;
+                    subresourceTilings[i].startTileIndexInOverallResource = startTileIndexInOverallResource;
+                }
+                else
+                {
+                    subresourceTilings[i].widthInTiles = 0;
+                    subresourceTilings[i].heightInTiles = 0;
+                    subresourceTilings[i].depthInTiles = 0;
+                    subresourceTilings[i].startTileIndexInOverallResource = UINT32_MAX;
+                }
+
+                width = std::max(width / 2, tileWidth);
+                height = std::max(height / 2, tileHeight);
+                depth = std::max(depth / 2, tileDepth);
+
+                startTileIndexInOverallResource += subresourceTilings[i].widthInTiles * subresourceTilings[i].heightInTiles * subresourceTilings[i].depthInTiles;
+            }
+        }
+
+        if (numTiles)
+        {
+            auto memoryRequirements = m_Context.device.getImageMemoryRequirements(texture->image);
+            *numTiles = (uint32_t)(memoryRequirements.size / texture->tileByteSize);
+        }
+    }
+
     HeapHandle Device::createHeap(const HeapDesc& d)
     {
         vk::MemoryRequirements memoryRequirements;
@@ -541,5 +623,4 @@ namespace nvrhi::vulkan
     {
         messageCallback->message(MessageSeverity::Warning, message.c_str());
     }
-
 } // namespace nvrhi::vulkan

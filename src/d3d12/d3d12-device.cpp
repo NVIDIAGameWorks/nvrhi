@@ -386,6 +386,99 @@ namespace nvrhi::d3d12
         pWaitQueue->queue->Wait(pExecutionQueue->fence, instanceID);
     }
 
+    void Device::getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* _subresourceTilings)
+    {
+        ID3D12Resource* resource = checked_cast<Texture*>(texture)->resource;
+        D3D12_RESOURCE_DESC resourceDesc = resource->GetDesc();
+
+        D3D12_PACKED_MIP_INFO packedMipDesc = {};
+        D3D12_TILE_SHAPE standardTileShapeForNonPackedMips = {};
+        D3D12_SUBRESOURCE_TILING subresourceTilings[16];
+
+        m_Context.device->GetResourceTiling(resource, numTiles, desc ? &packedMipDesc : nullptr, tileShape ? &standardTileShapeForNonPackedMips : nullptr, subresourceTilingsNum, 0, subresourceTilings);
+
+        if (desc)
+        {
+            desc->numStandardMips = packedMipDesc.NumStandardMips;
+            desc->numPackedMips = packedMipDesc.NumPackedMips;
+            desc->startTileIndexInOverallResource = packedMipDesc.StartTileIndexInOverallResource;
+            desc->numTilesForPackedMips = packedMipDesc.NumTilesForPackedMips;
+        }
+
+        if (tileShape)
+        {
+            tileShape->widthInTexels = standardTileShapeForNonPackedMips.WidthInTexels;
+            tileShape->heightInTexels = standardTileShapeForNonPackedMips.HeightInTexels;
+            tileShape->depthInTexels = standardTileShapeForNonPackedMips.DepthInTexels;
+        }
+
+        for (uint32_t i = 0; i < *subresourceTilingsNum; ++i)
+        {
+            _subresourceTilings[i].widthInTiles = subresourceTilings[i].WidthInTiles;
+            _subresourceTilings[i].heightInTiles = subresourceTilings[i].HeightInTiles;
+            _subresourceTilings[i].depthInTiles = subresourceTilings[i].DepthInTiles;
+            _subresourceTilings[i].startTileIndexInOverallResource = subresourceTilings[i].StartTileIndexInOverallResource;
+        }
+    }
+
+    void Device::updateTextureTilesMappings(ITexture* _texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
+    {
+        Queue* queue = getQueue(executionQueue);
+        Texture* texture = checked_cast<Texture*>(_texture);
+
+        D3D12_TILE_SHAPE tileShape;
+        D3D12_SUBRESOURCE_TILING subresourceTiling;
+        m_Context.device->GetResourceTiling(texture->resource, nullptr, nullptr, &tileShape, nullptr, 0, &subresourceTiling);
+
+        for (size_t i = 0; i < numTileMappings; i++)
+        {
+            uint32_t numRegions = tileMappings[i].numTextureRegions;
+            std::vector<D3D12_TILED_RESOURCE_COORDINATE> resourceCoordinates(numRegions);
+            std::vector<D3D12_TILE_REGION_SIZE> regionSizes(numRegions);
+            std::vector<D3D12_TILE_RANGE_FLAGS> rangeFlags(numRegions, D3D12_TILE_RANGE_FLAG_NONE);
+            std::vector<UINT> heapStartOffsets(numRegions);
+            std::vector<UINT> rangeTileCounts(numRegions);
+
+            Heap* heap = tileMappings[i].heap ? checked_cast<Heap*>(tileMappings[i].heap) : nullptr;
+
+            for (uint32_t j = 0; j < numRegions; ++j)
+            {
+                const TiledTextureCoordinate& tiledTextureCoordinate = tileMappings[i].tiledTextureCoordinates[j];
+                const TiledTextureRegion& tiledTextureRegion = tileMappings[i].tiledTextureRegions[j];
+
+                resourceCoordinates[j].Subresource = tiledTextureCoordinate.mipLevel * texture->desc.arraySize + tiledTextureCoordinate.arrayLevel;
+                resourceCoordinates[j].X = tiledTextureCoordinate.x;
+                resourceCoordinates[j].Y = tiledTextureCoordinate.y;
+                resourceCoordinates[j].Z = tiledTextureCoordinate.z;
+
+                if (tiledTextureRegion.tilesNum)
+                {
+                    regionSizes[j].NumTiles = tiledTextureRegion.tilesNum;
+                    regionSizes[j].UseBox = false;
+                }
+                else
+                {
+                    uint32_t tilesX = (tiledTextureRegion.width + (tileShape.WidthInTexels - 1)) / tileShape.WidthInTexels;
+                    uint32_t tilesY = (tiledTextureRegion.height + (tileShape.HeightInTexels - 1)) / tileShape.HeightInTexels;
+                    uint32_t tilesZ = (tiledTextureRegion.depth + (tileShape.DepthInTexels - 1)) / tileShape.DepthInTexels;
+
+                    regionSizes[j].Width = tilesX;
+                    regionSizes[j].Height = (uint16_t)tilesY;
+                    regionSizes[j].Depth = (uint16_t)tilesZ;
+
+                    regionSizes[j].NumTiles = tilesX * tilesY * tilesZ;
+                    regionSizes[j].UseBox = true;
+                }
+
+                // Offset in tiles
+                heapStartOffsets[j] = heap ? (uint32_t)(tileMappings[i].byteOffsets[j] / D3D12_TILED_RESOURCE_TILE_SIZE_IN_BYTES) : 0;
+                rangeTileCounts[j] = regionSizes[j].NumTiles;
+            }
+
+            queue->queue->UpdateTileMappings(texture->resource, tileMappings[i].numTextureRegions, resourceCoordinates.data(), regionSizes.data(), heap ? heap->heap : nullptr, numRegions, rangeFlags.data(), heapStartOffsets.data(), rangeTileCounts.data(), D3D12_TILE_MAPPING_FLAG_NONE);
+        }
+    }
+
     void Device::runGarbageCollection()
     {
         for (const auto& pQueue : m_Queues)

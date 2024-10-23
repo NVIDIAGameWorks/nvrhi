@@ -421,6 +421,7 @@ namespace nvrhi
         // and memory is bound to the texture later using bindTextureMemory.
         // On DX12, the texture resource is created at the time of memory binding.
         bool isVirtual = false;
+        bool isTiled = false;
 
         Color clearValue;
         bool useClearValue = false;
@@ -541,6 +542,54 @@ namespace nvrhi
     };
     typedef RefCountPtr<IStagingTexture> StagingTextureHandle;
 
+    struct TiledTextureCoordinate
+    {
+        uint16_t mipLevel = 0;
+        uint16_t arrayLevel = 0;
+        uint32_t x = 0;
+        uint32_t y = 0;
+        uint32_t z = 0;
+    };
+
+    struct TiledTextureRegion
+    {
+        uint32_t tilesNum = 0;
+        uint32_t width = 0;
+        uint32_t height = 0;
+        uint32_t depth = 0;
+    };
+
+    struct TextureTilesMapping
+    {
+        TiledTextureCoordinate* tiledTextureCoordinates = nullptr;
+        TiledTextureRegion* tiledTextureRegions = nullptr;
+        uint64_t* byteOffsets = nullptr;
+        uint32_t numTextureRegions = 0;
+        IHeap* heap = nullptr;
+    };
+
+    struct PackedMipDesc
+    {
+        uint32_t numStandardMips = 0;
+        uint32_t numPackedMips = 0;
+        uint32_t numTilesForPackedMips = 0;
+        uint32_t startTileIndexInOverallResource = 0;
+    };
+    
+    struct TileShape
+    {
+        uint32_t widthInTexels = 0;
+        uint32_t heightInTexels = 0;
+        uint32_t depthInTexels = 0;
+    };
+
+    struct SubresourceTiling
+    {
+        uint32_t widthInTiles = 0;
+        uint32_t heightInTiles = 0;
+        uint32_t depthInTiles = 0;
+        uint32_t startTileIndexInOverallResource = 0;
+    };
 
     enum SamplerFeedbackFormat : uint8_t
     {
@@ -551,9 +600,9 @@ namespace nvrhi
     struct SamplerFeedbackTextureDesc
     {
         SamplerFeedbackFormat samplerFeedbackFormat = SamplerFeedbackFormat::MinMipOpaque;
-        uint32_t samplerFeedbackMipRegionX = 1;
-        uint32_t samplerFeedbackMipRegionY = 1;
-        uint32_t samplerFeedbackMipRegionZ = 1;
+        uint32_t samplerFeedbackMipRegionX = 0;
+        uint32_t samplerFeedbackMipRegionY = 0;
+        uint32_t samplerFeedbackMipRegionZ = 0;
         ResourceStates initialState = ResourceStates::Unknown;
     };
 
@@ -624,7 +673,7 @@ namespace nvrhi
         bool isVolatile = false;
 
         // Indicates that the buffer is created with no backing memory,
-        // and memory is bound to the texture later using bindBufferMemory.
+        // and memory is bound to the buffer later using bindBufferMemory.
         // On DX12, the buffer resource is created at the time of memory binding.
         bool isVirtual = false;
 
@@ -2574,7 +2623,6 @@ namespace nvrhi
         virtual void clearTextureFloat(ITexture* t, TextureSubresourceSet subresources, const Color& clearColor) = 0;
         virtual void clearDepthStencilTexture(ITexture* t, TextureSubresourceSet subresources, bool clearDepth, float depth, bool clearStencil, uint8_t stencil) = 0;
         virtual void clearTextureUInt(ITexture* t, TextureSubresourceSet subresources, uint32_t clearColor) = 0;
-        virtual void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* t) = 0;
 
         virtual void copyTexture(ITexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) = 0;
         virtual void copyTexture(IStagingTexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) = 0;
@@ -2692,8 +2740,8 @@ namespace nvrhi
         virtual void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) = 0;
         virtual void unmapStagingTexture(IStagingTexture* tex) = 0;
 
-        virtual SamplerFeedbackTextureHandle createSamplerFeedbackTexture(TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) = 0;
-        virtual SamplerFeedbackTextureHandle createSamplerFeedbackForNativeTexture(ObjectType objectType, Object texture, TextureHandle pairedTexture, const SamplerFeedbackTextureDesc& desc) = 0;
+        virtual void getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings) = 0;
+        virtual void updateTextureTilesMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) = 0;
 
         virtual BufferHandle createBuffer(const BufferDesc& d) = 0;
         virtual void *mapBuffer(IBuffer* buffer, CpuAccessMode cpuAccess) = 0;
