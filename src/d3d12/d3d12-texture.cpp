@@ -901,7 +901,11 @@ namespace nvrhi::d3d12
         }
         rdFeedback.SamplerFeedbackMipRegion = D3D12_MIP_REGION{ desc.samplerFeedbackMipRegionX, desc.samplerFeedbackMipRegionY, desc.samplerFeedbackMipRegionZ };
 
-        SamplerFeedbackTexture* texture = new SamplerFeedbackTexture(m_Context, m_Resources, desc, rdFeedback, pairedTexture);
+        TextureDesc textureDesc = pairedTexture->getDesc();
+        textureDesc.initialState = desc.initialState;
+        textureDesc.keepInitialState = desc.keepInitialState;
+
+        SamplerFeedbackTexture* texture = new SamplerFeedbackTexture(m_Context, m_Resources, desc, textureDesc, pairedTexture);
 
         HRESULT hr = m_Context.device8->CreateCommittedResource2(
             &heapPropsDefault,
@@ -948,7 +952,11 @@ namespace nvrhi::d3d12
         desc.samplerFeedbackMipRegionY = rdFeedback.SamplerFeedbackMipRegion.Height;
         desc.samplerFeedbackMipRegionZ = rdFeedback.SamplerFeedbackMipRegion.Depth;
 
-        SamplerFeedbackTexture* texture = new SamplerFeedbackTexture(m_Context, m_Resources, desc, rdFeedback, pairedTexture);
+        TextureDesc textureDesc = pairedTexture->getDesc();
+        textureDesc.initialState = ResourceStates::Unknown;
+        textureDesc.keepInitialState = false;
+
+        SamplerFeedbackTexture* texture = new SamplerFeedbackTexture(m_Context, m_Resources, desc, textureDesc, pairedTexture);
         texture->resource = pResource;
 
         return SamplerFeedbackTextureHandle::Create(texture);
@@ -1119,11 +1127,33 @@ namespace nvrhi::d3d12
         }
     }
 
-    void CommandList::clearSamplerFeedbackTexture(ISamplerFeedbackTexture* _t)
+    void CommandList::clearSamplerFeedbackTexture(ISamplerFeedbackTexture* _texture)
     {
-        SamplerFeedbackTexture* t = checked_cast<SamplerFeedbackTexture*>(_t);
+        SamplerFeedbackTexture* texture = checked_cast<SamplerFeedbackTexture*>(_texture);
 
-        m_ActiveCommandList->commandList->DiscardResource(t->resource, nullptr);
+        m_ActiveCommandList->commandList->DiscardResource(texture->resource, nullptr);
+    }
+
+    void CommandList::decodeSamplerFeedbackTexture(IBuffer* _buffer, ISamplerFeedbackTexture* _texture, nvrhi::Format format)
+    {
+        Buffer* buffer = checked_cast<Buffer*>(_buffer);
+        SamplerFeedbackTexture* texture = checked_cast<SamplerFeedbackTexture*>(_texture);
+
+        if (m_EnableAutomaticBarriers)
+        {
+            requireBufferState(buffer, ResourceStates::ResolveDest);
+            requireSamplerFeedbackTextureState(texture, ResourceStates::ResolveSource);
+        }
+        commitBarriers();
+
+        const DxgiFormatMapping& formatMapping = getDxgiFormatMapping(format);
+
+        m_ActiveCommandList->commandList4->ResolveSubresourceRegion(buffer->resource, 0, 0, 0, texture->resource, 0, nullptr, formatMapping.srvFormat, D3D12_RESOLVE_MODE_DECODE_SAMPLER_FEEDBACK);
+    }
+
+    void CommandList::setSamplerFeedbackTextureState(ISamplerFeedbackTexture* texture, ResourceStates stateBits)
+    {
+        requireSamplerFeedbackTextureState(texture, stateBits);
     }
 
     void CommandList::copyTexture(ITexture* _dst, const TextureSlice& dstSlice,

@@ -604,6 +604,7 @@ namespace nvrhi
         uint32_t samplerFeedbackMipRegionY = 0;
         uint32_t samplerFeedbackMipRegionZ = 0;
         ResourceStates initialState = ResourceStates::Unknown;
+        bool keepInitialState = false;
     };
 
     class ISamplerFeedbackTexture : public IResource

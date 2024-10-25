@@ -432,14 +432,14 @@ namespace nvrhi::d3d12
 
         for (size_t i = 0; i < numTileMappings; i++)
         {
+            ID3D12Heap* heap = tileMappings[i].heap ? checked_cast<Heap*>(tileMappings[i].heap)->heap : nullptr;
+
             uint32_t numRegions = tileMappings[i].numTextureRegions;
             std::vector<D3D12_TILED_RESOURCE_COORDINATE> resourceCoordinates(numRegions);
             std::vector<D3D12_TILE_REGION_SIZE> regionSizes(numRegions);
-            std::vector<D3D12_TILE_RANGE_FLAGS> rangeFlags(numRegions, D3D12_TILE_RANGE_FLAG_NONE);
+            std::vector<D3D12_TILE_RANGE_FLAGS> rangeFlags(numRegions, heap ? D3D12_TILE_RANGE_FLAG_NONE : D3D12_TILE_RANGE_FLAG_NULL);
             std::vector<UINT> heapStartOffsets(numRegions);
             std::vector<UINT> rangeTileCounts(numRegions);
-
-            Heap* heap = tileMappings[i].heap ? checked_cast<Heap*>(tileMappings[i].heap) : nullptr;
 
             for (uint32_t j = 0; j < numRegions; ++j)
             {
@@ -471,11 +471,13 @@ namespace nvrhi::d3d12
                 }
 
                 // Offset in tiles
-                heapStartOffsets[j] = heap ? (uint32_t)(tileMappings[i].byteOffsets[j] / D3D12_TILED_RESOURCE_TILE_SIZE_IN_BYTES) : 0;
+                if (heap)
+                    heapStartOffsets[j] = (uint32_t)(tileMappings[i].byteOffsets[j] / D3D12_TILED_RESOURCE_TILE_SIZE_IN_BYTES);
+
                 rangeTileCounts[j] = regionSizes[j].NumTiles;
             }
 
-            queue->queue->UpdateTileMappings(texture->resource, tileMappings[i].numTextureRegions, resourceCoordinates.data(), regionSizes.data(), heap ? heap->heap : nullptr, numRegions, rangeFlags.data(), heapStartOffsets.data(), rangeTileCounts.data(), D3D12_TILE_MAPPING_FLAG_NONE);
+            queue->queue->UpdateTileMappings(texture->resource, tileMappings[i].numTextureRegions, resourceCoordinates.data(), regionSizes.data(), heap, numRegions, rangeFlags.data(), heap ? heapStartOffsets.data() : nullptr, rangeTileCounts.data(), D3D12_TILE_MAPPING_FLAG_NONE);
         }
     }
 

@@ -57,7 +57,9 @@ namespace nvrhi::d3d12
         virtual void updateGraphicsVolatileBuffers() = 0;
         virtual void updateComputeVolatileBuffers() = 0;
 
-        virtual void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* t) = 0;
+        virtual void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* texture) = 0;
+        virtual void decodeSamplerFeedbackTexture(IBuffer* buffer, ISamplerFeedbackTexture* texture, nvrhi::Format format) = 0;
+        virtual void setSamplerFeedbackTextureState(ISamplerFeedbackTexture* texture, ResourceStates stateBits) = 0;
     };
 
     typedef RefCountPtr<ICommandList> CommandListHandle;

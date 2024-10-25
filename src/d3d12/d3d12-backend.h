@@ -256,7 +256,7 @@ namespace nvrhi::d3d12
         }
 
         ~Texture() override;
-        
+
         const TextureDesc& getDesc() const override { return desc; }
 
         Object getNativeObject(ObjectType objectType) override;
@@ -358,21 +358,24 @@ namespace nvrhi::d3d12
         Object getNativeObject(ObjectType objectType) override;
     };
 
-    class SamplerFeedbackTexture : public RefCounter<ISamplerFeedbackTexture>
+    class SamplerFeedbackTexture : public RefCounter<ISamplerFeedbackTexture>, public TextureStateExtension
     {
     public:
         const SamplerFeedbackTextureDesc desc;
-        const D3D12_RESOURCE_DESC1 resourceDesc;
+        const TextureDesc textureDesc; // used with state tracking
         RefCountPtr<ID3D12Resource> resource;
         TextureHandle pairedTexture;
 
-        SamplerFeedbackTexture(const Context& context, DeviceResources& resources, SamplerFeedbackTextureDesc desc, const D3D12_RESOURCE_DESC1& resourceDesc, ITexture* pairedTexture)
+        SamplerFeedbackTexture(const Context& context, DeviceResources& resources, SamplerFeedbackTextureDesc desc, TextureDesc textureDesc, ITexture* pairedTexture)
             : desc(std::move(desc))
-            , resourceDesc(resourceDesc)
+            , textureDesc(std::move(textureDesc))
             , m_Context(context)
             , m_Resources(resources)
             , pairedTexture(pairedTexture)
+            , TextureStateExtension(SamplerFeedbackTexture::textureDesc)
         {
+            TextureStateExtension::stateInitialized = true;
+            TextureStateExtension::isSamplerFeedback = true;
         }
 
         const SamplerFeedbackTextureDesc& getDesc() const override { return desc; }
@@ -380,24 +383,11 @@ namespace nvrhi::d3d12
 
         void createUAV(size_t descriptor) const;
 
-        DescriptorIndex SamplerFeedbackTexture::getClearUAV()
-        {
-            if (m_ClearUAV != c_InvalidDescriptorIndex)
-                return m_ClearUAV;
-
-            m_ClearUAV = m_Resources.shaderResourceViewHeap.allocateDescriptor();
-            createUAV(m_Resources.shaderResourceViewHeap.getCpuHandle(m_ClearUAV).ptr);
-            m_Resources.shaderResourceViewHeap.copyToShaderVisibleHeap(m_ClearUAV);
-
-            return m_ClearUAV;
-        }
-
         Object getNativeObject(ObjectType objectType) override;
 
     private:
         const Context& m_Context;
         DeviceResources& m_Resources;
-        DescriptorIndex m_ClearUAV = c_InvalidDescriptorIndex;
     };
 
     class Sampler : public RefCounter<ISampler>
@@ -912,6 +902,7 @@ namespace nvrhi::d3d12
         ~CommandList() override;
         std::shared_ptr<CommandListInstance> executed(Queue* pQueue);
         void requireTextureState(ITexture* texture, TextureSubresourceSet subresources, ResourceStates state);
+        void requireSamplerFeedbackTextureState(ISamplerFeedbackTexture* texture, ResourceStates state);
         void requireBufferState(IBuffer* buffer, ResourceStates state);
         ID3D12CommandList* getD3D12CommandList() const { return m_ActiveCommandList->commandList; }
 
@@ -928,7 +919,9 @@ namespace nvrhi::d3d12
         void clearTextureFloat(ITexture* t, TextureSubresourceSet subresources, const Color& clearColor) override;
         void clearDepthStencilTexture(ITexture* t, TextureSubresourceSet subresources, bool clearDepth, float depth, bool clearStencil, uint8_t stencil) override;
         void clearTextureUInt(ITexture* t, TextureSubresourceSet subresources, uint32_t clearColor) override;
-        void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* t) override;
+        void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* texture) override;
+        void decodeSamplerFeedbackTexture(IBuffer* buffer, ISamplerFeedbackTexture* texture, Format format) override;
+        void setSamplerFeedbackTextureState(ISamplerFeedbackTexture* texture, ResourceStates stateBits) override;
 
         void copyTexture(ITexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;
         void copyTexture(IStagingTexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;
