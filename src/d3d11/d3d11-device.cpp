@@ -184,7 +184,7 @@ namespace nvrhi::d3d11
         utils::NotSupported();
     }
 
-    void Device::updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics)
+    void Device::updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
     {
         (void)texture;
         (void)tileMappings;
