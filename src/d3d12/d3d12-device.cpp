@@ -421,7 +421,7 @@ namespace nvrhi::d3d12
         }
     }
 
-    void Device::updateTextureTilesMappings(ITexture* _texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
+    void Device::updateTextureTileMappings(ITexture* _texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
     {
         Queue* queue = getQueue(executionQueue);
         Texture* texture = checked_cast<Texture*>(_texture);

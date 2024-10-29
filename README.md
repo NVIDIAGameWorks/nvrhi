@@ -43,7 +43,7 @@ Various early versions of NVRHI have been used in various projects created at NV
 * Windows or Linux (x64 or ARM64)
 * CMake 3.10
 * A C++ 17 compiler (Visual Studio 2019, GCC 8 or Clang 6)
-* Windows SDK version 10.0.19041.0 or later for DX12 support
+* Windows SDK version 10.0.22621.0 or later for DX12 support
 
 ## Building NVRHI
 

@@ -246,9 +246,9 @@ namespace nvrhi::validation
         m_Device->getTextureTiling(texture, numTiles, desc, tileShape, subresourceTilingsNum, subresourceTilings);
     }
 
-    void DeviceWrapper::updateTextureTilesMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
+    void DeviceWrapper::updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
     {
-        m_Device->updateTextureTilesMappings(texture, tileMappings, numTileMappings, executionQueue);
+        m_Device->updateTextureTileMappings(texture, tileMappings, numTileMappings, executionQueue);
     }
 
     MemoryRequirements DeviceWrapper::getTextureMemoryRequirements(ITexture* texture)

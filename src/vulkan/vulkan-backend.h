@@ -251,7 +251,7 @@ namespace nvrhi::vulkan
         // submits a command buffer to this queue, returns submissionID
         uint64_t submit(ICommandList* const* ppCmd, size_t numCmd);
 
-        void updateTextureTilesMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings);
+        void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings);
 
         // retire any command buffers that have finished execution from the pending execution list
         void retireCommandBuffers();
@@ -1080,7 +1080,7 @@ namespace nvrhi::vulkan
         void unmapStagingTexture(IStagingTexture* tex) override;
 
         void getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings) override;
-        void updateTextureTilesMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) override;
+        void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) override;
 
         BufferHandle createBuffer(const BufferDesc& d) override;
         void *mapBuffer(IBuffer* b, CpuAccessMode mapFlags) override;

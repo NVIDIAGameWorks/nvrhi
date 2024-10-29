@@ -2742,7 +2742,7 @@ namespace nvrhi
         virtual void unmapStagingTexture(IStagingTexture* tex) = 0;
 
         virtual void getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings) = 0;
-        virtual void updateTextureTilesMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) = 0;
+        virtual void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) = 0;
 
         virtual BufferHandle createBuffer(const BufferDesc& d) = 0;
         virtual void *mapBuffer(IBuffer* buffer, CpuAccessMode cpuAccess) = 0;

@@ -183,7 +183,7 @@ namespace nvrhi::vulkan
         return m_LastSubmittedID;
     }
 
-    void Queue::updateTextureTilesMappings(ITexture* _texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings)
+    void Queue::updateTextureTileMappings(ITexture* _texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings)
     {
         Texture* texture = checked_cast<Texture*>(_texture);
 
@@ -339,11 +339,11 @@ namespace nvrhi::vulkan
         queueWaitForSemaphore(waitQueueID, getQueueSemaphore(executionQueueID), instance);
     }
 
-    void Device::updateTextureTilesMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
+    void Device::updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
     {
         Queue& queue = *m_Queues[uint32_t(executionQueue)];
 
-        queue.updateTextureTilesMappings(texture, tileMappings, numTileMappings);
+        queue.updateTextureTileMappings(texture, tileMappings, numTileMappings);
     }
 
     uint64_t Device::queueGetCompletedInstance(CommandQueue queue)
