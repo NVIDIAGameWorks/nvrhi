@@ -212,6 +212,9 @@ namespace nvrhi::vulkan
         if (d.isTypeless)
             flags |= vk::ImageCreateFlagBits::eMutableFormat | vk::ImageCreateFlagBits::eExtendedUsage;
 
+        if (d.isTiled)
+            flags |= vk::ImageCreateFlagBits::eSparseBinding | vk::ImageCreateFlagBits::eSparseResidency;
+
         return flags;
     }
 

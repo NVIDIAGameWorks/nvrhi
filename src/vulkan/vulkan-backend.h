@@ -251,6 +251,8 @@ namespace nvrhi::vulkan
         // submits a command buffer to this queue, returns submissionID
         uint64_t submit(ICommandList* const* ppCmd, size_t numCmd);
 
+        void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings);
+
         // retire any command buffers that have finished execution from the pending execution list
         void retireCommandBuffers();
 
@@ -400,6 +402,7 @@ namespace nvrhi::vulkan
         vk::ImageCreateInfo imageInfo;
         vk::ExternalMemoryImageCreateInfo externalMemoryImageInfo;
         vk::Image image;
+        static constexpr uint32_t tileByteSize = 65536;
 
         HeapHandle heap;
 
@@ -1075,6 +1078,9 @@ namespace nvrhi::vulkan
         StagingTextureHandle createStagingTexture(const TextureDesc& d, CpuAccessMode cpuAccess) override;
         void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) override;
         void unmapStagingTexture(IStagingTexture* tex) override;
+
+        void getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings) override;
+        void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) override;
 
         BufferHandle createBuffer(const BufferDesc& d) override;
         void *mapBuffer(IBuffer* b, CpuAccessMode mapFlags) override;

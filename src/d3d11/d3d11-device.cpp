@@ -172,6 +172,28 @@ namespace nvrhi::d3d11
         return m_ImmediateCommandList;
     }
 
+    void Device::getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings)
+    {
+        (void)texture;
+        (void)numTiles;
+        (void)desc;
+        (void)tileShape;
+        (void)subresourceTilingsNum;
+        (void)subresourceTilings;
+
+        utils::NotSupported();
+    }
+
+    void Device::updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
+    {
+        (void)texture;
+        (void)tileMappings;
+        (void)numTileMappings;
+        (void)executionQueue;
+
+        utils::NotSupported();
+    }
+
     bool Device::queryFeatureSupport(Feature feature, void* pInfo, size_t infoSize)
     {
         (void)pInfo;

@@ -81,6 +81,13 @@ namespace nvrhi::d3d12
 
         m_StateTracker.requireTextureState(texture, subresources, state);
     }
+
+    void CommandList::requireSamplerFeedbackTextureState(ISamplerFeedbackTexture* _texture, ResourceStates state)
+    {
+        SamplerFeedbackTexture* texture = checked_cast<SamplerFeedbackTexture*>(_texture);
+
+        m_StateTracker.requireTextureState(texture, AllSubresources, state);
+    }
     
     void CommandList::requireBufferState(IBuffer* _buffer, ResourceStates state)
     {
@@ -106,7 +113,18 @@ namespace nvrhi::d3d12
         // Convert the texture barriers into D3D equivalents
         for (const auto& barrier : textureBarriers)
         {
-            const Texture* texture = static_cast<const Texture*>(barrier.texture);
+            const Texture* texture = nullptr;
+            ID3D12Resource* resource = nullptr;
+
+            if (barrier.texture->isSamplerFeedback)
+            {
+                resource = static_cast<const SamplerFeedbackTexture*>(barrier.texture)->resource;
+            }
+            else
+            {
+                texture = static_cast<const Texture*>(barrier.texture);
+                resource = texture->resource;
+            }
 
             D3D12_RESOURCE_BARRIER d3dbarrier{};
             const D3D12_RESOURCE_STATES stateBefore = convertResourceStates(barrier.stateBefore);
@@ -116,7 +134,7 @@ namespace nvrhi::d3d12
                 d3dbarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
                 d3dbarrier.Transition.StateBefore = stateBefore;
                 d3dbarrier.Transition.StateAfter = stateAfter;
-                d3dbarrier.Transition.pResource = texture->resource;
+                d3dbarrier.Transition.pResource = resource;
                 if (barrier.entireTexture)
                 {
                     d3dbarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -134,7 +152,7 @@ namespace nvrhi::d3d12
             else if (stateAfter & D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
             {
                 d3dbarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-                d3dbarrier.UAV.pResource = texture->resource;
+                d3dbarrier.UAV.pResource = resource;
                 m_D3DBarriers.push_back(d3dbarrier);
             }
         }

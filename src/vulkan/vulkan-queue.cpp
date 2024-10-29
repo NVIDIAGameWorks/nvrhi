@@ -183,6 +183,79 @@ namespace nvrhi::vulkan
         return m_LastSubmittedID;
     }
 
+    void Queue::updateTextureTileMappings(ITexture* _texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings)
+    {
+        Texture* texture = checked_cast<Texture*>(_texture);
+
+        std::vector<vk::SparseImageMemoryBind> sparseImageMemoryBinds;
+        std::vector<vk::SparseMemoryBind> sparseMemoryBinds;
+
+        for (size_t i = 0; i < numTileMappings; i++)
+        {
+            uint32_t numRegions = tileMappings[i].numTextureRegions;
+            Heap* heap = tileMappings[i].heap ? checked_cast<Heap*>(tileMappings[i].heap) : nullptr;
+            vk::DeviceMemory deviceMemory = heap ? heap->memory : VK_NULL_HANDLE;
+
+            for (uint32_t j = 0; j < numRegions; ++j)
+            {
+                const TiledTextureCoordinate& tiledTextureCoordinate = tileMappings[i].tiledTextureCoordinates[j];
+                const TiledTextureRegion& tiledTextureRegion = tileMappings[i].tiledTextureRegions[j];
+
+                if (tiledTextureRegion.tilesNum)
+                {
+                    sparseMemoryBinds.push_back(vk::SparseMemoryBind()
+                        .setResourceOffset(0)
+                        .setSize(tiledTextureRegion.tilesNum * texture->tileByteSize)
+                        .setMemory(deviceMemory)
+                        .setMemoryOffset(deviceMemory ? tileMappings[i].byteOffsets[j] : 0));
+                }
+                else
+                {
+                    vk::ImageSubresource subresource = {};
+                    subresource.arrayLayer = tiledTextureCoordinate.arrayLevel;
+                    subresource.mipLevel = tiledTextureCoordinate.mipLevel;
+
+                    vk::Offset3D offset3D;
+                    offset3D.x = tiledTextureCoordinate.x;
+                    offset3D.y = tiledTextureCoordinate.y;
+                    offset3D.z = tiledTextureCoordinate.z;
+
+                    vk::Extent3D extent3D;
+                    extent3D.width = tiledTextureRegion.width;
+                    extent3D.height = tiledTextureRegion.height;
+                    extent3D.depth = tiledTextureRegion.depth;
+
+                    sparseImageMemoryBinds.push_back(vk::SparseImageMemoryBind()
+                        .setSubresource(subresource)
+                        .setOffset(offset3D)
+                        .setExtent(extent3D)
+                        .setMemory(deviceMemory)
+                        .setMemoryOffset(deviceMemory ? tileMappings[i].byteOffsets[j] : 0));
+                }
+            }
+        }
+
+        vk::BindSparseInfo bindSparseInfo = {};
+
+        vk::SparseImageMemoryBindInfo sparseImageMemoryBindInfo;
+        if (!sparseImageMemoryBinds.empty())
+        {
+            sparseImageMemoryBindInfo.setImage(texture->image);
+            sparseImageMemoryBindInfo.setBinds(sparseImageMemoryBinds);
+            bindSparseInfo.setImageBinds(sparseImageMemoryBindInfo);
+        }
+
+        vk::SparseImageOpaqueMemoryBindInfo sparseImageOpaqueMemoryBindInfo;
+        if (!sparseMemoryBinds.empty())
+        {
+            sparseImageOpaqueMemoryBindInfo.setImage(texture->image);
+            sparseImageOpaqueMemoryBindInfo.setBinds(sparseMemoryBinds);
+            bindSparseInfo.setImageOpaqueBinds(sparseImageOpaqueMemoryBindInfo);
+        }
+
+        m_Queue.bindSparse(bindSparseInfo, vk::Fence());
+    }
+
     uint64_t Queue::updateLastFinishedID()
     {
         m_LastFinishedID = m_Context.device.getSemaphoreCounterValue(trackingSemaphore);
@@ -264,6 +337,13 @@ namespace nvrhi::vulkan
     void Device::queueWaitForCommandList(CommandQueue waitQueueID, CommandQueue executionQueueID, uint64_t instance)
     {
         queueWaitForSemaphore(waitQueueID, getQueueSemaphore(executionQueueID), instance);
+    }
+
+    void Device::updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue)
+    {
+        Queue& queue = *m_Queues[uint32_t(executionQueue)];
+
+        queue.updateTextureTileMappings(texture, tileMappings, numTileMappings);
     }
 
     uint64_t Device::queueGetCompletedInstance(CommandQueue queue)

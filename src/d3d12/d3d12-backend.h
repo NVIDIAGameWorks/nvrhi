@@ -106,6 +106,7 @@ namespace nvrhi::d3d12
         RefCountPtr<ID3D12Device> device;
         RefCountPtr<ID3D12Device2> device2;
         RefCountPtr<ID3D12Device5> device5;
+        RefCountPtr<ID3D12Device8> device8;
 #ifdef NVRHI_WITH_RTXMU
         std::unique_ptr<rtxmu::DxAccelStructManager> rtxMemUtil;
 #endif
@@ -243,6 +244,7 @@ namespace nvrhi::d3d12
         HANDLE sharedHandle = nullptr;
         HeapHandle heap;
 
+
         Texture(const Context& context, DeviceResources& resources, TextureDesc desc, const D3D12_RESOURCE_DESC& resourceDesc)
             : TextureStateExtension(this->desc)
             , desc(std::move(desc))
@@ -254,7 +256,7 @@ namespace nvrhi::d3d12
         }
 
         ~Texture() override;
-        
+
         const TextureDesc& getDesc() const override { return desc; }
 
         Object getNativeObject(ObjectType objectType) override;
@@ -354,6 +356,38 @@ namespace nvrhi::d3d12
         
         const TextureDesc& getDesc() const override { return desc; }
         Object getNativeObject(ObjectType objectType) override;
+    };
+
+    class SamplerFeedbackTexture : public RefCounter<ISamplerFeedbackTexture>, public TextureStateExtension
+    {
+    public:
+        const SamplerFeedbackTextureDesc desc;
+        const TextureDesc textureDesc; // used with state tracking
+        RefCountPtr<ID3D12Resource> resource;
+        TextureHandle pairedTexture;
+
+        SamplerFeedbackTexture(const Context& context, DeviceResources& resources, SamplerFeedbackTextureDesc desc, TextureDesc textureDesc, ITexture* pairedTexture)
+            : desc(std::move(desc))
+            , textureDesc(std::move(textureDesc))
+            , m_Context(context)
+            , m_Resources(resources)
+            , pairedTexture(pairedTexture)
+            , TextureStateExtension(SamplerFeedbackTexture::textureDesc)
+        {
+            TextureStateExtension::stateInitialized = true;
+            TextureStateExtension::isSamplerFeedback = true;
+        }
+
+        const SamplerFeedbackTextureDesc& getDesc() const override { return desc; }
+        TextureHandle getPairedTexture() override { return pairedTexture; }
+
+        void createUAV(size_t descriptor) const;
+
+        Object getNativeObject(ObjectType objectType) override;
+
+    private:
+        const Context& m_Context;
+        DeviceResources& m_Resources;
     };
 
     class Sampler : public RefCounter<ISampler>
@@ -868,6 +902,7 @@ namespace nvrhi::d3d12
         ~CommandList() override;
         std::shared_ptr<CommandListInstance> executed(Queue* pQueue);
         void requireTextureState(ITexture* texture, TextureSubresourceSet subresources, ResourceStates state);
+        void requireSamplerFeedbackTextureState(ISamplerFeedbackTexture* texture, ResourceStates state);
         void requireBufferState(IBuffer* buffer, ResourceStates state);
         ID3D12CommandList* getD3D12CommandList() const { return m_ActiveCommandList->commandList; }
 
@@ -884,6 +919,9 @@ namespace nvrhi::d3d12
         void clearTextureFloat(ITexture* t, TextureSubresourceSet subresources, const Color& clearColor) override;
         void clearDepthStencilTexture(ITexture* t, TextureSubresourceSet subresources, bool clearDepth, float depth, bool clearStencil, uint8_t stencil) override;
         void clearTextureUInt(ITexture* t, TextureSubresourceSet subresources, uint32_t clearColor) override;
+        void clearSamplerFeedbackTexture(ISamplerFeedbackTexture* texture) override;
+        void decodeSamplerFeedbackTexture(IBuffer* buffer, ISamplerFeedbackTexture* texture, Format format) override;
+        void setSamplerFeedbackTextureState(ISamplerFeedbackTexture* texture, ResourceStates stateBits) override;
 
         void copyTexture(ITexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;
         void copyTexture(IStagingTexture* dest, const TextureSlice& destSlice, ITexture* src, const TextureSlice& srcSlice) override;
@@ -1058,6 +1096,12 @@ namespace nvrhi::d3d12
         void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) override;
         void unmapStagingTexture(IStagingTexture* tex) override;
 
+        void getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings) override;
+        void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) override;
+
+        SamplerFeedbackTextureHandle createSamplerFeedbackTexture(ITexture* pairedTexture, const SamplerFeedbackTextureDesc& desc) override;
+        SamplerFeedbackTextureHandle createSamplerFeedbackForNativeTexture(ObjectType objectType, Object texture, ITexture* pairedTexture) override;
+
         BufferHandle createBuffer(const BufferDesc& d) override;
         void *mapBuffer(IBuffer* b, CpuAccessMode mapFlags) override;
         void unmapBuffer(IBuffer* b) override;
@@ -1160,6 +1204,7 @@ namespace nvrhi::d3d12
         bool m_VariableRateShadingSupported = false;
         bool m_OpacityMicromapSupported = false;
         bool m_ShaderExecutionReorderingSupported = false;
+        bool m_SamplerFeedbackSupported = false;
         bool m_AftermathEnabled = false;
         AftermathCrashDumpHelper m_AftermathCrashDumpHelper;
 

@@ -33,7 +33,7 @@ jobs:
         submodules: true
       
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build "-DCMAKE_SYSTEM_VERSION=10.0.19041.0" -DNVRHI_WITH_RTXMU=${{matrix.rtxmu}} -DNVRHI_BUILD_SHARED=ON -DNVRHI_INSTALL=ON -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/build/install
+      run: cmake -B ${{github.workspace}}/build "-DCMAKE_SYSTEM_VERSION=10.0.22621.0" -DNVRHI_WITH_RTXMU=${{matrix.rtxmu}} -DNVRHI_BUILD_SHARED=ON -DNVRHI_INSTALL=ON -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/build/install
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}

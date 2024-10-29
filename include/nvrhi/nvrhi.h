@@ -421,6 +421,7 @@ namespace nvrhi
         // and memory is bound to the texture later using bindTextureMemory.
         // On DX12, the texture resource is created at the time of memory binding.
         bool isVirtual = false;
+        bool isTiled = false;
 
         Color clearValue;
         bool useClearValue = false;
@@ -541,6 +542,79 @@ namespace nvrhi
     };
     typedef RefCountPtr<IStagingTexture> StagingTextureHandle;
 
+    struct TiledTextureCoordinate
+    {
+        uint16_t mipLevel = 0;
+        uint16_t arrayLevel = 0;
+        uint32_t x = 0;
+        uint32_t y = 0;
+        uint32_t z = 0;
+    };
+
+    struct TiledTextureRegion
+    {
+        uint32_t tilesNum = 0;
+        uint32_t width = 0;
+        uint32_t height = 0;
+        uint32_t depth = 0;
+    };
+
+    struct TextureTilesMapping
+    {
+        TiledTextureCoordinate* tiledTextureCoordinates = nullptr;
+        TiledTextureRegion* tiledTextureRegions = nullptr;
+        uint64_t* byteOffsets = nullptr;
+        uint32_t numTextureRegions = 0;
+        IHeap* heap = nullptr;
+    };
+
+    struct PackedMipDesc
+    {
+        uint32_t numStandardMips = 0;
+        uint32_t numPackedMips = 0;
+        uint32_t numTilesForPackedMips = 0;
+        uint32_t startTileIndexInOverallResource = 0;
+    };
+    
+    struct TileShape
+    {
+        uint32_t widthInTexels = 0;
+        uint32_t heightInTexels = 0;
+        uint32_t depthInTexels = 0;
+    };
+
+    struct SubresourceTiling
+    {
+        uint32_t widthInTiles = 0;
+        uint32_t heightInTiles = 0;
+        uint32_t depthInTiles = 0;
+        uint32_t startTileIndexInOverallResource = 0;
+    };
+
+    enum SamplerFeedbackFormat : uint8_t
+    {
+        MinMipOpaque = 0x0,
+        MipRegionUsedOpaque = 0x1,
+    };
+
+    struct SamplerFeedbackTextureDesc
+    {
+        SamplerFeedbackFormat samplerFeedbackFormat = SamplerFeedbackFormat::MinMipOpaque;
+        uint32_t samplerFeedbackMipRegionX = 0;
+        uint32_t samplerFeedbackMipRegionY = 0;
+        uint32_t samplerFeedbackMipRegionZ = 0;
+        ResourceStates initialState = ResourceStates::Unknown;
+        bool keepInitialState = false;
+    };
+
+    class ISamplerFeedbackTexture : public IResource
+    {
+    public:
+        [[nodiscard]] virtual const SamplerFeedbackTextureDesc& getDesc() const = 0;
+        virtual TextureHandle getPairedTexture() = 0;
+    };
+    typedef RefCountPtr<ISamplerFeedbackTexture> SamplerFeedbackTextureHandle;
+
     //////////////////////////////////////////////////////////////////////////
     // Input Layout
     //////////////////////////////////////////////////////////////////////////
@@ -600,7 +674,7 @@ namespace nvrhi
         bool isVolatile = false;
 
         // Indicates that the buffer is created with no backing memory,
-        // and memory is bound to the texture later using bindBufferMemory.
+        // and memory is bound to the buffer later using bindBufferMemory.
         // On DX12, the buffer resource is created at the time of memory binding.
         bool isVirtual = false;
 
@@ -1560,6 +1634,7 @@ namespace nvrhi
         Sampler,
         RayTracingAccelStruct,
         PushConstants,
+        SamplerFeedbackTexture_UAV,
 
         Count
     };
@@ -1601,6 +1676,7 @@ namespace nvrhi
         NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(VolatileConstantBuffer)
         NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(Sampler)
         NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(RayTracingAccelStruct)
+        NVRHI_BINDING_LAYOUT_ITEM_INITIALIZER(SamplerFeedbackTexture_UAV)
 
         static BindingLayoutItem PushConstants(const uint32_t slot, const size_t size)
         {
@@ -1914,6 +1990,19 @@ namespace nvrhi
             result.dimension = TextureDimension::Unknown;
             result.range.byteOffset = 0;
             result.range.byteSize = byteSize;
+            result.unused = 0;
+            return result;
+        }
+
+        static BindingSetItem SamplerFeedbackTexture_UAV(uint32_t slot, ISamplerFeedbackTexture* texture)
+        {
+            BindingSetItem result;
+            result.slot = slot;
+            result.type = ResourceType::SamplerFeedbackTexture_UAV;
+            result.resourceHandle = texture;
+            result.format = Format::UNKNOWN;
+            result.dimension = TextureDimension::Unknown;
+            result.subresources = AllSubresources;
             result.unused = 0;
             return result;
         }
@@ -2651,6 +2740,9 @@ namespace nvrhi
         virtual StagingTextureHandle createStagingTexture(const TextureDesc& d, CpuAccessMode cpuAccess) = 0;
         virtual void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) = 0;
         virtual void unmapStagingTexture(IStagingTexture* tex) = 0;
+
+        virtual void getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings) = 0;
+        virtual void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) = 0;
 
         virtual BufferHandle createBuffer(const BufferDesc& d) = 0;
         virtual void *mapBuffer(IBuffer* buffer, CpuAccessMode cpuAccess) = 0;

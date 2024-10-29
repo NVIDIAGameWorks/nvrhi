@@ -217,6 +217,17 @@ namespace nvrhi::d3d12
         }
     }
 
+    Object SamplerFeedbackTexture::getNativeObject(ObjectType objectType)
+    {
+        switch (objectType)
+        {
+        case ObjectTypes::D3D12_Resource:
+            return Object(resource);
+        default:
+            return nullptr;
+        }
+    }
+
     static D3D12_RESOURCE_DESC convertTextureDesc(const TextureDesc& d)
     {
         const auto& formatMapping = getDxgiFormatMapping(d.format);
@@ -311,8 +322,15 @@ namespace nvrhi::d3d12
             heapFlags |= D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER;
             isShared = true;
         }
+        if (d.isTiled)
+        {
+            rd.Layout = D3D12_TEXTURE_LAYOUT_64KB_UNDEFINED_SWIZZLE;
+        }
 
         Texture* texture = new Texture(m_Context, m_Resources, d, rd);
+
+        D3D12_CLEAR_VALUE clearValue = convertTextureClearValue(d);
+        HRESULT hr = S_OK;
 
         if (d.isVirtual)
         {
@@ -320,17 +338,26 @@ namespace nvrhi::d3d12
             return TextureHandle::Create(texture);
         }
 
-        heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+        if (d.isTiled)
+        {
+            hr = m_Context.device->CreateReservedResource(
+                &texture->resourceDesc,
+                convertResourceStates(d.initialState),
+                d.useClearValue ? &clearValue : nullptr,
+                IID_PPV_ARGS(&texture->resource));
+        }
+        else
+        {
+            heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 
-        D3D12_CLEAR_VALUE clearValue = convertTextureClearValue(d);
-
-        HRESULT hr = m_Context.device->CreateCommittedResource(
-            &heapProps,
-            heapFlags,
-            &texture->resourceDesc,
-            convertResourceStates(d.initialState),
-            d.useClearValue ? &clearValue : nullptr,
-            IID_PPV_ARGS(&texture->resource));
+            hr = m_Context.device->CreateCommittedResource(
+                &heapProps,
+                heapFlags,
+                &texture->resourceDesc,
+                convertResourceStates(d.initialState),
+                d.useClearValue ? &clearValue : nullptr,
+                IID_PPV_ARGS(&texture->resource));
+        }
 
         if (FAILED(hr))
         {
@@ -344,7 +371,7 @@ namespace nvrhi::d3d12
             return nullptr;
         }
 
-        if(isShared)
+        if (isShared)
         {
             hr = m_Context.device->CreateSharedHandle(
                 texture->resource,
@@ -851,6 +878,96 @@ namespace nvrhi::d3d12
         tex->mappedAccess = CpuAccessMode::None;
     }
 
+    SamplerFeedbackTextureHandle Device::createSamplerFeedbackTexture(ITexture* pairedTexture, const SamplerFeedbackTextureDesc& desc)
+    {
+        Texture* texPair = checked_cast<Texture*>(pairedTexture);
+        TextureDesc descPair = texPair->desc;
+        D3D12_RESOURCE_DESC rdPair = texPair->resourceDesc;
+
+        D3D12_RESOURCE_DESC1 rdFeedback = {};
+        memcpy(&rdFeedback, &rdPair, sizeof(D3D12_RESOURCE_DESC));
+        D3D12_HEAP_PROPERTIES heapPropsDefault = {};
+        heapPropsDefault.Type = D3D12_HEAP_TYPE_DEFAULT;
+        rdFeedback.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+        rdFeedback.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        switch (desc.samplerFeedbackFormat)
+        {
+        case SamplerFeedbackFormat::MinMipOpaque:
+            rdFeedback.Format = DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE;
+            break;
+        case SamplerFeedbackFormat::MipRegionUsedOpaque:
+            rdFeedback.Format = DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE;
+            break;
+        }
+        rdFeedback.SamplerFeedbackMipRegion = D3D12_MIP_REGION{ desc.samplerFeedbackMipRegionX, desc.samplerFeedbackMipRegionY, desc.samplerFeedbackMipRegionZ };
+
+        TextureDesc textureDesc = pairedTexture->getDesc();
+        textureDesc.initialState = desc.initialState;
+        textureDesc.keepInitialState = desc.keepInitialState;
+
+        SamplerFeedbackTexture* texture = new SamplerFeedbackTexture(m_Context, m_Resources, desc, textureDesc, pairedTexture);
+
+        HRESULT hr = m_Context.device8->CreateCommittedResource2(
+            &heapPropsDefault,
+            D3D12_HEAP_FLAG_NONE,
+            &rdFeedback,
+            convertResourceStates(desc.initialState),
+            nullptr, // clear value
+            nullptr,
+            IID_PPV_ARGS(&texture->resource));
+
+        if (FAILED(hr))
+        {
+            std::stringstream ss;
+            ss << "Failed to create texture " << utils::DebugNameToString(descPair.debugName) << ", error code = 0x";
+            ss.setf(std::ios::hex, std::ios::basefield);
+            ss << hr;
+            m_Context.error(ss.str());
+
+            delete texture;
+            return nullptr;
+        }
+
+        std::wstringstream ssName;
+        ssName << "Sampler Feedback Texture: " << utils::DebugNameToString(descPair.debugName);
+        texture->resource->SetName(ssName.str().c_str());
+
+        return SamplerFeedbackTextureHandle::Create(texture);
+    }
+
+    SamplerFeedbackTextureHandle Device::createSamplerFeedbackForNativeTexture(ObjectType objectType, Object _texture, ITexture* pairedTexture)
+    {
+        if (_texture.pointer == nullptr)
+            return nullptr;
+
+        if (objectType != ObjectTypes::D3D12_Resource)
+            return nullptr;
+
+        ID3D12Resource2* pResource = static_cast<ID3D12Resource2*>(_texture.pointer);
+
+        D3D12_RESOURCE_DESC1 rdFeedback = pResource->GetDesc1();
+        SamplerFeedbackTextureDesc desc = {};
+        desc.samplerFeedbackFormat = rdFeedback.Format == DXGI_FORMAT_SAMPLER_FEEDBACK_MIN_MIP_OPAQUE ? SamplerFeedbackFormat::MinMipOpaque : SamplerFeedbackFormat::MipRegionUsedOpaque;
+        desc.samplerFeedbackMipRegionX = rdFeedback.SamplerFeedbackMipRegion.Width;
+        desc.samplerFeedbackMipRegionY = rdFeedback.SamplerFeedbackMipRegion.Height;
+        desc.samplerFeedbackMipRegionZ = rdFeedback.SamplerFeedbackMipRegion.Depth;
+
+        TextureDesc textureDesc = pairedTexture->getDesc();
+        textureDesc.initialState = ResourceStates::Unknown;
+        textureDesc.keepInitialState = false;
+
+        SamplerFeedbackTexture* texture = new SamplerFeedbackTexture(m_Context, m_Resources, desc, textureDesc, pairedTexture);
+        texture->resource = pResource;
+
+        return SamplerFeedbackTextureHandle::Create(texture);
+    }
+
+    void SamplerFeedbackTexture::createUAV(size_t descriptor) const
+    {
+        ID3D12Resource* pairedResource = checked_cast<Texture*>(pairedTexture.Get())->resource;
+
+        m_Context.device8->CreateSamplerFeedbackUnorderedAccessView(pairedResource, resource, { descriptor });
+    }
 
     void CommandList::clearTextureFloat(ITexture* _t, TextureSubresourceSet subresources, const Color & clearColor)
     {
@@ -1008,6 +1125,35 @@ namespace nvrhi::d3d12
                 m_ActiveCommandList->commandList->ClearRenderTargetView(RTV, floatColor, 0, nullptr);
             }
         }
+    }
+
+    void CommandList::clearSamplerFeedbackTexture(ISamplerFeedbackTexture* _texture)
+    {
+        SamplerFeedbackTexture* texture = checked_cast<SamplerFeedbackTexture*>(_texture);
+
+        m_ActiveCommandList->commandList->DiscardResource(texture->resource, nullptr);
+    }
+
+    void CommandList::decodeSamplerFeedbackTexture(IBuffer* _buffer, ISamplerFeedbackTexture* _texture, nvrhi::Format format)
+    {
+        Buffer* buffer = checked_cast<Buffer*>(_buffer);
+        SamplerFeedbackTexture* texture = checked_cast<SamplerFeedbackTexture*>(_texture);
+
+        if (m_EnableAutomaticBarriers)
+        {
+            requireBufferState(buffer, ResourceStates::ResolveDest);
+            requireSamplerFeedbackTextureState(texture, ResourceStates::ResolveSource);
+        }
+        commitBarriers();
+
+        const DxgiFormatMapping& formatMapping = getDxgiFormatMapping(format);
+
+        m_ActiveCommandList->commandList4->ResolveSubresourceRegion(buffer->resource, 0, 0, 0, texture->resource, 0, nullptr, formatMapping.srvFormat, D3D12_RESOLVE_MODE_DECODE_SAMPLER_FEEDBACK);
+    }
+
+    void CommandList::setSamplerFeedbackTextureState(ISamplerFeedbackTexture* texture, ResourceStates stateBits)
+    {
+        requireSamplerFeedbackTextureState(texture, stateBits);
     }
 
     void CommandList::copyTexture(ITexture* _dst, const TextureSlice& dstSlice,

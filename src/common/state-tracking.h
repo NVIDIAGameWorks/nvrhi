@@ -43,6 +43,7 @@ namespace nvrhi
         const TextureDesc& descRef;
         ResourceStates permanentState = ResourceStates::Unknown;
         bool stateInitialized = false;
+        bool isSamplerFeedback = false;
 
         explicit TextureStateExtension(const TextureDesc& desc)
             : descRef(desc)
