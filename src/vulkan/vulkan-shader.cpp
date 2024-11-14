@@ -41,7 +41,7 @@ namespace nvrhi::vulkan
         CHECK_VK_FAIL(res)
 
         const std::string debugName = desc.debugName + ":" + desc.entryName;
-        m_Context.nameVKObject(VkShaderModule(shader->shaderModule), vk::DebugReportObjectTypeEXT::eShaderModule, debugName.c_str());
+        m_Context.nameVKObject(VkShaderModule(shader->shaderModule), vk::ObjectType::eShaderModule, vk::DebugReportObjectTypeEXT::eShaderModule, debugName.c_str());
 
         return ShaderHandle::Create(shader);
     }

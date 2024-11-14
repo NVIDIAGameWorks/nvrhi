@@ -129,14 +129,14 @@ namespace nvrhi::vulkan
         vk::Result res = m_Context.device.createBuffer(&bufferInfo, m_Context.allocationCallbacks, &buffer->buffer);
         CHECK_VK_FAIL(res);
 
-        m_Context.nameVKObject(VkBuffer(buffer->buffer), vk::DebugReportObjectTypeEXT::eBuffer, desc.debugName.c_str());
+        m_Context.nameVKObject(VkBuffer(buffer->buffer), vk::ObjectType::eBuffer, vk::DebugReportObjectTypeEXT::eBuffer, desc.debugName.c_str());
 
         if (!desc.isVirtual)
         {
             res = m_Allocator.allocateBufferMemory(buffer, (usageFlags & vk::BufferUsageFlagBits::eShaderDeviceAddress) != vk::BufferUsageFlags(0));
             CHECK_VK_FAIL(res)
 
-            m_Context.nameVKObject(buffer->memory, vk::DebugReportObjectTypeEXT::eDeviceMemory, desc.debugName.c_str());
+            m_Context.nameVKObject(buffer->memory, vk::ObjectType::eDeviceMemory, vk::DebugReportObjectTypeEXT::eDeviceMemory, desc.debugName.c_str());
 
             if (desc.isVolatile)
             {

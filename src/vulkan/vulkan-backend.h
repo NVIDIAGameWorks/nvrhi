@@ -172,8 +172,8 @@ namespace nvrhi::vulkan
             bool EXT_conservative_rasterization = false;
             bool EXT_opacity_micromap = false;
             bool NV_ray_tracing_invocation_reorder = false;
-#if NVRHI_WITH_AFTERMATH
             bool EXT_debug_utils = false;
+#if NVRHI_WITH_AFTERMATH
             bool NV_device_diagnostic_checkpoints = false;
             bool NV_device_diagnostics_config= false;
 #endif
@@ -194,7 +194,8 @@ namespace nvrhi::vulkan
 #endif
         vk::DescriptorSetLayout emptyDescriptorSetLayout;
 
-        void nameVKObject(const void* handle, vk::DebugReportObjectTypeEXT objtype, const char* name) const;
+        void nameVKObject(const void* handle, const vk::ObjectType objtype,
+            const vk::DebugReportObjectTypeEXT objtypeEXT, const char* name) const;
         void error(const std::string& message) const;
         void warning(const std::string& message) const;
     };
