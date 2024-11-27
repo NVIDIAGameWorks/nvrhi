@@ -55,10 +55,6 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if (NVRHI_WITH_VULKAN AND NOT TARGET Vulkan-Headers AND NOT TARGET Vulkan::Headers)
-    # Don't need the cpp module, disable it.
-    # TODO: Remove this after updating Vulkan-Headers to v1.3.301 or later, which have this option OFF by default.
-    option(VULKAN_HEADERS_ENABLE_MODULE "" OFF)
-
     add_subdirectory(thirdparty/Vulkan-Headers)
 endif()
 

@@ -36,7 +36,11 @@ namespace nvrhi::vulkan
     DeviceHandle createDevice(const DeviceDesc& desc)
     {
 #if defined(NVRHI_SHARED_LIBRARY_BUILD)
-        const vk::DynamicLoader dl;
+#if VK_HEADER_VERSION >= 301
+        vk::detail::DynamicLoader dl;
+#else
+        vk::DynamicLoader dl;
+#endif
         const PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =   // NOLINT(misc-misplaced-const)
             dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
         VULKAN_HPP_DEFAULT_DISPATCHER.init(desc.instance, vkGetInstanceProcAddr, desc.device);
