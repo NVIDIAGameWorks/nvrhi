@@ -99,6 +99,7 @@ endif()
 
 set(include_common
     include/nvrhi/nvrhi.h
+    include/nvrhi/nvrhiHLSL.h
     include/nvrhi/utils.h
     include/nvrhi/common/containers.h
     include/nvrhi/common/misc.h

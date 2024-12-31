@@ -38,6 +38,11 @@ namespace nvrhi::d3d12
         messageCallback->message(MessageSeverity::Error, message.c_str());
     }
 
+    void Context::info(const std::string& message) const
+    {
+        messageCallback->message(MessageSeverity::Info, message.c_str());
+    }
+
     void WaitForFence(ID3D12Fence* fence, uint64_t value, HANDLE event)
     {
         // Test if the fence has been reached
@@ -88,6 +93,7 @@ namespace nvrhi::d3d12
         : m_Resources(m_Context, desc)
     {
         m_Context.device = desc.pDevice;
+        m_Context.logBufferLifetime = desc.logBufferLifetime;
         m_Context.messageCallback = desc.errorCB;
 
         if (desc.pGraphicsCommandQueue)
@@ -197,20 +203,37 @@ namespace nvrhi::d3d12
         if (m_NvapiIsInitialized)
         {
             NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_CAPS caps = NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_CAP_NONE;
-            NvAPI_D3D12_GetRaytracingCaps(m_Context.device5, NVAPI_D3D12_RAYTRACING_CAPS_TYPE_OPACITY_MICROMAP, &caps, sizeof(NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_CAPS));
+            NvAPI_D3D12_GetRaytracingCaps(m_Context.device5, NVAPI_D3D12_RAYTRACING_CAPS_TYPE_OPACITY_MICROMAP, &caps, sizeof(caps));
             m_OpacityMicromapSupported = caps == NVAPI_D3D12_RAYTRACING_OPACITY_MICROMAP_CAP_STANDARD;
         }
+#endif
+#endif // #if NVRHI_WITH_NVAPI_OPACITY_MICROMAPS
 
-        if (m_OpacityMicromapSupported)
+#if NVRHI_WITH_NVAPI_CLUSTERS
+        if (m_NvapiIsInitialized)
+        {
+            NVAPI_D3D12_RAYTRACING_CLUSTER_OPERATIONS_CAPS clusterCaps = NVAPI_D3D12_RAYTRACING_CLUSTER_OPERATIONS_CAP_NONE;
+            NvAPI_D3D12_GetRaytracingCaps(m_Context.device5, NVAPI_D3D12_RAYTRACING_CAPS_TYPE_CLUSTER_OPERATIONS, &clusterCaps, sizeof(clusterCaps));
+            m_RayTracingClustersSupported = clusterCaps == NVAPI_D3D12_RAYTRACING_CLUSTER_OPERATIONS_CAP_STANDARD;
+        }
+#endif // #if NVRHI_WITH_NVAPI_CLUSTERS
+
+#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_CLUSTERS
+        if (m_OpacityMicromapSupported || m_RayTracingClustersSupported)
         {
             NVAPI_D3D12_SET_CREATE_PIPELINE_STATE_OPTIONS_PARAMS params = {};
             params.version = NVAPI_D3D12_SET_CREATE_PIPELINE_STATE_OPTIONS_PARAMS_VER;
-            params.flags = NVAPI_D3D12_PIPELINE_CREATION_STATE_FLAGS_ENABLE_OMM_SUPPORT;
+            params.flags = 0;
+        #if NVRHI_WITH_NVAPI_OPACITY_MICRO_MAP 
+            params.flags |= (m_OpacityMicromapSupported ? NVAPI_D3D12_PIPELINE_CREATION_STATE_FLAGS_ENABLE_OMM_SUPPORT : 0);
+        #endif
+        #if NVRHI_WITH_NVAPI_CLUSTERS
+            params.flags |= (m_RayTracingClustersSupported ? NVAPI_D3D12_PIPELINE_CREATION_STATE_FLAGS_ENABLE_CLUSTER_SUPPORT : 0);
+        #endif
             [[maybe_unused]] NvAPI_Status res = NvAPI_D3D12_SetCreatePipelineStateOptions(m_Context.device5, &params);
             assert(res == NVAPI_OK);
         }
 #endif
-#endif // #if NVRHI_WITH_NVAPI_OPACITY_MICROMAPS
 
 #endif // #if NVRHI_D3D12_WITH_NVAPI
 
@@ -231,6 +254,15 @@ namespace nvrhi::d3d12
             }
         }
 #endif
+
+        if (desc.enableHeapDirectlyIndexed)
+        {
+            D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_6 };
+            bool hasShaderModel = SUCCEEDED(m_Context.device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)));
+
+            m_HeapDirectlyIndexedEnabled = m_Options.ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3 && 
+                hasShaderModel && shaderModel.HighestShaderModel >= D3D_SHADER_MODEL_6_6;
+        }
     }
 
     Device::~Device()
@@ -538,6 +570,8 @@ namespace nvrhi::d3d12
             return m_RayTracingSupported;
         case Feature::RayTracingOpacityMicromap:
             return m_OpacityMicromapSupported;
+        case Feature::RayTracingClusters:
+            return m_RayTracingClustersSupported;
         case Feature::RayQuery:
             return m_TraceRayInlineSupported;
         case Feature::FastGeometryShader:
@@ -568,6 +602,8 @@ namespace nvrhi::d3d12
             return true;
         case Feature::ConstantBufferRanges:
             return true;
+        case Feature::HeapDirectlyIndexed:
+            return m_HeapDirectlyIndexedEnabled;
         default:
             return false;
         }

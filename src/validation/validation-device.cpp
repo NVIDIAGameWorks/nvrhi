@@ -1763,6 +1763,133 @@ namespace nvrhi::validation
         return memReq;
     }
 
+    static const char* kOperationTypeStrings[] =
+    {
+        "Move",
+        "ClasBuild",
+        "ClasBuildTemplates",
+        "ClasInstantiateTemplates",
+        "BlasBuild"
+    };
+    static_assert(std::size(kOperationTypeStrings) == uint32_t(rt::cluster::OperationType::BlasBuild) + 1);
+
+
+    bool DeviceWrapper::validateClusterOperationParams(const rt::cluster::OperationParams& params) const
+    {
+        bool isValid = true;
+
+        const char* operationType = "Unknown";
+        if (uint32_t(params.type) < std::size(kOperationTypeStrings))
+        {
+            operationType = kOperationTypeStrings[uint32_t(params.type)];
+        }
+
+        switch (params.mode)
+        {
+        case rt::cluster::OperationMode::ImplicitDestinations:
+        case rt::cluster::OperationMode::ExplicitDestinations:
+        case rt::cluster::OperationMode::GetSizes:
+            break;
+        default:
+            isValid = false;
+            error("cluster::OperationParams " + std::string(operationType) + " unknown cluster::OperationMode");
+            break;
+        }
+
+        bool validateClasParams = false;
+        switch (params.type)
+        {
+        case rt::cluster::OperationType::Move:
+            break;
+        case rt::cluster::OperationType::ClasBuild:
+        case rt::cluster::OperationType::ClasBuildTemplates:
+        case rt::cluster::OperationType::ClasInstantiateTemplates:
+            validateClasParams = true;
+            break;
+        case rt::cluster::OperationType::BlasBuild:
+            break;
+        }
+
+        if (validateClasParams)
+        {
+            nvrhi::Format vertexFormat = params.clas.vertexFormat;
+            const bool validVertexFormat =
+                (vertexFormat == nvrhi::Format::RGBA32_FLOAT)
+                || (vertexFormat == nvrhi::Format::RGB32_FLOAT)
+                || (vertexFormat == nvrhi::Format::RG32_FLOAT)
+                || (vertexFormat == nvrhi::Format::RGBA16_FLOAT)
+                || (vertexFormat == nvrhi::Format::RG16_FLOAT)
+                || (vertexFormat == nvrhi::Format::RGBA16_SNORM)
+                || (vertexFormat == nvrhi::Format::RG16_SNORM)
+                || (vertexFormat == nvrhi::Format::RGBA8_SNORM)
+                || (vertexFormat == nvrhi::Format::RG8_SNORM)
+                || (vertexFormat == nvrhi::Format::RGBA16_UNORM)
+                || (vertexFormat == nvrhi::Format::RG16_UNORM)
+                || (vertexFormat == nvrhi::Format::RGBA8_UNORM)
+                || (vertexFormat == nvrhi::Format::RG8_UNORM)
+                || (vertexFormat == nvrhi::Format::R10G10B10A2_UNORM);
+            if (!validVertexFormat)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " does not have a valid vertex format");
+                isValid = false;
+            }
+
+            if (params.clas.maxGeometryIndex > nvrhi::rt::cluster::kMaxGeometryIndex)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " has a maxGeometryIndex over " + std::to_string(nvrhi::rt::cluster::kMaxGeometryIndex));
+                isValid = false;
+            }
+
+            if (params.clas.minPositionTruncateBitCount > 32)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " minPositionTruncateBitCount over " + std::to_string(32));
+                isValid = false;
+            }
+
+            if (params.clas.maxTriangleCount > nvrhi::rt::cluster::kClasMaxTriangles)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " maxTriangleCount over " + std::to_string(nvrhi::rt::cluster::kClasMaxTriangles));
+                isValid = false;
+            }
+
+            if (params.clas.maxVertexCount > nvrhi::rt::cluster::kClasMaxVertices)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " maxVertexCount over " + std::to_string(nvrhi::rt::cluster::kClasMaxVertices));
+                isValid = false;
+            }
+
+            if (params.clas.maxTriangleCount > params.clas.maxTotalTriangleCount)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " maxTriangleCount over maxTotalTriangleCount. maxTotalTriangleCount must be greater than the sum of all triangles in the operation");
+                isValid = false;
+            }
+
+            if (params.clas.maxVertexCount > params.clas.maxTotalVertexCount)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " maxVertexCount over maxTotalVertexCount. maxTotalVertexCount must be greater than the sum of all vertices in the operation");
+                isValid = false;
+            }
+
+            if (params.clas.maxUniqueGeometryCount > params.clas.maxTriangleCount)
+            {
+                error("cluster::OperationParams " + std::string(operationType) + " maxUniqueGeometryCount over maxTriangleCount. Maximum 1 geometry per triangle");
+                isValid = false;
+            }
+        }
+        
+        return isValid;
+    }
+
+    rt::cluster::OperationSizeInfo DeviceWrapper::getClusterOperationSizeInfo(const rt::cluster::OperationParams& params)
+    {
+        if (!validateClusterOperationParams(params))
+        {
+            return rt::cluster::OperationSizeInfo{};
+        }
+
+        return m_Device->getClusterOperationSizeInfo(params);
+    }
+
     bool DeviceWrapper::bindAccelStructMemory(rt::IAccelStruct* as, IHeap* heap, uint64_t offset)
     {
         if (as == nullptr)

@@ -1696,6 +1696,73 @@ namespace nvrhi::validation
         m_CommandList->buildTopLevelAccelStructFromBuffer(underlyingAS, instanceBuffer, instanceBufferOffset, numInstances, buildFlags);
     }
 
+    void CommandListWrapper::executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc& desc)
+    {
+        if (!requireOpenState())
+            return;
+
+        if (!requireType(CommandQueue::Compute, "executeMultiIndirectClusterOperation"))
+            return;
+
+        if (!m_Device->validateClusterOperationParams(desc.params))
+            return;
+
+        if (desc.inIndirectArgCountBuffer == nullptr)
+        {
+            error("executeMultiIndirectClusterOperation: 'inIndirectArgCountBuffer' is NULL");
+            return;
+        }
+
+        if (desc.inIndirectArgsBuffer == nullptr)
+        {
+            error("executeMultiIndirectClusterOperation: 'inIndirectArgsBuffer' is NULL");
+            return;
+        }
+
+        if (desc.scratchSizeInBytes == 0)
+        {
+            error("executeMultiIndirectClusterOperation: 'scratchSizeInBytes' is 0");
+            return;
+        }
+
+        if (desc.params.mode == rt::cluster::OperationMode::ImplicitDestinations)
+        {
+            if (desc.inOutAddressesBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ImplicitDestinations): 'inOutAddressesBuffer' is NULL");
+                return;
+            }
+            if (desc.outAccelerationStructuresBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ImplicitDestinations): 'outAccelerationStructuresBuffer' is NULL");
+                return;
+            }
+        }
+        else if (desc.params.mode == rt::cluster::OperationMode::ExplicitDestinations)
+        {
+            if (desc.inOutAddressesBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ExplicitDestinations): 'inOutAddressesBuffer' is NULL");
+                return;
+            }
+            if (desc.outAccelerationStructuresBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ExplicitDestinations): 'outAccelerationStructuresBuffer' is NULL");
+                return;
+            }
+        }
+        else if (desc.params.mode == rt::cluster::OperationMode::GetSizes)
+        {
+            if (desc.outSizesBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::GetSizes): 'outSizesBuffer' is NULL");
+                return;
+            }
+        }
+
+        m_CommandList->executeMultiIndirectClusterOperation(desc);
+    }
+
     void CommandListWrapper::evaluatePushConstantSize(const nvrhi::BindingLayoutVector& bindingLayouts)
     {
         m_PipelinePushConstantSize = 0;

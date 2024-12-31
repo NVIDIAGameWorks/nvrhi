@@ -53,6 +53,12 @@
 #define NVRHI_WITH_NVAPI_DISPLACEMENT_MICROMAP (0)
 #endif
 
+#if NVRHI_D3D12_WITH_NVAPI && defined(NVAPI_GET_RAYTRACING_MULTI_INDIRECT_CLUSTER_OPERATION_REQUIREMENTS_INFO_PARAMS_VER)
+#define NVRHI_WITH_NVAPI_CLUSTERS (1)
+#else
+#define NVRHI_WITH_NVAPI_CLUSTERS (0)
+#endif
+
 #include <bitset>
 #include <memory>
 #include <queue>
@@ -117,8 +123,10 @@ namespace nvrhi::d3d12
         RefCountPtr<ID3D12QueryHeap> timerQueryHeap;
         RefCountPtr<Buffer> timerQueryResolveBuffer;
 
+        bool logBufferLifetime = false;
         IMessageCallback* messageCallback = nullptr;
         void error(const std::string& message) const;
+        void info(const std::string& message) const;
     };
 
     class StaticDescriptorHeap : public IDescriptorHeap
@@ -304,6 +312,7 @@ namespace nvrhi::d3d12
         ~Buffer() override;
         
         const BufferDesc& getDesc() const override { return desc; }
+        GpuVirtualAddress getGpuVirtualAddress() const override { return gpuVA; }
 
         Object getNativeObject(ObjectType objectType) override;
 
@@ -637,6 +646,7 @@ namespace nvrhi::d3d12
         const BindingSetDesc* getDesc() const override { return nullptr; }
         IBindingLayout* getLayout() const override { return nullptr; }
         uint32_t getCapacity() const override { return capacity; }
+        uint32_t getFirstDescriptorIndexInHeap() const override { return firstDescriptor; }
 
     private:
         DeviceResources& m_Resources;
@@ -957,6 +967,7 @@ namespace nvrhi::d3d12
         void buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags) override;
         void buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances,
             rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) override;
+        void executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc& desc);
 
         void beginTimerQuery(ITimerQuery* query) override;
         void endTimerQuery(ITimerQuery* query) override;
@@ -1153,6 +1164,8 @@ namespace nvrhi::d3d12
         rt::OpacityMicromapHandle createOpacityMicromap(const rt::OpacityMicromapDesc& desc) override;
         rt::AccelStructHandle createAccelStruct(const rt::AccelStructDesc& desc) override;
         MemoryRequirements getAccelStructMemoryRequirements(rt::IAccelStruct* as) override;
+        rt::cluster::OperationSizeInfo getClusterOperationSizeInfo(const rt::cluster::OperationParams& params) override;
+
         bool bindAccelStructMemory(rt::IAccelStruct* as, IHeap* heap, uint64_t offset) override;
 
         nvrhi::CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) override;
@@ -1203,9 +1216,11 @@ namespace nvrhi::d3d12
         bool m_MeshletsSupported = false;
         bool m_VariableRateShadingSupported = false;
         bool m_OpacityMicromapSupported = false;
+        bool m_RayTracingClustersSupported = false;
         bool m_ShaderExecutionReorderingSupported = false;
         bool m_SamplerFeedbackSupported = false;
         bool m_AftermathEnabled = false;
+        bool m_HeapDirectlyIndexedEnabled = false;
         AftermathCrashDumpHelper m_AftermathCrashDumpHelper;
 
         D3D12_FEATURE_DATA_D3D12_OPTIONS  m_Options = {};

@@ -309,6 +309,12 @@ namespace nvrhi::vulkan
         return MemoryRequirements();
     }
 
+    rt::cluster::OperationSizeInfo Device::getClusterOperationSizeInfo(const rt::cluster::OperationParams&)
+    {
+        utils::NotSupported();
+        return rt::cluster::OperationSizeInfo();
+    }
+
     bool Device::bindAccelStructMemory(rt::IAccelStruct* _as, IHeap* heap, uint64_t offset)
     {
         AccelStruct* as = checked_cast<AccelStruct*>(_as);
@@ -737,6 +743,11 @@ namespace nvrhi::vulkan
 
         if (as->desc.trackLiveness)
             m_CurrentCmdBuf->referencedResources.push_back(as);
+    }
+
+    void CommandList::executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc&)
+    {
+        utils::NotSupported();
     }
 
     AccelStruct::~AccelStruct()
