@@ -480,6 +480,9 @@ namespace nvrhi::vulkan
             case PrimitiveType::LineList:
                 return vk::PrimitiveTopology::eLineList;
 
+            case PrimitiveType::LineStrip:
+                return vk::PrimitiveTopology::eLineStrip;
+
             case PrimitiveType::TriangleList:
                 return vk::PrimitiveTopology::eTriangleList;
 

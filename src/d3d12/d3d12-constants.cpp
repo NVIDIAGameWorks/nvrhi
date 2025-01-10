@@ -177,6 +177,8 @@ namespace nvrhi::d3d12
             return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
         case PrimitiveType::LineList:
             return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+        case PrimitiveType::LineStrip:
+            return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
         case PrimitiveType::TriangleList:
             return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         case PrimitiveType::TriangleStrip:
