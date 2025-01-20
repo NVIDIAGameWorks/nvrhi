@@ -679,6 +679,8 @@ namespace nvrhi::vulkan
             return Object(memory);
         case ObjectTypes::SharedHandle:
             return Object(sharedHandle);
+        case ObjectTypes::VK_ImageCreateInfo:
+            return Object(&imageInfo);
         default:
             return nullptr;
         }
