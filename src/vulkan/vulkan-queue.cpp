@@ -170,7 +170,7 @@ namespace nvrhi::vulkan
         try {
             m_Queue.submit(submitInfo);
         }
-        catch (vk::DeviceLostError e)
+        catch (vk::DeviceLostError &e)
         {
             m_Context.messageCallback->message(MessageSeverity::Error, "Device Removed!");
         }

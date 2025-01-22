@@ -1263,6 +1263,7 @@ namespace nvrhi::validation
                     {
                     case Format::RG32_FLOAT:
                     case Format::RGB32_FLOAT:
+                    case Format::RGBA32_FLOAT:
                     case Format::RG16_FLOAT:
                     case Format::RGBA16_FLOAT:
                     case Format::RG16_SNORM:
@@ -1278,7 +1279,7 @@ namespace nvrhi::validation
                     default: {
                         std::stringstream ss;
                         ss << "BLAS " << utils::DebugNameToString(as->getDesc().debugName) << " build geometry " << i
-                            << " has unsupported vertex format: " << utils::FormatToString(triangles.indexFormat);
+                            << " has unsupported vertex format: " << utils::FormatToString(triangles.vertexFormat);
                         error(ss.str());
                         return;
                     }
