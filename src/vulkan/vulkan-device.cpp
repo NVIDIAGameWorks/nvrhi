@@ -283,7 +283,7 @@ namespace nvrhi::vulkan
         try {
             m_Context.device.waitIdle();
         }
-        catch (vk::DeviceLostError &e)
+        catch (vk::DeviceLostError&)
         {
             return false;
         }
