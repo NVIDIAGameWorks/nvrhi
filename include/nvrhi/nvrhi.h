@@ -760,7 +760,7 @@ namespace nvrhi
         Pixel           = 0x0010,
         Amplification   = 0x0040,
         Mesh            = 0x0080,
-        AllGraphics     = 0x00FE,
+        AllGraphics     = 0x00DF,
 
         RayGeneration   = 0x0100,
         AnyHit          = 0x0200,
@@ -2226,6 +2226,7 @@ namespace nvrhi
     {
         PointList,
         LineList,
+        LineStrip,
         TriangleList,
         TriangleStrip,
         TriangleFan,
