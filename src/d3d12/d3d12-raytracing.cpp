@@ -38,7 +38,7 @@ namespace
     {
         struct RaytracingGeometryDesc
         {
-#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
+#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_LSS
             NVAPI_D3D12_RAYTRACING_GEOMETRY_TYPE_EX type;
 #else
             D3D12_RAYTRACING_GEOMETRY_TYPE type;
@@ -55,6 +55,10 @@ namespace
                 // Note: this union member is currently only used to pad the structure so that it's the same size as NVAPI_D3D12_RAYTRACING_GEOMETRY_DESC_EX.
                 // There is no support for Displacement Micro Maps in NVRHI API yet.
                 NVAPI_D3D12_RAYTRACING_GEOMETRY_DMM_TRIANGLES_DESC dmmTriangles;
+#endif
+#if NVRHI_WITH_NVAPI_LSS
+                NVAPI_D3D12_RAYTRACING_GEOMETRY_SPHERES_DESC       spheres;
+                NVAPI_D3D12_RAYTRACING_GEOMETRY_LSS_DESC           lss;
 #endif
             };
         } m_data;
@@ -126,6 +130,18 @@ namespace
             m_data.ommTriangles = ommTriangles;
         }
 #endif
+
+#if NVRHI_WITH_NVAPI_LSS
+        void SetSpheres(const NVAPI_D3D12_RAYTRACING_GEOMETRY_SPHERES_DESC& spheres) {
+            m_data.type = NVAPI_D3D12_RAYTRACING_GEOMETRY_TYPE_SPHERES_EX;
+            m_data.spheres = spheres;
+        }
+
+        void SetLss(const NVAPI_D3D12_RAYTRACING_GEOMETRY_LSS_DESC& lss) {
+            m_data.type = NVAPI_D3D12_RAYTRACING_GEOMETRY_TYPE_LSS_EX;
+            m_data.lss = lss;
+        }
+#endif
     };
 
     class D3D12BuildRaytracingAccelerationStructureInputs
@@ -180,7 +196,7 @@ namespace
         const T GetAs();
     };
 
-#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
+#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_LSS
     template<>
     const NVAPI_D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS_EX D3D12BuildRaytracingAccelerationStructureInputs::GetAs<NVAPI_D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS_EX>() {
         NVAPI_D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS_EX inputs = {};
@@ -467,6 +483,71 @@ namespace nvrhi::d3d12
         outDxrAABB.AABBCount = aabbs.count;
     }
 
+#if NVRHI_WITH_NVAPI_LSS
+    static void fillD3dSpheresDesc(NVAPI_D3D12_RAYTRACING_GEOMETRY_SPHERES_DESC& outDxrSpheres, const rt::GeometryDesc& geometryDesc)
+    {
+        const auto& spheres = geometryDesc.geometryData.spheres;
+
+        if (spheres.indexBuffer)
+            outDxrSpheres.indexBuffer.StartAddress = checked_cast<Buffer*>(spheres.indexBuffer)->gpuVA + spheres.indexOffset;
+        else
+            outDxrSpheres.indexBuffer.StartAddress = 0;
+
+        if (spheres.vertexBuffer)
+        {
+            outDxrSpheres.vertexPositionBuffer.StartAddress = checked_cast<Buffer*>(spheres.vertexBuffer)->gpuVA + spheres.vertexPositionOffset;
+            outDxrSpheres.vertexRadiusBuffer.StartAddress = checked_cast<Buffer*>(spheres.vertexBuffer)->gpuVA + spheres.vertexRadiusOffset;
+        }
+        else
+        {
+            outDxrSpheres.vertexPositionBuffer.StartAddress = 0;
+            outDxrSpheres.vertexRadiusBuffer.StartAddress = 0;
+        }
+
+        outDxrSpheres.indexBuffer.StrideInBytes = spheres.indexStride;
+        outDxrSpheres.vertexPositionBuffer.StrideInBytes = spheres.vertexPositionStride;
+        outDxrSpheres.vertexRadiusBuffer.StrideInBytes = spheres.vertexRadiusStride;
+        outDxrSpheres.indexFormat = getDxgiFormatMapping(spheres.indexFormat).srvFormat;
+        outDxrSpheres.vertexPositionFormat = getDxgiFormatMapping(spheres.vertexPositionFormat).srvFormat;
+        outDxrSpheres.vertexRadiusFormat = getDxgiFormatMapping(spheres.vertexRadiusFormat).srvFormat;
+        outDxrSpheres.indexCount = spheres.indexCount;
+        outDxrSpheres.vertexCount = spheres.vertexCount;
+    }
+
+    static void fillD3dLssDesc(NVAPI_D3D12_RAYTRACING_GEOMETRY_LSS_DESC& outDxrLss, const rt::GeometryDesc& geometryDesc)
+    {
+        const auto& lss = geometryDesc.geometryData.lss;
+
+        if (lss.indexBuffer)
+            outDxrLss.indexBuffer.StartAddress = checked_cast<Buffer*>(lss.indexBuffer)->gpuVA + lss.indexOffset;
+        else
+            outDxrLss.indexBuffer.StartAddress = 0;
+
+        if (lss.vertexBuffer)
+        {
+            outDxrLss.vertexPositionBuffer.StartAddress = checked_cast<Buffer*>(lss.vertexBuffer)->gpuVA + lss.vertexPositionOffset;
+            outDxrLss.vertexRadiusBuffer.StartAddress = checked_cast<Buffer*>(lss.vertexBuffer)->gpuVA + lss.vertexRadiusOffset;
+        }
+        else
+        {
+            outDxrLss.vertexPositionBuffer.StartAddress = 0;
+            outDxrLss.vertexRadiusBuffer.StartAddress = 0;
+        }
+
+        outDxrLss.indexBuffer.StrideInBytes = lss.indexStride;
+        outDxrLss.vertexPositionBuffer.StrideInBytes = lss.vertexPositionStride;
+        outDxrLss.vertexRadiusBuffer.StrideInBytes = lss.vertexRadiusStride;
+        outDxrLss.indexFormat = getDxgiFormatMapping(lss.indexFormat).srvFormat;
+        outDxrLss.vertexPositionFormat = getDxgiFormatMapping(lss.vertexPositionFormat).srvFormat;
+        outDxrLss.vertexRadiusFormat = getDxgiFormatMapping(lss.vertexRadiusFormat).srvFormat;
+        outDxrLss.indexCount = lss.indexCount;
+        outDxrLss.primitiveCount = lss.primitiveCount;
+        outDxrLss.vertexCount = lss.vertexCount;
+        outDxrLss.primitiveFormat = lss.primitiveFormat == nvrhi::rt::GeometryLssPrimitiveFormat::List ? NVAPI_D3D12_RAYTRACING_LSS_PRIMITIVE_FORMAT_LIST : NVAPI_D3D12_RAYTRACING_LSS_PRIMITIVE_FORMAT_SUCCESSIVE_IMPLICIT;
+        outDxrLss.endcapMode = lss.endcapMode == nvrhi::rt::GeometryLssEndcapMode::None ? NVAPI_D3D12_RAYTRACING_LSS_ENDCAP_MODE_NONE : NVAPI_D3D12_RAYTRACING_LSS_ENDCAP_MODE_CHAINED;
+    }
+#endif
+
 #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
     static void fillOmmAttachmentDesc(NVAPI_D3D12_RAYTRACING_GEOMETRY_OMM_ATTACHMENT_DESC& ommAttachment, const rt::GeometryDesc& geometryDesc)
     {
@@ -517,6 +598,20 @@ namespace nvrhi::d3d12
                 outD3dGeometryDesc.SetTriangles(dxrTriangles);
             }
         }
+#if NVRHI_WITH_NVAPI_LSS
+        else if (geometryDesc.geometryType == rt::GeometryType::Spheres)
+        {
+            NVAPI_D3D12_RAYTRACING_GEOMETRY_SPHERES_DESC spheres = {};
+            fillD3dSpheresDesc(spheres, geometryDesc);
+            outD3dGeometryDesc.SetSpheres(spheres);
+        }
+        else if (geometryDesc.geometryType == rt::GeometryType::Lss)
+        {
+            NVAPI_D3D12_RAYTRACING_GEOMETRY_LSS_DESC lss = {};
+            fillD3dLssDesc(lss, geometryDesc);
+            outD3dGeometryDesc.SetLss(lss);
+        }
+#endif
         else
         {
             D3D12_RAYTRACING_GEOMETRY_AABBS_DESC dxrAABBs = {};
@@ -602,7 +697,7 @@ namespace nvrhi::d3d12
         D3D12BuildRaytracingAccelerationStructureInputs ASInputs;
         fillAsInputDescForPreBuildInfo(ASInputs, desc);
 
-#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
+#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_LSS
         if (m_NvapiIsInitialized)
         {
             const NVAPI_D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS_EX inputs = ASInputs.GetAs<NVAPI_D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS_EX>();
@@ -665,7 +760,17 @@ namespace nvrhi::d3d12
             static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
                 == offsetof(rt::GeometryAABBs, unused));
 
-            // Clear only the triangles' data, because the AABBs' data is aliased to triangles (verified above)
+            static_assert(offsetof(rt::GeometryTriangles, indexBuffer)
+                == offsetof(rt::GeometrySpheres, indexBuffer));
+            static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
+                == offsetof(rt::GeometrySpheres, vertexBuffer));
+
+            static_assert(offsetof(rt::GeometryTriangles, indexBuffer)
+                == offsetof(rt::GeometryLss, indexBuffer));
+            static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
+                == offsetof(rt::GeometryLss, vertexBuffer));
+                
+            // Clear only the triangles' data, because the other types' data is aliased to triangles (verified above)
             geometry.geometryData.triangles.indexBuffer = nullptr;
             geometry.geometryData.triangles.vertexBuffer = nullptr;
         }
@@ -1567,7 +1672,7 @@ namespace nvrhi::d3d12
                 if (triangles.ommIndexBuffer)
                     m_Instance->referencedResources.push_back(triangles.ommIndexBuffer);
             }
-            else
+            else if (geometryDesc.geometryType == rt::GeometryType::AABBs)
             {
                 const auto& aabbs = geometryDesc.geometryData.aabbs;
 
@@ -1578,6 +1683,40 @@ namespace nvrhi::d3d12
 
                 m_Instance->referencedResources.push_back(aabbs.buffer);
             }
+#if NVRHI_WITH_NVAPI_LSS
+            else if (geometryDesc.geometryType == rt::GeometryType::Spheres)
+            {
+                const auto& spheres = geometryDesc.geometryData.spheres;
+
+                if (m_EnableAutomaticBarriers)
+                {
+                    if (spheres.indexBuffer)
+                    {
+                        requireBufferState(spheres.indexBuffer, ResourceStates::AccelStructBuildInput);
+                    }
+                    requireBufferState(spheres.vertexBuffer, ResourceStates::AccelStructBuildInput);
+                }
+
+                m_Instance->referencedResources.push_back(spheres.indexBuffer);
+                m_Instance->referencedResources.push_back(spheres.vertexBuffer);
+            }
+            else if (geometryDesc.geometryType == rt::GeometryType::Lss)
+            {
+                const auto& lss = geometryDesc.geometryData.lss;
+
+                if (m_EnableAutomaticBarriers)
+                {
+                    if (lss.indexBuffer)
+                    {
+                        requireBufferState(lss.indexBuffer, ResourceStates::AccelStructBuildInput);
+                    }
+                    requireBufferState(lss.vertexBuffer, ResourceStates::AccelStructBuildInput);
+                }
+
+                m_Instance->referencedResources.push_back(lss.indexBuffer);
+                m_Instance->referencedResources.push_back(lss.vertexBuffer);
+            }
+#endif
         }
 
         commitBarriers();
@@ -1679,7 +1818,7 @@ namespace nvrhi::d3d12
         }
         commitBarriers();
 
-#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
+#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_LSS
         if (checked_cast<d3d12::Device*>(m_Device)->GetNvapiIsInitialized())
         {
             NVAPI_D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC_EX buildDesc = {};

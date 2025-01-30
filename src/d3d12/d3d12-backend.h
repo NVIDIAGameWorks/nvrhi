@@ -59,6 +59,14 @@
 #define NVRHI_WITH_NVAPI_CLUSTERS (0)
 #endif
 
+// Look for Cooperative Vector features to tell if the NVAPI header is >=570,
+// which also defines the Linear Swept Spheres features.
+#if NVRHI_D3D12_WITH_NVAPI && defined(NVAPI_CONVERT_COOPERATIVE_VECTOR_MATRIX_DESC_VER)
+#define NVRHI_WITH_NVAPI_LSS (1)
+#else
+#define NVRHI_WITH_NVAPI_LSS (0)
+#endif
+
 #include <bitset>
 #include <memory>
 #include <queue>
@@ -1217,11 +1225,14 @@ namespace nvrhi::d3d12
         bool m_VariableRateShadingSupported = false;
         bool m_OpacityMicromapSupported = false;
         bool m_RayTracingClustersSupported = false;
+        bool m_LinearSweptSpheresSupported = false;
+        bool m_SpheresSupported = false;
         bool m_ShaderExecutionReorderingSupported = false;
         bool m_SamplerFeedbackSupported = false;
         bool m_AftermathEnabled = false;
         bool m_HeapDirectlyIndexedEnabled = false;
         AftermathCrashDumpHelper m_AftermathCrashDumpHelper;
+
 
         D3D12_FEATURE_DATA_D3D12_OPTIONS  m_Options = {};
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 m_Options5 = {};

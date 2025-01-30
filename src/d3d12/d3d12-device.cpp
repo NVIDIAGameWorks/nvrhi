@@ -218,17 +218,34 @@ namespace nvrhi::d3d12
         }
 #endif // #if NVRHI_WITH_NVAPI_CLUSTERS
 
-#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_CLUSTERS
-        if (m_OpacityMicromapSupported || m_RayTracingClustersSupported)
+#if NVRHI_WITH_NVAPI_LSS
+        if (m_NvapiIsInitialized)
+        {
+            NVAPI_D3D12_RAYTRACING_LINEAR_SWEPT_SPHERES_CAPS lssCaps = NVAPI_D3D12_RAYTRACING_LINEAR_SWEPT_SPHERES_CAP_NONE;
+            NvAPI_D3D12_GetRaytracingCaps(m_Context.device5, NVAPI_D3D12_RAYTRACING_CAPS_TYPE_LINEAR_SWEPT_SPHERES, &lssCaps, sizeof(NVAPI_D3D12_RAYTRACING_LINEAR_SWEPT_SPHERES_CAPS));
+            m_LinearSweptSpheresSupported = lssCaps == NVAPI_D3D12_RAYTRACING_LINEAR_SWEPT_SPHERES_CAP_STANDARD;
+
+            NVAPI_D3D12_RAYTRACING_SPHERES_CAPS spheresCaps = NVAPI_D3D12_RAYTRACING_SPHERES_CAP_NONE;
+            NvAPI_D3D12_GetRaytracingCaps(m_Context.device5, NVAPI_D3D12_RAYTRACING_CAPS_TYPE_SPHERES, &spheresCaps, sizeof(NVAPI_D3D12_RAYTRACING_SPHERES_CAPS));
+            m_SpheresSupported = spheresCaps == NVAPI_D3D12_RAYTRACING_SPHERES_CAP_STANDARD;
+        }
+#endif // #if NVRHI_WITH_NVAPI_LSS
+
+#if NVRHI_WITH_NVAPI_OPACITY_MICROMAP || NVRHI_WITH_NVAPI_CLUSTERS || NVRHI_WITH_NVAPI_LSS
+        if (m_OpacityMicromapSupported || m_RayTracingClustersSupported || m_LinearSweptSpheresSupported || m_SpheresSupported)
         {
             NVAPI_D3D12_SET_CREATE_PIPELINE_STATE_OPTIONS_PARAMS params = {};
             params.version = NVAPI_D3D12_SET_CREATE_PIPELINE_STATE_OPTIONS_PARAMS_VER;
             params.flags = 0;
-        #if NVRHI_WITH_NVAPI_OPACITY_MICRO_MAP 
+        #if NVRHI_WITH_NVAPI_OPACITY_MICROMAP
             params.flags |= (m_OpacityMicromapSupported ? NVAPI_D3D12_PIPELINE_CREATION_STATE_FLAGS_ENABLE_OMM_SUPPORT : 0);
         #endif
         #if NVRHI_WITH_NVAPI_CLUSTERS
             params.flags |= (m_RayTracingClustersSupported ? NVAPI_D3D12_PIPELINE_CREATION_STATE_FLAGS_ENABLE_CLUSTER_SUPPORT : 0);
+        #endif
+        #if NVRHI_WITH_NVAPI_LSS
+            params.flags |= (m_LinearSweptSpheresSupported ? NVAPI_D3D12_PIPELINE_CREATION_STATE_FLAGS_ENABLE_LSS_SUPPORT : 0);
+            params.flags |= (m_SpheresSupported ? NVAPI_D3D12_PIPELINE_CREATION_STATE_FLAGS_ENABLE_SPHERE_SUPPORT : 0);
         #endif
             [[maybe_unused]] NvAPI_Status res = NvAPI_D3D12_SetCreatePipelineStateOptions(m_Context.device5, &params);
             assert(res == NVAPI_OK);
@@ -578,6 +595,10 @@ namespace nvrhi::d3d12
             return m_FastGeometryShaderSupported;
         case Feature::ShaderExecutionReordering:
             return m_ShaderExecutionReorderingSupported;
+        case Feature::Spheres:
+            return m_SpheresSupported;
+        case Feature::LinearSweptSpheres:
+            return m_LinearSweptSpheresSupported;
         case Feature::Meshlets:
             return m_MeshletsSupported;
         case Feature::VariableRateShading:
