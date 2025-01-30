@@ -1708,9 +1708,9 @@ namespace nvrhi::validation
         if (!m_Device->validateClusterOperationParams(desc.params))
             return;
 
-        if (desc.inIndirectArgCountBuffer == nullptr)
+        if (desc.inIndirectArgCountBuffer == nullptr && desc.params.maxArgCount == 0)
         {
-            error("executeMultiIndirectClusterOperation: 'inIndirectArgCountBuffer' is NULL");
+            error("executeMultiIndirectClusterOperation: 'inIndirectArgCountBuffer' is NULL and maxArgCount is 0");
             return;
         }
 
@@ -1744,11 +1744,6 @@ namespace nvrhi::validation
             if (desc.inOutAddressesBuffer == nullptr)
             {
                 error("executeMultiIndirectClusterOperation (cluster::OperationMode::ExplicitDestinations): 'inOutAddressesBuffer' is NULL");
-                return;
-            }
-            if (desc.outAccelerationStructuresBuffer == nullptr)
-            {
-                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ExplicitDestinations): 'outAccelerationStructuresBuffer' is NULL");
                 return;
             }
         }
