@@ -1438,7 +1438,9 @@ namespace nvrhi
         enum class GeometryType : uint8_t
         {
             Triangles = 0,
-            AABBs = 1
+            AABBs = 1,
+            Spheres = 2,
+            Lss = 3
         };
 
         struct GeometryAABB
@@ -1453,8 +1455,8 @@ namespace nvrhi
 
         struct GeometryTriangles
         {
-            IBuffer* indexBuffer = nullptr;   // make sure the first fields in both Triangles 
-            IBuffer* vertexBuffer = nullptr;  // and AABBs are IBuffer* for easier debugging
+            IBuffer* indexBuffer = nullptr;   // make sure the first 2 fields in all Geometry 
+            IBuffer* vertexBuffer = nullptr;  // structs are IBuffer* for easier debugging
             Format indexFormat = Format::UNKNOWN;
             Format vertexFormat = Format::UNKNOWN; // See D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC for accepted formats and how they are interpreted
             uint64_t indexOffset = 0;
@@ -1501,12 +1503,94 @@ namespace nvrhi
             GeometryAABBs& setStride(uint32_t value) { stride = value; return *this; }
         };
 
+        struct GeometrySpheres
+        {
+            IBuffer* indexBuffer = nullptr;
+            IBuffer* vertexBuffer = nullptr;
+            Format indexFormat = Format::UNKNOWN;
+            Format vertexPositionFormat = Format::UNKNOWN;
+            Format vertexRadiusFormat = Format::UNKNOWN;
+            uint64_t indexOffset = 0;
+            uint64_t vertexPositionOffset = 0;
+            uint64_t vertexRadiusOffset = 0;
+            uint32_t indexCount = 0;
+            uint32_t vertexCount = 0;
+            uint32_t indexStride = 0;
+            uint32_t vertexPositionStride = 0;
+            uint32_t vertexRadiusStride = 0;
+
+            GeometrySpheres& setIndexBuffer(IBuffer* value) { indexBuffer = value; return *this; }
+            GeometrySpheres& setVertexBuffer(IBuffer* value) { vertexBuffer = value; return *this; }
+            GeometrySpheres& setIndexFormat(Format value) { indexFormat = value; return *this; }
+            GeometrySpheres& setVertexPositionFormat(Format value) { vertexPositionFormat = value; return *this; }
+            GeometrySpheres& setVertexRadiusFormat(Format value) { vertexRadiusFormat = value; return *this; }
+            GeometrySpheres& setIndexOffset(uint64_t value) { indexOffset = value; return *this; }
+            GeometrySpheres& setVertexPositionOffset(uint64_t value) { vertexPositionOffset = value; return *this; }
+            GeometrySpheres& setVertexRadiusOffset(uint64_t value) { vertexRadiusOffset = value; return *this; }
+            GeometrySpheres& setIndexCount(uint32_t value) { indexCount = value; return *this; }
+            GeometrySpheres& setVertexCount(uint32_t value) { vertexCount = value; return *this; }
+            GeometrySpheres& setIndexStride(uint32_t value) { indexStride = value; return *this; }
+            GeometrySpheres& setVertexPositionStride(uint32_t value) { vertexPositionStride = value; return *this; }
+            GeometrySpheres& setVertexRadiusStride(uint32_t value) { vertexRadiusStride = value; return *this; }
+        };
+
+        enum class GeometryLssPrimitiveFormat : uint8_t
+        {
+            List = 0,
+            SuccessiveImplicit = 1
+        };
+
+        enum class GeometryLssEndcapMode : uint8_t
+        {
+            None = 0,
+            Chained = 1
+        };
+
+        struct GeometryLss
+        {
+            IBuffer* indexBuffer = nullptr;
+            IBuffer* vertexBuffer = nullptr;
+            Format indexFormat = Format::UNKNOWN;
+            Format vertexPositionFormat = Format::UNKNOWN;
+            Format vertexRadiusFormat = Format::UNKNOWN;
+            uint64_t indexOffset = 0;
+            uint64_t vertexPositionOffset = 0;
+            uint64_t vertexRadiusOffset = 0;
+            uint32_t indexCount = 0;
+            uint32_t primitiveCount = 0;
+            uint32_t vertexCount = 0;
+            uint32_t indexStride = 0;
+            uint32_t vertexPositionStride = 0;
+            uint32_t vertexRadiusStride = 0;
+            GeometryLssPrimitiveFormat primitiveFormat = GeometryLssPrimitiveFormat::List;
+            GeometryLssEndcapMode endcapMode = GeometryLssEndcapMode::None;
+
+            GeometryLss& setIndexBuffer(IBuffer* value) { indexBuffer = value; return *this; }
+            GeometryLss& setVertexBuffer(IBuffer* value) { vertexBuffer = value; return *this; }
+            GeometryLss& setIndexFormat(Format value) { indexFormat = value; return *this; }
+            GeometryLss& setVertexPositionFormat(Format value) { vertexPositionFormat = value; return *this; }
+            GeometryLss& setVertexRadiusFormat(Format value) { vertexRadiusFormat = value; return *this; }
+            GeometryLss& setIndexOffset(uint64_t value) { indexOffset = value; return *this; }
+            GeometryLss& setVertexPositionOffset(uint64_t value) { vertexPositionOffset = value; return *this; }
+            GeometryLss& setVertexRadiusOffset(uint64_t value) { vertexRadiusOffset = value; return *this; }
+            GeometryLss& setIndexCount(uint32_t value) { indexCount = value; return *this; }
+            GeometryLss& setPrimitiveCount(uint32_t value) { primitiveCount = value; return *this; }
+            GeometryLss& setVertexCount(uint32_t value) { vertexCount = value; return *this; }
+            GeometryLss& setIndexStride(uint32_t value) { indexStride = value; return *this; }
+            GeometryLss& setVertexPositionStride(uint32_t value) { vertexPositionStride = value; return *this; }
+            GeometryLss& setVertexRadiusStride(uint32_t value) { vertexRadiusStride = value; return *this; }
+            GeometryLss& setPrimitiveFormat(GeometryLssPrimitiveFormat value) { primitiveFormat = value; return *this; }
+            GeometryLss& setEndcapMode(GeometryLssEndcapMode value) { endcapMode = value; return *this; }
+        };
+
         struct GeometryDesc
         {
             union GeomTypeUnion
             {
                 GeometryTriangles triangles;
                 GeometryAABBs aabbs;
+                GeometrySpheres spheres;
+                GeometryLss lss;
             } geometryData;
 
             bool useTransform = false;
@@ -1520,6 +1604,8 @@ namespace nvrhi
             GeometryDesc& setFlags(GeometryFlags value) { flags = value; return *this; }
             GeometryDesc& setTriangles(const GeometryTriangles& value) { geometryData.triangles = value; geometryType = GeometryType::Triangles; return *this; }
             GeometryDesc& setAABBs(const GeometryAABBs& value) { geometryData.aabbs = value; geometryType = GeometryType::AABBs; return *this; }
+            GeometryDesc& setSpheres(const GeometrySpheres& value) { geometryData.spheres = value; geometryType = GeometryType::Spheres; return *this; }
+            GeometryDesc& setLss(const GeometryLss& value) { geometryData.lss = value; geometryType = GeometryType::Lss; return *this; }
         };
         
         enum class InstanceFlags : unsigned
@@ -2676,6 +2762,8 @@ namespace nvrhi
         RayTracingClusters,
         RayQuery,
         ShaderExecutionReordering,
+        Spheres,
+        LinearSweptSpheres,
         FastGeometryShader,
         Meshlets,
         ConservativeRasterization,

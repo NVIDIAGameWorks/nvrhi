@@ -291,7 +291,17 @@ namespace nvrhi::vulkan
             static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
                 == offsetof(rt::GeometryAABBs, unused));
 
-            // Clear only the triangles' data, because the AABBs' data is aliased to triangles (verified above)
+            static_assert(offsetof(rt::GeometryTriangles, indexBuffer)
+                == offsetof(rt::GeometrySpheres, indexBuffer));
+            static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
+                == offsetof(rt::GeometrySpheres, vertexBuffer));
+
+            static_assert(offsetof(rt::GeometryTriangles, indexBuffer)
+                == offsetof(rt::GeometryLss, indexBuffer));
+            static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
+                == offsetof(rt::GeometryLss, vertexBuffer));
+
+            // Clear only the triangles' data, because the other types' data is aliased to triangles (verified above)
             geometry.geometryData.triangles.indexBuffer = nullptr;
             geometry.geometryData.triangles.vertexBuffer = nullptr;
         }
