@@ -1893,7 +1893,6 @@ namespace nvrhi::d3d12
         if (desc.params.maxArgCount == 0) return;
 
         // Validate resource buffers
-        assert(desc.inIndirectArgCountBuffer != nullptr); 
         assert(desc.inIndirectArgsBuffer != nullptr); 
         assert(desc.scratchSizeInBytes != 0);
 
@@ -1905,7 +1904,6 @@ namespace nvrhi::d3d12
         else if (desc.params.mode == rt::cluster::OperationMode::ExplicitDestinations)
         {
             assert(desc.inOutAddressesBuffer != nullptr); 
-            assert(desc.outAccelerationStructuresBuffer != nullptr); 
         }
         else if (desc.params.mode == rt::cluster::OperationMode::GetSizes)
         {
@@ -1977,8 +1975,9 @@ namespace nvrhi::d3d12
 
         if (m_EnableAutomaticBarriers)
         {
-            requireBufferState(inIndirectArgCountBuffer, ResourceStates::IndirectArgument);
-            requireBufferState(inIndirectArgsBuffer, ResourceStates::IndirectArgument);
+            requireBufferState(inIndirectArgsBuffer, ResourceStates::ShaderResource);
+            if (inIndirectArgCountBuffer)
+                requireBufferState(inIndirectArgCountBuffer, ResourceStates::ShaderResource);
             if (inOutAddressesBuffer)
                 requireBufferState(inOutAddressesBuffer, ResourceStates::UnorderedAccess);
             if (outAccelerationStructuresBuffer)
@@ -1996,7 +1995,10 @@ namespace nvrhi::d3d12
         d3d12Desc.addressResolutionFlags = NVAPI_D3D12_RAYTRACING_MULTI_INDIRECT_CLUSTER_OPERATION_ADDRESS_RESOLUTION_FLAG_NONE;
 
         // Input Buffers
-        d3d12Desc.indirectArgCount = inIndirectArgCountBuffer->gpuVA + desc.inIndirectArgCountOffsetInBytes;
+        if (inIndirectArgCountBuffer)
+        {
+            d3d12Desc.indirectArgCount = inIndirectArgCountBuffer->gpuVA + desc.inIndirectArgCountOffsetInBytes;
+        }
         d3d12Desc.indirectArgArray.StartAddress = inIndirectArgsBuffer->gpuVA + desc.inIndirectArgsOffsetInBytes;
         d3d12Desc.indirectArgArray.StrideInBytes = indirectArgsStride;
         d3d12Desc.batchScratchData = scratchGpuVA;
