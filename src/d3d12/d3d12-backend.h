@@ -59,9 +59,8 @@
 #define NVRHI_WITH_NVAPI_CLUSTERS (0)
 #endif
 
-// Look for Cooperative Vector features to tell if the NVAPI header is >=570,
-// which also defines the Linear Swept Spheres features.
-#if NVRHI_D3D12_WITH_NVAPI && defined(NVAPI_CONVERT_COOPERATIVE_VECTOR_MATRIX_DESC_VER)
+// Line-Swept Spheres were added in NVAPI SDK 572.18
+#if NVRHI_D3D12_WITH_NVAPI && (NVAPI_SDK_VERSION >= 57218)
 #define NVRHI_WITH_NVAPI_LSS (1)
 #else
 #define NVRHI_WITH_NVAPI_LSS (0)
