@@ -17,9 +17,9 @@ jobs:
           PERSONAL_ACCESS_TOKEN : ${{ secrets.CLA_ACCESS_TOKEN }}
         with:
           path-to-signatures: 'signatures/nvrhi.json'
-          path-to-document: 'https://github.com/NVIDIAGameWorks/nvrhi/blob/main/CLA.txt'
+          path-to-document: 'https://github.com/NVIDIA-RTX/NVRHI/blob/main/CLA.txt'
           branch: 'nvrhi'
           allowlist: nobody
           lock-pullrequest-aftermerge: true
-          remote-organization-name: NVIDIAGameWorks
+          remote-organization-name: NVIDIA-RTX
           remote-repository-name: CLAs
