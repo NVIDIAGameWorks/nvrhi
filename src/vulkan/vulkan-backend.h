@@ -569,6 +569,7 @@ namespace nvrhi::vulkan
 
         ~Buffer() override;
         const BufferDesc& getDesc() const override { return desc; }
+        GpuVirtualAddress getGpuVirtualAddress() const override { return deviceAddress; }
         Object getNativeObject(ObjectType type) override;
 
     private:
@@ -810,6 +811,9 @@ namespace nvrhi::vulkan
         const BindingSetDesc* getDesc() const override { return nullptr; }
         IBindingLayout* getLayout() const override { return layout; }
         uint32_t getCapacity() const override { return capacity; }
+
+        // Vulkan doesnt not have a concept of the first descriptor in the heap
+        uint32_t getFirstDescriptorIndexInHeap() const override { return 0; }
         Object getNativeObject(ObjectType objectType) override;
 
     private:
@@ -1136,6 +1140,7 @@ namespace nvrhi::vulkan
         rt::OpacityMicromapHandle createOpacityMicromap(const rt::OpacityMicromapDesc& desc) override;
         rt::AccelStructHandle createAccelStruct(const rt::AccelStructDesc& desc) override;
         MemoryRequirements getAccelStructMemoryRequirements(rt::IAccelStruct* as) override;
+        rt::cluster::OperationSizeInfo getClusterOperationSizeInfo(const rt::cluster::OperationParams& params) override;
         bool bindAccelStructMemory(rt::IAccelStruct* as, IHeap* heap, uint64_t offset) override;
 
         CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) override;
@@ -1233,6 +1238,7 @@ namespace nvrhi::vulkan
         void buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags) override;
         void buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances,
             rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) override;
+        void executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc& desc) override;
 
         void beginTimerQuery(ITimerQuery* query) override;
         void endTimerQuery(ITimerQuery* query) override;

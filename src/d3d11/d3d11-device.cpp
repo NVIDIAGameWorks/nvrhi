@@ -292,6 +292,12 @@ namespace nvrhi::d3d11
         return MemoryRequirements();
     }
 
+    rt::cluster::OperationSizeInfo Device::getClusterOperationSizeInfo(const rt::cluster::OperationParams&)
+    {
+        utils::NotSupported();
+        return rt::cluster::OperationSizeInfo();
+    }
+
     bool Device::bindAccelStructMemory(rt::IAccelStruct*, IHeap*, uint64_t)
     {
         utils::NotSupported();

@@ -222,4 +222,9 @@ namespace nvrhi::d3d11
     {
         utils::NotSupported();
     }
+
+    void CommandList::executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc&)
+    {
+        utils::NotSupported();
+    }
 } // namespace nvrhi::d3d11

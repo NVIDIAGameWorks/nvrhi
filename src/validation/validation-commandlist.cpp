@@ -1336,7 +1336,7 @@ namespace nvrhi::validation
                         return;
                     }
                 }
-                else // AABBs
+                else if (geom.geometryType == rt::GeometryType::AABBs)
                 {
                     const auto& aabbs = geom.geometryData.aabbs;
 
@@ -1390,6 +1390,36 @@ namespace nvrhi::validation
                             "which is unsupported, and the transform will be ignored";
                         m_MessageCallback->message(MessageSeverity::Warning, ss.str().c_str());
                     }
+                }
+                else if (geom.geometryType == rt::GeometryType::Spheres)
+                {
+                    const auto& spheres = geom.geometryData.spheres;
+
+                    if (spheres.vertexBuffer == nullptr)
+                    {
+                        std::stringstream ss;
+                        ss << "BLAS " << utils::DebugNameToString(as->getDesc().debugName) << " build geometry " << i
+                            << " has NULL vertex buffer";
+                        error(ss.str());
+                        return;
+                    }
+
+                    // TODO: Add more validation
+                }
+                else if (geom.geometryType == rt::GeometryType::Lss)
+                {
+                    const auto& lss = geom.geometryData.lss;
+
+                    if (lss.vertexBuffer == nullptr)
+                    {
+                        std::stringstream ss;
+                        ss << "BLAS " << utils::DebugNameToString(as->getDesc().debugName) << " build geometry " << i
+                            << " has NULL vertex buffer";
+                        error(ss.str());
+                        return;
+                    }
+
+                    // TODO: Add more validation
                 }
             }
 
@@ -1695,6 +1725,68 @@ namespace nvrhi::validation
         }
 
         m_CommandList->buildTopLevelAccelStructFromBuffer(underlyingAS, instanceBuffer, instanceBufferOffset, numInstances, buildFlags);
+    }
+
+    void CommandListWrapper::executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc& desc)
+    {
+        if (!requireOpenState())
+            return;
+
+        if (!requireType(CommandQueue::Compute, "executeMultiIndirectClusterOperation"))
+            return;
+
+        if (!m_Device->validateClusterOperationParams(desc.params))
+            return;
+
+        if (desc.inIndirectArgCountBuffer == nullptr && desc.params.maxArgCount == 0)
+        {
+            error("executeMultiIndirectClusterOperation: 'inIndirectArgCountBuffer' is NULL and maxArgCount is 0");
+            return;
+        }
+
+        if (desc.inIndirectArgsBuffer == nullptr)
+        {
+            error("executeMultiIndirectClusterOperation: 'inIndirectArgsBuffer' is NULL");
+            return;
+        }
+
+        if (desc.scratchSizeInBytes == 0)
+        {
+            error("executeMultiIndirectClusterOperation: 'scratchSizeInBytes' is 0");
+            return;
+        }
+
+        if (desc.params.mode == rt::cluster::OperationMode::ImplicitDestinations)
+        {
+            if (desc.inOutAddressesBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ImplicitDestinations): 'inOutAddressesBuffer' is NULL");
+                return;
+            }
+            if (desc.outAccelerationStructuresBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ImplicitDestinations): 'outAccelerationStructuresBuffer' is NULL");
+                return;
+            }
+        }
+        else if (desc.params.mode == rt::cluster::OperationMode::ExplicitDestinations)
+        {
+            if (desc.inOutAddressesBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::ExplicitDestinations): 'inOutAddressesBuffer' is NULL");
+                return;
+            }
+        }
+        else if (desc.params.mode == rt::cluster::OperationMode::GetSizes)
+        {
+            if (desc.outSizesBuffer == nullptr)
+            {
+                error("executeMultiIndirectClusterOperation (cluster::OperationMode::GetSizes): 'outSizesBuffer' is NULL");
+                return;
+            }
+        }
+
+        m_CommandList->executeMultiIndirectClusterOperation(desc);
     }
 
     void CommandListWrapper::evaluatePushConstantSize(const nvrhi::BindingLayoutVector& bindingLayouts)

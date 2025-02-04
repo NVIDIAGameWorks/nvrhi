@@ -22,8 +22,10 @@
 
 #pragma once
 
+
 #include <nvrhi/common/containers.h>
 #include <nvrhi/common/resource.h>
+#include <nvrhi/nvrhiHLSL.h>
 
 #include <cstdint>
 #include <cmath>
@@ -735,6 +737,7 @@ namespace nvrhi
     {
     public:
         [[nodiscard]] virtual const BufferDesc& getDesc() const = 0;
+        [[nodiscard]] virtual GpuVirtualAddress getGpuVirtualAddress() const = 0;
     };
 
     typedef RefCountPtr<IBuffer> BufferHandle;
@@ -827,21 +830,24 @@ namespace nvrhi
             float f;
         } value;
 
-        static ShaderSpecialization UInt32(uint32_t constantID, uint32_t u) {
+        static ShaderSpecialization UInt32(uint32_t constantID, uint32_t u)
+        {
             ShaderSpecialization s;
             s.constantID = constantID;
             s.value.u = u;
             return s;
         }
 
-        static ShaderSpecialization Int32(uint32_t constantID, int32_t i) {
+        static ShaderSpecialization Int32(uint32_t constantID, int32_t i)
+        {
             ShaderSpecialization s;
             s.constantID = constantID;
             s.value.i = i;
             return s;
         }
 
-        static ShaderSpecialization Float(uint32_t constantID, float f) {
+        static ShaderSpecialization Float(uint32_t constantID, float f)
+        {
             ShaderSpecialization s;
             s.constantID = constantID;
             s.value.f = f;
@@ -1219,7 +1225,7 @@ namespace nvrhi
         SamplerDesc& setMinFilter(bool enable) { minFilter = enable; return *this; }
         SamplerDesc& setMagFilter(bool enable) { magFilter = enable; return *this; }
         SamplerDesc& setMipFilter(bool enable) { mipFilter = enable; return *this; }
-        SamplerDesc& setAllFilters (bool enable) { minFilter = magFilter = mipFilter = enable; return *this; }
+        SamplerDesc& setAllFilters(bool enable) { minFilter = magFilter = mipFilter = enable; return *this; }
         SamplerDesc& setAddressU(SamplerAddressMode mode) { addressU = mode; return *this; }
         SamplerDesc& setAddressV(SamplerAddressMode mode) { addressV = mode; return *this; }
         SamplerDesc& setAddressW(SamplerAddressMode mode) { addressW = mode; return *this; }
@@ -1227,8 +1233,8 @@ namespace nvrhi
         SamplerDesc& setReductionType(SamplerReductionType type) { reductionType = type; return *this; }
     };
 
-    class ISampler : public IResource 
-    { 
+    class ISampler : public IResource
+    {
     public:
         [[nodiscard]] virtual const SamplerDesc& getDesc() const = 0;
     };
@@ -1432,7 +1438,9 @@ namespace nvrhi
         enum class GeometryType : uint8_t
         {
             Triangles = 0,
-            AABBs = 1
+            AABBs = 1,
+            Spheres = 2,
+            Lss = 3
         };
 
         struct GeometryAABB
@@ -1447,10 +1455,10 @@ namespace nvrhi
 
         struct GeometryTriangles
         {
-            IBuffer* indexBuffer = nullptr;   // make sure the first fields in both Triangles 
-            IBuffer* vertexBuffer = nullptr;  // and AABBs are IBuffer* for easier debugging
+            IBuffer* indexBuffer = nullptr;   // make sure the first 2 fields in all Geometry 
+            IBuffer* vertexBuffer = nullptr;  // structs are IBuffer* for easier debugging
             Format indexFormat = Format::UNKNOWN;
-            Format vertexFormat = Format::UNKNOWN;
+            Format vertexFormat = Format::UNKNOWN; // See D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC for accepted formats and how they are interpreted
             uint64_t indexOffset = 0;
             uint64_t vertexOffset = 0;
             uint32_t indexCount = 0;
@@ -1495,12 +1503,94 @@ namespace nvrhi
             GeometryAABBs& setStride(uint32_t value) { stride = value; return *this; }
         };
 
+        struct GeometrySpheres
+        {
+            IBuffer* indexBuffer = nullptr;
+            IBuffer* vertexBuffer = nullptr;
+            Format indexFormat = Format::UNKNOWN;
+            Format vertexPositionFormat = Format::UNKNOWN;
+            Format vertexRadiusFormat = Format::UNKNOWN;
+            uint64_t indexOffset = 0;
+            uint64_t vertexPositionOffset = 0;
+            uint64_t vertexRadiusOffset = 0;
+            uint32_t indexCount = 0;
+            uint32_t vertexCount = 0;
+            uint32_t indexStride = 0;
+            uint32_t vertexPositionStride = 0;
+            uint32_t vertexRadiusStride = 0;
+
+            GeometrySpheres& setIndexBuffer(IBuffer* value) { indexBuffer = value; return *this; }
+            GeometrySpheres& setVertexBuffer(IBuffer* value) { vertexBuffer = value; return *this; }
+            GeometrySpheres& setIndexFormat(Format value) { indexFormat = value; return *this; }
+            GeometrySpheres& setVertexPositionFormat(Format value) { vertexPositionFormat = value; return *this; }
+            GeometrySpheres& setVertexRadiusFormat(Format value) { vertexRadiusFormat = value; return *this; }
+            GeometrySpheres& setIndexOffset(uint64_t value) { indexOffset = value; return *this; }
+            GeometrySpheres& setVertexPositionOffset(uint64_t value) { vertexPositionOffset = value; return *this; }
+            GeometrySpheres& setVertexRadiusOffset(uint64_t value) { vertexRadiusOffset = value; return *this; }
+            GeometrySpheres& setIndexCount(uint32_t value) { indexCount = value; return *this; }
+            GeometrySpheres& setVertexCount(uint32_t value) { vertexCount = value; return *this; }
+            GeometrySpheres& setIndexStride(uint32_t value) { indexStride = value; return *this; }
+            GeometrySpheres& setVertexPositionStride(uint32_t value) { vertexPositionStride = value; return *this; }
+            GeometrySpheres& setVertexRadiusStride(uint32_t value) { vertexRadiusStride = value; return *this; }
+        };
+
+        enum class GeometryLssPrimitiveFormat : uint8_t
+        {
+            List = 0,
+            SuccessiveImplicit = 1
+        };
+
+        enum class GeometryLssEndcapMode : uint8_t
+        {
+            None = 0,
+            Chained = 1
+        };
+
+        struct GeometryLss
+        {
+            IBuffer* indexBuffer = nullptr;
+            IBuffer* vertexBuffer = nullptr;
+            Format indexFormat = Format::UNKNOWN;
+            Format vertexPositionFormat = Format::UNKNOWN;
+            Format vertexRadiusFormat = Format::UNKNOWN;
+            uint64_t indexOffset = 0;
+            uint64_t vertexPositionOffset = 0;
+            uint64_t vertexRadiusOffset = 0;
+            uint32_t indexCount = 0;
+            uint32_t primitiveCount = 0;
+            uint32_t vertexCount = 0;
+            uint32_t indexStride = 0;
+            uint32_t vertexPositionStride = 0;
+            uint32_t vertexRadiusStride = 0;
+            GeometryLssPrimitiveFormat primitiveFormat = GeometryLssPrimitiveFormat::List;
+            GeometryLssEndcapMode endcapMode = GeometryLssEndcapMode::None;
+
+            GeometryLss& setIndexBuffer(IBuffer* value) { indexBuffer = value; return *this; }
+            GeometryLss& setVertexBuffer(IBuffer* value) { vertexBuffer = value; return *this; }
+            GeometryLss& setIndexFormat(Format value) { indexFormat = value; return *this; }
+            GeometryLss& setVertexPositionFormat(Format value) { vertexPositionFormat = value; return *this; }
+            GeometryLss& setVertexRadiusFormat(Format value) { vertexRadiusFormat = value; return *this; }
+            GeometryLss& setIndexOffset(uint64_t value) { indexOffset = value; return *this; }
+            GeometryLss& setVertexPositionOffset(uint64_t value) { vertexPositionOffset = value; return *this; }
+            GeometryLss& setVertexRadiusOffset(uint64_t value) { vertexRadiusOffset = value; return *this; }
+            GeometryLss& setIndexCount(uint32_t value) { indexCount = value; return *this; }
+            GeometryLss& setPrimitiveCount(uint32_t value) { primitiveCount = value; return *this; }
+            GeometryLss& setVertexCount(uint32_t value) { vertexCount = value; return *this; }
+            GeometryLss& setIndexStride(uint32_t value) { indexStride = value; return *this; }
+            GeometryLss& setVertexPositionStride(uint32_t value) { vertexPositionStride = value; return *this; }
+            GeometryLss& setVertexRadiusStride(uint32_t value) { vertexRadiusStride = value; return *this; }
+            GeometryLss& setPrimitiveFormat(GeometryLssPrimitiveFormat value) { primitiveFormat = value; return *this; }
+            GeometryLss& setEndcapMode(GeometryLssEndcapMode value) { endcapMode = value; return *this; }
+        };
+
         struct GeometryDesc
         {
             union GeomTypeUnion
             {
                 GeometryTriangles triangles;
                 GeometryAABBs aabbs;
+                GeometrySpheres spheres;
+                GeometryLss lss;
             } geometryData;
 
             bool useTransform = false;
@@ -1514,6 +1604,8 @@ namespace nvrhi
             GeometryDesc& setFlags(GeometryFlags value) { flags = value; return *this; }
             GeometryDesc& setTriangles(const GeometryTriangles& value) { geometryData.triangles = value; geometryType = GeometryType::Triangles; return *this; }
             GeometryDesc& setAABBs(const GeometryAABBs& value) { geometryData.aabbs = value; geometryType = GeometryType::AABBs; return *this; }
+            GeometryDesc& setSpheres(const GeometrySpheres& value) { geometryData.spheres = value; geometryType = GeometryType::Spheres; return *this; }
+            GeometryDesc& setLss(const GeometryLss& value) { geometryData.lss = value; geometryType = GeometryType::Lss; return *this; }
         };
         
         enum class InstanceFlags : unsigned
@@ -1536,7 +1628,8 @@ namespace nvrhi
             unsigned instanceMask : 8;
             unsigned instanceContributionToHitGroupIndex : 24;
             InstanceFlags flags : 8;
-            union {
+            union
+            {
                 IAccelStruct* bottomLevelAS; // for buildTopLevelAccelStruct
                 uint64_t blasDeviceAddress;  // for buildTopLevelAccelStructFromBuffer - use IAccelStruct::getDeviceAddress()
             };
@@ -1560,6 +1653,7 @@ namespace nvrhi
         };
 
         static_assert(sizeof(InstanceDesc) == 64, "sizeof(InstanceDesc) is supposed to be 64 bytes");
+        static_assert(sizeof(IndirectInstanceDesc) == sizeof(InstanceDesc));
 
         enum class AccelStructBuildFlags : uint8_t
         {
@@ -1611,6 +1705,139 @@ namespace nvrhi
         };
 
         typedef RefCountPtr<IAccelStruct> AccelStructHandle;
+
+
+        //////////////////////////////////////////////////////////////////////////
+        // Clusters
+        //////////////////////////////////////////////////////////////////////////
+        namespace cluster
+        {
+            enum class OperationType : uint8_t
+            {
+                Move,                       // Moves CLAS, CLAS Templates, or Cluster BLAS
+                ClasBuild,                  // Builds CLAS from clusters of triangles
+                ClasBuildTemplates,         // Builds CLAS templates from triangles
+                ClasInstantiateTemplates,   // Instantiates CLAS templates
+                BlasBuild                   // Builds Cluster BLAS from CLAS
+            };
+
+            enum class OperationMoveType : uint8_t
+            {
+                BottomLevel,                // Moved objects are Clustered BLAS
+                ClusterLevel,               // Moved objects are CLAS
+                Template                    // Moved objects are Cluster Templates
+            };
+
+            enum class OperationMode : uint8_t
+            {
+                ImplicitDestinations,       // Provide total buffer space, driver places results within, returns VAs and actual sizes
+                ExplicitDestinations,       // Provide individual target VAs, driver places them there, returns actual sizes
+                GetSizes                    // Get minimum size per element
+            };
+
+            enum class OperationFlags : uint8_t
+            {
+                None = 0x0,
+                FastTrace = 0x1,
+                FastBuild = 0x2,
+                NoOverlap = 0x4,
+                AllowOMM = 0x8
+            };
+            NVRHI_ENUM_CLASS_FLAG_OPERATORS(OperationFlags);
+
+            enum class OperationIndexFormat : uint8_t
+            {
+                IndexFormat8bit = 1,
+                IndexFormat16bit = 2,
+                IndexFormat32bit = 4
+            };
+
+            struct OperationSizeInfo
+            {
+                uint64_t resultMaxSizeInBytes = 0;
+                uint64_t scratchSizeInBytes = 0;
+            };
+
+            struct OperationMoveParams
+            {
+                OperationMoveType type;
+                uint32_t maxBytes = 0;
+            };
+
+            struct OperationClasBuildParams
+            {
+                // See D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC for accepted formats and how they are interpreted
+                Format vertexFormat = Format::RGB32_FLOAT;
+
+                // Index of the last geometry in a single CLAS
+                uint32_t maxGeometryIndex = 0;
+
+                // Maximum number of unique geometries in a single CLAS
+                uint32_t maxUniqueGeometryCount = 1;
+
+                // Maximum number of triangles in a single CLAS
+                uint32_t maxTriangleCount = 0;
+
+                // Maximum number of vertices in a single CLAS
+                uint32_t maxVertexCount = 0;
+
+                // Maximum number of triangles summed over all CLAS (in the current cluster operation)
+                uint32_t maxTotalTriangleCount = 0;
+
+                // Maximum number of vertices summed over all CLAS (in the current cluster operation)
+                uint32_t maxTotalVertexCount = 0;
+
+                // Minimum number of bits to be truncated in vertex positions across all CLAS (in the current cluster operation)
+                uint32_t minPositionTruncateBitCount = 0;
+            };
+
+            struct OperationBlasBuildParams
+            {
+                // Maximum number of CLAS references in a single BLAS
+                uint32_t maxClasPerBlasCount = 0;
+
+                // Maximum number of CLAS references summed over all BLAS (in the current cluster operation)
+                uint32_t maxTotalClasCount = 0;
+            };
+
+            // Params that can be used to getClusterOperationSizeInfo on this shared struct before passing to executeMultiIndirectClusterOperation
+            struct OperationParams
+            {
+                // Maximum number of acceleration structures (or templates) to build/instantiate/move
+                uint32_t maxArgCount = 0;
+
+                OperationType type;
+                OperationMode mode;
+                OperationFlags flags;
+
+                OperationMoveParams move;
+                OperationClasBuildParams clas;
+                OperationBlasBuildParams blas;
+            };
+
+            struct OperationDesc
+            {
+                OperationParams params;
+
+                uint64_t scratchSizeInBytes = 0;                        // Size of scratch resource returned by getClusterOperationSizeInfo() scratchSizeInBytes 
+
+                // Input Resources
+                IBuffer* inIndirectArgCountBuffer = nullptr;            // Buffer containing the number of AS to build, instantiate, or move
+                uint64_t inIndirectArgCountOffsetInBytes = 0;           // Offset (in bytes) to where the count is in the inIndirectArgCountBuffer 
+                IBuffer* inIndirectArgsBuffer = nullptr;                // Buffer of descriptor array of format IndirectTriangleClasArgs, IndirectTriangleTemplateArgs, IndirectInstantiateTemplateArgs
+                uint64_t inIndirectArgsOffsetInBytes = 0;               // Offset (in bytes) to where the descriptor array starts inIndirectArgsBuffer
+
+                // In/Out Resources
+                IBuffer* inOutAddressesBuffer = nullptr;                // Array of addresseses of CLAS, CLAS Templates, or BLAS
+                uint64_t inOutAddressesOffsetInBytes = 0;               // Offset (in bytes) to where the addresses array starts in inOutAddressesBuffer
+
+                // Output Resources
+                IBuffer* outSizesBuffer = nullptr;                      // Sizes (in bytes) of CLAS, CLAS Templates, or BLAS
+                uint64_t outSizesOffsetInBytes = 0;                     // Offset (in bytes) to where the output sizes array starts in outSizesBuffer
+                IBuffer* outAccelerationStructuresBuffer = nullptr;     // Destination buffer for CLAS, CLAS Template, or BLAS data. Size must be calculated with getOperationSizeInfo or with the outSizesBuffer result of OperationMode::GetSizes
+                uint64_t outAccelerationStructuresOffsetInBytes = 0;    // Offset (in bytes) to where the output acceleration structures starts in outAccelerationStructuresBuffer
+            };
+        } // namespace cluster
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -1648,7 +1875,8 @@ namespace nvrhi
         uint8_t unused : 8;
         uint16_t size : 16;
 
-        bool operator ==(const BindingLayoutItem& b) const {
+        bool operator ==(const BindingLayoutItem& b) const
+        {
             return slot == b.slot
                 && type == b.type
                 && size == b.size;
@@ -2071,6 +2299,7 @@ namespace nvrhi
     {
     public:
         [[nodiscard]] virtual uint32_t getCapacity() const = 0;
+        [[nodiscard]] virtual uint32_t getFirstDescriptorIndexInHeap() const = 0;
     };
 
     typedef RefCountPtr<IDescriptorTable> DescriptorTableHandle;
@@ -2098,7 +2327,8 @@ namespace nvrhi
         bool independentViewportMask = false;
         uint16_t renderTargetIndexOffset = 0;
 
-        bool operator ==(const SinglePassStereoState& b) const {
+        bool operator ==(const SinglePassStereoState& b) const
+        {
             return enabled == b.enabled
                 && independentViewportMask == b.independentViewportMask
                 && renderTargetIndexOffset == b.renderTargetIndexOffset;
@@ -2107,7 +2337,7 @@ namespace nvrhi
         bool operator !=(const SinglePassStereoState& b) const { return !(*this == b); }
 
         constexpr SinglePassStereoState& setEnabled(bool value) { enabled = value; return *this; }
-        constexpr SinglePassStereoState& setIndependentViewportMask(bool value) { independentViewportMask= value; return *this; }
+        constexpr SinglePassStereoState& setIndependentViewportMask(bool value) { independentViewportMask = value; return *this; }
         constexpr SinglePassStereoState& setRenderTargetIndexOffset(uint16_t value) { renderTargetIndexOffset = value; return *this; }
     };
 
@@ -2151,7 +2381,8 @@ namespace nvrhi
         ShadingRateCombiner pipelinePrimitiveCombiner = ShadingRateCombiner::Passthrough;
         ShadingRateCombiner imageCombiner = ShadingRateCombiner::Passthrough;
 
-        bool operator ==(const VariableRateShadingState& b) const {
+        bool operator ==(const VariableRateShadingState& b) const
+        {
             return enabled == b.enabled
                 && shadingRate == b.shadingRate
                 && pipelinePrimitiveCombiner == b.pipelinePrimitiveCombiner
@@ -2201,7 +2432,7 @@ namespace nvrhi
         GraphicsPipelineDesc& addBindingLayout(IBindingLayout* layout) { bindingLayouts.push_back(layout); return *this; }
     };
 
-    class IGraphicsPipeline : public IResource 
+    class IGraphicsPipeline : public IResource
     {
     public:
         [[nodiscard]] virtual const GraphicsPipelineDesc& getDesc() const = 0;
@@ -2220,7 +2451,7 @@ namespace nvrhi
         ComputePipelineDesc& addBindingLayout(IBindingLayout* layout) { bindingLayouts.push_back(layout); return *this; }
     };
 
-    class IComputePipeline : public IResource 
+    class IComputePipeline : public IResource
     {
     public:
         [[nodiscard]] virtual const ComputePipelineDesc& getDesc() const = 0;
@@ -2528,8 +2759,11 @@ namespace nvrhi
         RayTracingAccelStruct,
         RayTracingPipeline,
         RayTracingOpacityMicromap,
+        RayTracingClusters,
         RayQuery,
         ShaderExecutionReordering,
+        Spheres,
+        LinearSweptSpheres,
         FastGeometryShader,
         Meshlets,
         ConservativeRasterization,
@@ -2538,7 +2772,8 @@ namespace nvrhi
         VirtualResources,
         ComputeQueue,
         CopyQueue,
-        ConstantBufferRanges
+        ConstantBufferRanges,
+        HeapDirectlyIndexed
     };
 
     enum class MessageSeverity : uint8_t
@@ -2663,6 +2898,7 @@ namespace nvrhi
         virtual void compactBottomLevelAccelStructs() = 0;
         virtual void buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances,
             rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) = 0;
+        virtual void executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc& desc) = 0;
 
         // A version of buildTopLevelAccelStruct that takes the instance data from a buffer on the GPU.
         // The buffer must be pre-filled with rt::InstanceDesc structures using a copy operation or a shader.
@@ -2674,7 +2910,7 @@ namespace nvrhi
         virtual void endTimerQuery(ITimerQuery* query) = 0;
 
         // Command list range markers
-        virtual void beginMarker(const char *name) = 0;
+        virtual void beginMarker(const char* name) = 0;
         virtual void endMarker() = 0;
 
         // Enables or disables the automatic barrier placement on set[...]State, copy, write, and clear operations.
@@ -2739,14 +2975,14 @@ namespace nvrhi
         virtual TextureHandle createHandleForNativeTexture(ObjectType objectType, Object texture, const TextureDesc& desc) = 0;
 
         virtual StagingTextureHandle createStagingTexture(const TextureDesc& d, CpuAccessMode cpuAccess) = 0;
-        virtual void *mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t *outRowPitch) = 0;
+        virtual void* mapStagingTexture(IStagingTexture* tex, const TextureSlice& slice, CpuAccessMode cpuAccess, size_t* outRowPitch) = 0;
         virtual void unmapStagingTexture(IStagingTexture* tex) = 0;
 
         virtual void getTextureTiling(ITexture* texture, uint32_t* numTiles, PackedMipDesc* desc, TileShape* tileShape, uint32_t* subresourceTilingsNum, SubresourceTiling* subresourceTilings) = 0;
         virtual void updateTextureTileMappings(ITexture* texture, const TextureTilesMapping* tileMappings, uint32_t numTileMappings, CommandQueue executionQueue = CommandQueue::Graphics) = 0;
 
         virtual BufferHandle createBuffer(const BufferDesc& d) = 0;
-        virtual void *mapBuffer(IBuffer* buffer, CpuAccessMode cpuAccess) = 0;
+        virtual void* mapBuffer(IBuffer* buffer, CpuAccessMode cpuAccess) = 0;
         virtual void unmapBuffer(IBuffer* buffer) = 0;
         virtual MemoryRequirements getBufferMemoryRequirements(IBuffer* buffer) = 0;
         virtual bool bindBufferMemory(IBuffer* buffer, IHeap* heap, uint64_t offset) = 0;
@@ -2801,6 +3037,7 @@ namespace nvrhi
         virtual rt::OpacityMicromapHandle createOpacityMicromap(const rt::OpacityMicromapDesc& desc) = 0;
         virtual rt::AccelStructHandle createAccelStruct(const rt::AccelStructDesc& desc) = 0;
         virtual MemoryRequirements getAccelStructMemoryRequirements(rt::IAccelStruct* as) = 0;
+        virtual rt::cluster::OperationSizeInfo getClusterOperationSizeInfo(const rt::cluster::OperationParams& params) = 0;
         virtual bool bindAccelStructMemory(rt::IAccelStruct* as, IHeap* heap, uint64_t offset) = 0;
         
         virtual CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) = 0;

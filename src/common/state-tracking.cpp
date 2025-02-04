@@ -135,9 +135,16 @@ namespace nvrhi
     ResourceStates CommandListResourceStateTracker::getTextureSubresourceState(TextureStateExtension* texture, ArraySlice arraySlice, MipLevel mipLevel)
     {
         TextureState* tracking = getTextureStateTracking(texture, false);
-
         if (!tracking)
-            return ResourceStates::Unknown;
+        {
+            return texture->descRef.keepInitialState ? 
+                (texture->stateInitialized ? texture->descRef.initialState : ResourceStates::Common) :
+                ResourceStates::Unknown;
+        }
+
+        // whole resource
+        if (tracking->subresourceStates.empty())
+            return tracking->state;
 
         uint32_t subresource = calcSubresource(mipLevel, arraySlice, texture->descRef);
         return tracking->subresourceStates[subresource];

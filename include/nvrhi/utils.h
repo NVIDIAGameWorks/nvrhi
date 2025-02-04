@@ -124,4 +124,24 @@ namespace nvrhi::utils
         std::mutex m_Mutex;
     };
 
+    // Automatic begin/end marker for command list
+    class ScopedMarker
+    {
+    public:
+        ICommandList* m_commandList;
+        ScopedMarker(ICommandList* commandList, const char* markerName) : m_commandList(commandList)
+        {
+            m_commandList->beginMarker(markerName);
+        }
+
+        ScopedMarker(CommandListHandle* commandList, const char* markerName) :
+            ScopedMarker(commandList->Get(), markerName)
+        {}
+
+        ~ScopedMarker()
+        {
+            m_commandList->endMarker();
+        }
+    };
+
 }

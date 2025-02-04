@@ -291,7 +291,17 @@ namespace nvrhi::vulkan
             static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
                 == offsetof(rt::GeometryAABBs, unused));
 
-            // Clear only the triangles' data, because the AABBs' data is aliased to triangles (verified above)
+            static_assert(offsetof(rt::GeometryTriangles, indexBuffer)
+                == offsetof(rt::GeometrySpheres, indexBuffer));
+            static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
+                == offsetof(rt::GeometrySpheres, vertexBuffer));
+
+            static_assert(offsetof(rt::GeometryTriangles, indexBuffer)
+                == offsetof(rt::GeometryLss, indexBuffer));
+            static_assert(offsetof(rt::GeometryTriangles, vertexBuffer)
+                == offsetof(rt::GeometryLss, vertexBuffer));
+
+            // Clear only the triangles' data, because the other types' data is aliased to triangles (verified above)
             geometry.geometryData.triangles.indexBuffer = nullptr;
             geometry.geometryData.triangles.vertexBuffer = nullptr;
         }
@@ -307,6 +317,12 @@ namespace nvrhi::vulkan
             return getBufferMemoryRequirements(as->dataBuffer);
 
         return MemoryRequirements();
+    }
+
+    rt::cluster::OperationSizeInfo Device::getClusterOperationSizeInfo(const rt::cluster::OperationParams&)
+    {
+        utils::NotSupported();
+        return rt::cluster::OperationSizeInfo();
     }
 
     bool Device::bindAccelStructMemory(rt::IAccelStruct* _as, IHeap* heap, uint64_t offset)
@@ -737,6 +753,11 @@ namespace nvrhi::vulkan
 
         if (as->desc.trackLiveness)
             m_CurrentCmdBuf->referencedResources.push_back(as);
+    }
+
+    void CommandList::executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc&)
+    {
+        utils::NotSupported();
     }
 
     AccelStruct::~AccelStruct()

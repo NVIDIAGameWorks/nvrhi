@@ -688,6 +688,12 @@ namespace nvrhi::d3d12
             rsDesc.Desc_1_1.Flags |= D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
         }
 
+        if (m_HeapDirectlyIndexedEnabled)
+        {
+            rsDesc.Desc_1_1.Flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+            rsDesc.Desc_1_1.Flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+        }
+        
         if (!rootParameters.empty())
         {
             rsDesc.Desc_1_1.pParameters = rootParameters.data();

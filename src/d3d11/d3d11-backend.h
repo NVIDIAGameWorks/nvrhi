@@ -24,6 +24,7 @@
 
 #include <nvrhi/d3d11.h>
 #include <nvrhi/common/resourcebindingmap.h>
+#include <nvrhi/utils.h>
 #include "../common/dxgi-format.h"
 
 #include <d3d11_1.h>
@@ -115,6 +116,7 @@ namespace nvrhi::d3d11
         
         Buffer(const Context& context) : m_Context(context) { }
         const BufferDesc& getDesc() const override { return desc; }
+        GpuVirtualAddress getGpuVirtualAddress() const override { nvrhi::utils::NotImplemented(); return 0; }
         Object getNativeObject(ObjectType objectType) override;
 
         ID3D11ShaderResourceView* getSRV(Format format, BufferRange range, ResourceType type);
@@ -335,6 +337,7 @@ namespace nvrhi::d3d11
         void buildTopLevelAccelStruct(rt::IAccelStruct* as, const rt::InstanceDesc* pInstances, size_t numInstances, rt::AccelStructBuildFlags buildFlags) override;
         void buildTopLevelAccelStructFromBuffer(rt::IAccelStruct* as, nvrhi::IBuffer* instanceBuffer, uint64_t instanceBufferOffset, size_t numInstances,
             rt::AccelStructBuildFlags buildFlags = rt::AccelStructBuildFlags::None) override;
+        void executeMultiIndirectClusterOperation(const rt::cluster::OperationDesc& desc) override;
 
         void beginTimerQuery(ITimerQuery* query) override;
         void endTimerQuery(ITimerQuery* query) override;
@@ -498,6 +501,7 @@ namespace nvrhi::d3d11
         rt::OpacityMicromapHandle createOpacityMicromap(const rt::OpacityMicromapDesc& desc) override;
         rt::AccelStructHandle createAccelStruct(const rt::AccelStructDesc& desc) override;
         MemoryRequirements getAccelStructMemoryRequirements(rt::IAccelStruct* as) override;
+        rt::cluster::OperationSizeInfo getClusterOperationSizeInfo(const rt::cluster::OperationParams& params) override;
         bool bindAccelStructMemory(rt::IAccelStruct* as, IHeap* heap, uint64_t offset) override;
 
         CommandListHandle createCommandList(const CommandListParameters& params = CommandListParameters()) override;
