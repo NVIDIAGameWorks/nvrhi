@@ -84,7 +84,7 @@ nvrhi::TextureHandle swapChainTexture = nvrhiDevice->createHandleForNativeTextur
 
 Now, the `swapChainTexture` variable holds a strong reference to the swap chain texture. It can be used to create a `Framebuffer` object to be rendered into.
 
-On D3D12 and Vulkan, multiple swap chain textures and explicit access synchronization is necessary; this is out of scope for this article, and working implementations can be found in the `DeviceManager` classes in Donut: [D3D11](https://github.com/NVIDIAGameWorks/donut/blob/main/src/app/dx11/DeviceManager_DX11.cpp), [D3D12](https://github.com/NVIDIAGameWorks/donut/blob/main/src/app/dx12/DeviceManager_DX12.cpp), [Vulkan](https://github.com/NVIDIAGameWorks/donut/blob/main/src/app/vulkan/DeviceManager_VK.cpp).
+On D3D12 and Vulkan, multiple swap chain textures and explicit access synchronization is necessary; this is out of scope for this article, and working implementations can be found in the `DeviceManager` classes in Donut: [D3D11](https://github.com/NVIDIA-RTX/Donut/blob/main/src/app/dx11/DeviceManager_DX11.cpp), [D3D12](https://github.com/NVIDIA-RTX/Donut/blob/main/src/app/dx12/DeviceManager_DX12.cpp), [Vulkan](https://github.com/NVIDIA-RTX/Donut/blob/main/src/app/vulkan/DeviceManager_VK.cpp).
 
 ### Creating a Graphics Pipeline
 
@@ -149,7 +149,7 @@ auto layoutDesc = nvrhi::BindingLayoutDesc()
 nvrhi::BindingLayoutHandle bindingLayout = nvrhiDevice->createBindingLayout(layoutDesc);
 ```
 
-You may have noticed that the snippet above references a `VolatileConstantBuffer`. That is a special type of constant buffer supported by NVRHI that is more lightweight than a separate buffer object on D3D12 and Vulkan, and has unique semantics, somewhat similar to push constants (which are also supported). For more information on volatile buffers, see the [Programming Guide](https://github.com/NVIDIAGameWorks/nvrhi/blob/main/doc/ProgrammingGuide.md#buffers).
+You may have noticed that the snippet above references a `VolatileConstantBuffer`. That is a special type of constant buffer supported by NVRHI that is more lightweight than a separate buffer object on D3D12 and Vulkan, and has unique semantics, somewhat similar to push constants (which are also supported). For more information on volatile buffers, see the [Programming Guide](ProgrammingGuide.md#buffers).
 
 With all the prerequisites ready, let's create the pipeline:
 
@@ -297,7 +297,7 @@ nvrhiDevice->executeCommandList(commandList);
 
 Now we can present the rendered image to the screen. NVRHI does not provide any presentation functions, and that is left up to the application. Working presentation functions for all three GAPI can be found in the same `DeviceManager` classes in Donut, referenced above.
 
-A complete, working example application similar to the code shown above can be found in the [Donut Examples](https://github.com/NVIDIAGameWorks/donut_examples) repository. Look for the `vertex_buffer` example.
+A complete, working example application similar to the code shown above can be found in the [Donut Samples](https://github.com/NVIDIA-RTX/Donut-Samples) repository. Look for the `vertex_buffer` example.
 
 ## Ray Tracing Support
 
@@ -370,7 +370,7 @@ nvrhiDevice->executeCommandList(commandList);
 
 ### Ray Tracing Pipelines and Shader Tables
 
-Now the acceleration structures are ready for use. Just one tiny bit left: the actual ray tracing pipeline that would use them. To avoid making things complicated, let's assume our ray tracing pipeline is going to be reading one texture and one vertex buffer, so we can bind these things directly - without local root signatures or bindless resources. To see how those approaches can be implemented, please refer to the `rt_reflections` and `rt_bindless` [examples](https://github.com/NVIDIAGameWorks/donut_examples).
+Now the acceleration structures are ready for use. Just one tiny bit left: the actual ray tracing pipeline that would use them. To avoid making things complicated, let's assume our ray tracing pipeline is going to be reading one texture and one vertex buffer, so we can bind these things directly - without local root signatures or bindless resources. To see how those approaches can be implemented, please refer to the `rt_reflections` and `rt_bindless` [samples](https://github.com/NVIDIA-RTX/Donut-Samples).
 
 A ray tracing pipeline is based on at least one shader library, and includes multiple shaders: RayGen, ClosestHit, etc. Let's enumerate the shaders and create the pipeline:
 
@@ -456,4 +456,4 @@ nvrhiDevice->executeCommandList(commandList);
 
 In this tutorial, we have shown basic usage of the NVRHI API to create some common rendering resources and pipelines and to draw geometry and trace rays. This does not cover the entire available API, of course, but should give you an idea of what it looks like.
 
-For more information, please refer to the [Programming Guide](ProgrammingGuide.md). To see working applications based on NVRHI, go to the [Donut Examples](https://github.com/NVIDIAGameWorks/donut_examples) repository.
+For more information, please refer to the [Programming Guide](ProgrammingGuide.md). To see working applications based on NVRHI, go to the [Donut Samples](https://github.com/NVIDIA-RTX/Donut-Samples) repository.
