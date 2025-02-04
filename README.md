@@ -1,6 +1,6 @@
 # NVRHI
 
-[![Build Status](https://github.com/NVIDIAGameWorks/nvrhi/actions/workflows/build.yml/badge.svg)](https://github.com/NVIDIAGameWorks/nvrhi/actions/workflows/build.yml)
+[![Build Status](https://github.com/NVIDIA-RTX/NVRHI/actions/workflows/build.yml/badge.svg)](https://github.com/NVIDIA-RTX/NVRHI/actions/workflows/build.yml)
 
 ## Introduction
 
@@ -18,10 +18,10 @@ Key features:
 - Supports all types of pipelines: Graphics, Compute, Ray Tracing, and Meshlet.
 - Validation layer and resource reflection for easy debugging.
 
-NVRHI is used in several NVIDIA GameWorks SDKs:
+NVRHI is used in several NVIDIA SDKs:
 
 - [Adaptive and Variable-Rate Shading SDK](https://github.com/NVIDIAGameWorks/nas-sample)
-- [Donut Framework](https://github.com/NVIDIAGameWorks/donut) and its [Examples](https://github.com/NVIDIAGameWorks/donut_examples)
+- [Donut Framework](https://github.com/NVIDIA-RTX/Donut) and its [Samples](https://github.com/NVIDIA-RTX/Donut-Samples)
 - [Opacity Micro-Map SDK](https://github.com/NVIDIAGameWorks/Opacity-MicroMap-SDK)
 - [Path Tracing SDK](https://github.com/NVIDIAGameWorks/Path-Tracing-SDK)
 - [RTXDI SDK](https://github.com/NVIDIAGameWorks/RTXDI)
@@ -88,7 +88,7 @@ The following extensions are supported:
 
 ## RTXMU Integration
 
-NVRHI includes an optional integration of the [RTXMU](https://github.com/NVIDIAGameWorks/RTXMU) library. The library is included as a git submodule, and can be enabled with the `NVRHI_WITH_RTXMU` CMake variable.
+NVRHI includes an optional integration of the [RTXMU](https://github.com/NVIDIA-RTX/RTXMU) library. The library is included as a git submodule, and can be enabled with the `NVRHI_WITH_RTXMU` CMake variable.
 
 When RTXMU integration is enabled, all bottom-level ray tracing acceleration structures (BLAS'es) are managed by that library. All built BLAS'es that have the `AllowCompaction` flag set are automatically compacted when `ICommandList::compactBottomLevelAccelStructs` method is called. No other configuration is necessary.
 
